@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: true
+
+      - name: No sorry in the sources
+        run: |
+          if grep -rnE '^[[:space:]]*(sorry|admit)\b' LambdaS/ Main.lean; then
+            echo "::error::sorry or admit found in the development"
+            exit 1
+          fi
+
+      - name: Audit the trust base
+        run: |
+          lake env lean scripts/Audit.lean | tee axioms.txt
+          if grep -q sorryAx axioms.txt; then
+            echo "::error::a headline theorem depends on sorryAx"
+            exit 1
+          fi
+          cat axioms.txt
