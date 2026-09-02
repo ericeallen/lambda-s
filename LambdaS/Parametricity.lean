@@ -5,13 +5,13 @@ import LambdaS.Dynamics
 # Relational parametricity for units
 
 Kennedy's POPL 1997 insight: the semantic content of unit correctness is
-**invariance of program behaviour under rescaling**. This file builds the
+**invariance of program behavior under rescaling**. This file builds the
 relation that says so at scalar type, and proves that every operation of the
 arithmetic fragment preserves it.
 
 ## Why the *erased* semantics
 
-The relation is stated on bare magnitudes — a quantity is a real number, and the
+The relation is stated on bare magnitudes: a quantity is a real number, and the
 unit lives only in the relation. That is deliberate, and it is the half of
 Kennedy's "instrumentation is cheating" objection that survives. An instrumented
 semantics carries units on values, so there is nothing left to be invariant
@@ -24,7 +24,7 @@ file can state the other's theorem, and both are needed.
 
 ## What is proved here
 
-`RelQ`, the relation at scalar type, and — the substance — that **every
+`RelQ`, the relation at scalar type, and (the substance) that **every
 arithmetic operation preserves it**. These are the inductive steps of the
 fundamental theorem, and each is an instance of a homomorphism law from
 `LambdaS.Scaling`.
@@ -34,7 +34,7 @@ Three read as design justifications rather than lemmas:
 * `relQ_add` requires **both operands at the same unit**. State it at different
   units and it is false: the summands would scale by different factors and the
   sum by neither. The typing rule is forced by the semantics, not chosen.
-* `relQ_rpow` requires the value to be **non-negative** — precisely Kennedy's
+* `relQ_rpow` requires the value to be **non-negative**: precisely Kennedy's
   standing assumption that floats are positive. Here it appears as a hypothesis
   that cannot be dropped, since `(k·x)^p = k^p · x^p` fails without it. Note
   that only the *value* needs it: the scale factor is positive by construction
@@ -53,12 +53,12 @@ other literal is `float<1>`.
 `Ty.den` and the full `Rel` are here, including the `∀u` case, and
 `free_theorem_sqr` is the first result that uses them: any `f` related to itself
 at `∀u. Q u → Q (u·u)` satisfies `f (r + log k) (k·x) = k²·f r x` for every
-positive `k` — the familiar `f (k·x) = k²·f x`, with the family index moved
+positive `k`: the familiar `f (k·x) = k²·f x`, with the family index moved
 along by the rescaling. That is Kennedy's "theorems for free", mechanized.
 
 Two notes on getting `Ty.den` to work, since both looked like obstacles and
-neither was. Its type must generalize both scope indices — `{j k : ℕ} →
-Ty B D j k → Type`, not `Ty B D j k → Type` — because `all` recurses at `k + 1`
+neither was. Its type must generalize both scope indices (`{j k : ℕ} →
+Ty B D j k → Type`, not `Ty B D j k → Type`) because `all` recurses at `k + 1`
 and `allDim` at `j + 1`.
 And it must be `@[reducible]`, because instance synthesis runs at reducible
 transparency and otherwise `HMul ℝ (Ty.Q u).den` fails to resolve even though
@@ -66,7 +66,7 @@ the two types are definitionally equal.
 
 ## Where this leads
 
-The **fundamental theorem** — every well-typed term related to itself — needs a
+The **fundamental theorem** (every well-typed term related to itself) needs a
 denotation of *terms*, hence recursion over typing **derivations**. `HasTy` is
 `Type`-valued for exactly that reason, and `LambdaS.Fundamental` does the work:
 `den` interprets derivations, and `fundamental` and `fundamental_free` are the
@@ -77,7 +77,7 @@ namespace LambdaS
 
 variable {B D : Type} [Fintype B] {j k : ℕ}
 
-/-- The **erased denotation** of a type. Units contribute nothing — a quantity is
+/-- The **erased denotation** of a type. Units contribute nothing: a quantity is
 a real number whatever unit it carries, and a dimension abstraction denotes what its
 body does, because dimensions have no magnitudes to carry.
 
@@ -85,7 +85,7 @@ A **unit** abstraction is different, and this is where `convert` shows its cost.
 `Λu:δ. e` denotes a *family* `ℝ → Ty.den τ`, indexed by the log-magnitude the
 instantiating unit is declared to have. It has to: `Λu:Length. convert x u metre`
 means something different depending on how big `u` is, and `conv` is what reads
-that. For convert-free terms the family is constant — which is Kennedy's theorem
+that. For convert-free terms the family is constant, which is Kennedy's theorem
 rather than our definition, and is the better place for it to live.
 
 `@[reducible]` is load-bearing: instance synthesis runs at reducible
@@ -104,12 +104,12 @@ environments leaves its denotation unchanged.
 This is unit erasure, stated at the level of types, and it is what makes the
 denotation of polymorphic terms typeable at instantiation: `Λu:δ. e` denotes a
 family, `e[μ]` samples it at `μ`'s log-magnitude, and the result must land in
-`Ty.den (τ.subst μ)` — this equation says that is the same type as `Ty.den τ`,
+`Ty.den (τ.subst μ)`; this equation says that is the same type as `Ty.den τ`,
 because instantiating a unit variable moves no magnitudes.
-The equation is propositional rather than definitional — `Ty.ground` maps over a
-space's unit list, and `(V.map f).length = V.length` is a theorem — so the
+The equation is propositional rather than definitional (`Ty.ground` maps over a
+space's unit list, and `(V.map f).length = V.length` is a theorem), so the
 denotation of a unit application transports along it. That transport is not an
-artefact of the encoding; it is exactly the place where "units are erasable"
+artifact of the encoding; it is exactly the place where "units are erasable"
 does its work. -/
 theorem Ty.den_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
     (η : Fin k → UExp B k₀) (δ : Fin j → DExp D j₀),
@@ -166,7 +166,7 @@ The relation must survive instantiation, or unit abstraction has no semantics.
 under the pulled-back scaling at the original.
 
 The denotations are compared with `HEq` because `Ty.den (Ty.ground η δ τ)` and
-`Ty.den τ` are equal but not definitionally so — the same transport that appears
+`Ty.den τ` are equal but not definitionally so: the same transport that appears
 in `den` at `uapp` and `dapp`. -/
 
 /-- Applying heterogeneously equal functions to heterogeneously equal arguments. -/
@@ -298,7 +298,7 @@ systems that differ by `ψ`"*. The two readings differ by exactly the scale
 factor of the unit. -/
 def RelQ (u : UExp B k) (ψ : Scaling B k) (x y : ℝ) : Prop := y = ψ.scale u * x
 
-/-- Under the trivial scaling the relation is equality — nothing moves when
+/-- Under the trivial scaling the relation is equality: nothing moves when
 nothing is rescaled. -/
 @[simp] theorem relQ_id {u : UExp B k} {x y : ℝ} :
     RelQ u (Scaling.id B k) x y ↔ y = x := by simp [RelQ]
@@ -306,7 +306,7 @@ nothing is rescaled. -/
 /-! ## The arithmetic operations preserve the relation -/
 
 /-- Dimensionless literals are **invariant**: the same number in every unit
-system. This is why `lit` has type `Q 1`, and why there is no unitless *type* —
+system. This is why `lit` has type `Q 1`, and why there is no unitless *type*,
 only the unit `1`. -/
 theorem relQ_lit (ψ : Scaling B k) (q : ℝ) : RelQ (1 : UExp B k) ψ q q := by
   simp [RelQ]
@@ -347,7 +347,7 @@ theorem relQ_rpow {u : UExp B k} {ψ : Scaling B k} {x y : ℝ} (q : ℚ)
   simp only [RelQ] at *
   rw [h, Scaling.scale_rpow, Real.mul_rpow (le_of_lt (ψ.scale_pos u)) hx]
 
-/-- **`log` is invariant only at the trivial unit** — the semantic content of the
+/-- **`log` is invariant only at the trivial unit**: the semantic content of the
 base-measure problem. -/
 theorem relQ_log {ψ : Scaling B k} {x y : ℝ} (h : RelQ (1 : UExp B k) ψ x y) :
     RelQ (1 : UExp B k) ψ (Real.log x) (Real.log y) := by
@@ -363,7 +363,7 @@ theorem relQ_exp {ψ : Scaling B k} {x y : ℝ} (h : RelQ (1 : UExp B k) ψ x y)
 /-! ## Zero is the unique scale-invariant magnitude
 
 Kennedy's explanation of why `0.0 : ∀u. float<u>` while every other literal is
-`float<1>`. Not a special case bolted on to make arithmetic work — forced. It is
+`float<1>`. Not a special case bolted on to make arithmetic work: forced. It is
 also what makes identity matrices and the `n = 0` term of `exp` well-typed in
 `LambdaS.Map`, where the off-diagonal zeros must inhabit every unit. -/
 
@@ -384,9 +384,9 @@ theorem eq_zero_of_relQ_self {x : ℝ}
 /-! ## A theorem for free
 
 The first result at higher type, and the shape Kennedy's Pi theorem generalizes:
-the *type alone* constrains the function's behaviour, whatever its code. -/
+the *type alone* constrains the function's behavior, whatever its code. -/
 
-/-- The relation at `.Q` is exactly `RelQ` — so every arithmetic lemma above is a
+/-- The relation at `.Q` is exactly `RelQ`, so every arithmetic lemma above is a
 lemma about `Rel`. -/
 theorem rel_Q_eq (u : UExp B k) (ψ : Scaling B k) (x y : ℝ) :
     Rel (D := D) (j := j) (.Q u) ψ x y ↔ RelQ u ψ x y := Iff.rfl
@@ -395,11 +395,11 @@ theorem rel_Q_eq (u : UExp B k) (ψ : Scaling B k) (x y : ℝ) :
 satisfies `f (k·x) = k² · f x` for every positive `k`.
 
 `f` takes the instantiating unit's log-magnitude as its first argument, and
-rescaling by `k` moves that argument by `log k` — the unit the term was applied
+rescaling by `k` moves that argument by `log k`: the unit the term was applied
 to gets rescaled along with everything else. Read at a fixed `r` this is the
 familiar statement.
 
-Note how `∀u` is written: `∀δ. ∀u:δ.` — a unit variable bounded by a *dimension*
+Note how `∀u` is written: `∀δ. ∀u:δ.`, a unit variable bounded by a *dimension*
 variable. That is unbounded quantification, and it is where the full strength of
 the free theorem comes from, since nothing concrete matches `δ` and so `convert`
 is unavailable at `u`.

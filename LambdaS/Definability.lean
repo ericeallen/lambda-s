@@ -5,13 +5,13 @@ import LambdaS.Fundamental
 
 `fundamental` says a parametric term is scale-invariant for coherent scalings,
 and `fundamental_free` says a parametric convert-free term is invariant for
-*all* of them — parametric meaning no `ucon` and no `root`.
+*all* of them (parametric meaning no `ucon` and no `root`).
 This file proves the converse: invariance under all scalings detects **exactly**
 the conversions that do something.
 
 ## The theorem that is not available
 
-The tempting statement — "invariant under all scalings implies definable" — is
+The tempting statement ("invariant under all scalings implies definable") is
 false, and not for any interesting reason. Take `f x = π · x` at type
 `Q u → Q u`. It satisfies the scaling law for every `ψ`, since `f (k·x) = k·f x`.
 No term denotes it: literals are rational, and the arithmetic of Λs over
@@ -30,7 +30,7 @@ into a convert-free term with the same denotation.
 
 The converse is `cvt_invariant_iff_eq`: a single conversion applied to a nonzero
 argument is invariant under *all* scalings if and only if `u = v` on the nose.
-Not "same dimension" — literally the same exponent vector. The mechanism is
+Not "same dimension": literally the same exponent vector. The mechanism is
 `scale_eq_iff`: scalings separate points of the unit group, so `∀ψ, ψ.scale u =
 ψ.scale v` collapses to `u = v`.
 
@@ -42,7 +42,7 @@ conditions
 * denotationally convert-free,
 
 coincide. Coherent invariance, by contrast, is strictly weaker and holds for
-every conversion between same-dimension units — and that gap is exactly what
+every conversion between same-dimension units, and that gap is exactly what
 conversion costs.
 
 ## And the first-order dichotomy
@@ -50,7 +50,7 @@ conversion costs.
 `scaleLaw_forces_zero` is the general form of `NonDef.convert_not_definable`: if
 a first-order term's result unit mentions a base unit that none of its arguments
 mention, then all-scalings invariance forces the term to denote zero. This is
-`Pi.eq_zero_of_appears_once` — the pendulum argument — reappearing as a
+`Pi.eq_zero_of_appears_once` (the pendulum argument) reappearing as a
 statement about terms rather than about exponent matrices.
 -/
 
@@ -153,7 +153,7 @@ theorem Tm.inert_of_convertFree : ∀ {j k : ℕ} (e : Tm B D j k), e.ConvertFre
   | _, _, .convert _ _ _, h => absurd h not_false
 
 /-- **Inert conversions are removable.** A term whose conversions are all inert
-denotes exactly what some convert-free term denotes — at the same type, in every
+denotes exactly what some convert-free term denotes: at the same type, in every
 environment, under every valuation.
 
 Stated over derivations this says what it should: there is another **term**,
@@ -268,7 +268,7 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
     rw [hd, conv_self, mul_one]
 
 /-- **Inert terms are invariant under every scaling**, not merely the coherent
-ones — because they are convert-free in all but name. -/
+ones, because they are convert-free in all but name. -/
 theorem fundamental_of_inert {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     {e : Tm B D j k} {τ : Ty B D j k} (d : HasTy Δ Γ e τ) (hp : e.Parametric)
     (hi : e.Inert) (V ψ : Scaling B k) {ρ ρ' : Env Γ} (hr : RelEnv Γ ψ ρ ρ') :
@@ -293,8 +293,8 @@ over every `ψ` and applying `scale_eq_iff` collapses that to `u = v`. -/
 /-- **All-scalings invariance is exactly inertness**, for the canonical
 conversion applied to a nonzero argument.
 
-The three conditions coincide: invariant under every scaling, inert, and — by
-`exists_convertFree_of_inert` — denotationally convert-free. Contrast
+The three conditions coincide: invariant under every scaling, inert, and (by
+`exists_convertFree_of_inert`) denotationally convert-free. Contrast
 `fundamental`, which holds for *every* well-typed conversion once the
 scalings are restricted to coherent ones. -/
 theorem cvt_invariant_iff_eq {u v : UExp B k} (h : SameDim Δ u v)
@@ -369,7 +369,7 @@ theorem scaleLaw_forces_zero {us : List (UExp B k)} {u₀ : UExp B k}
 
 /-- The dichotomy for actual terms: a first-order term whose result unit escapes
 its arguments denotes zero, if it is invariant under every scaling. Otherwise it
-is not invariant — so by the contrapositive of `fundamental_free` it is not
+is not invariant, so by the contrapositive of `fundamental_free` it is not
 both parametric and convert-free. -/
 theorem forced_zero {us : List (UExp B k)} {u₀ : UExp B k} {e : Tm B D j k}
     (d : HasTy Δ (scalarCtx us) e (.Q u₀)) (V : Scaling B k)

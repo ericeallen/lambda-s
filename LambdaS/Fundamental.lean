@@ -13,10 +13,10 @@ are unproved conjectures about particular functions.
 There are two fundamental theorems here, and the difference between them is the
 whole story about conversion.
 
-* `fundamental_free` — a **convert-free** term is related to itself under
+* `fundamental_free`: a **convert-free** term is related to itself under
   *every* scaling. This is Kennedy's theorem, and it is what the Pi theorem
   consumes.
-* `fundamental` — an **arbitrary** term is related to itself under every
+* `fundamental`: an **arbitrary** term is related to itself under every
   **coherent** scaling, one that factors through dimension.
 
 Conversion is the only operation in Λs that can observe a unit, so it is the
@@ -28,7 +28,7 @@ through; it is what the term forces.
 
 That is the gap in the literature. Kennedy (POPL'97) and Atkey–Johann–Kennedy
 (POPL'13) have unconditional abstraction theorems because nothing in their
-calculi observes a unit — there is no conversion operator to break anything.
+calculi observes a unit: there is no conversion operator to break anything.
 Practical systems have conversion and no invariance theory. Λs has both, and
 this file is where they meet.
 
@@ -36,7 +36,7 @@ this file is where they meet.
 
 `den` recurses over `HasTy`, which is `Type`-valued precisely so that it can: a
 denotation is data, and a `Prop`-valued derivation cannot eliminate into `Type`.
-There is no second, intrinsically typed syntax — the term a derivation types is
+There is no second, intrinsically typed syntax: the term a derivation types is
 its index, so the checker and the semantics are the same calculus by
 construction rather than by a bridging theorem. Derivations being unique
 (`Subsingleton (HasTy Δ Γ e τ)`) is what makes the denotation a function of the
@@ -44,12 +44,12 @@ construction rather than by a bridging theorem. Derivations being unique
 rather than on derivations.
 
 Unit and dimension application transport along `Ty.den_subst` and
-`Ty.den_substDim`. Those casts are not an artefact of the encoding: they are
+`Ty.den_substDim`. Those casts are not an artifact of the encoding: they are
 where "instantiating a unit moves no magnitudes" is discharged.
 
 ## Why the denotation takes a valuation
 
-`den` is parameterised by a `Scaling B k` — the *declared* valuation, what each
+`den` is parameterized by a `Scaling B k`: the *declared* valuation, what each
 base unit is worth. Nothing but `convert` reads it (`den_indep` proves exactly
 that; note that `ucon` does **not** read it), but `convert` must: a conversion
 factor is a ratio of declared magnitudes and cannot be recovered from the term
@@ -58,7 +58,7 @@ alone.
 This is also why the fundamental theorem relates `den V` to `den (V.comp ψ)`
 rather than `den` to itself. Rescaling is a change of the declared unit system,
 so it acts on the valuation as well as on the environment. For convert-free
-terms the distinction is invisible, which is precisely `den_indep` — with
+terms the distinction is invisible, which is precisely `den_indep`, with
 `den_eq_of_convertFree` its closed-scalar corollary, closed because an open term
 may have a free variable of quantified type whose family the environment
 chooses non-constantly.
@@ -70,18 +70,18 @@ the reason is worth stating because it explains a feature of Kennedy's calculus
 that otherwise looks arbitrary.
 
 `ucon m : Q m` denotes the number `1`. The relation at `Q m` demands the two
-readings differ by `ψ(m)`, so self-relatedness would need `1 = ψ(m) · 1` — false
+readings differ by `ψ(m)`, so self-relatedness would need `1 = ψ(m) · 1`, false
 for any scaling that actually moves the metre. A term that can *name* a unit can
 detect a rescaling.
 
 This is why Λu has no unit constants, and why Kennedy's own "converting kg into
 lb" example rewrites the literals: `1.0<kg>` becomes `2.2<lb>`. The rescaling
 acts on the program text, not only on the environment. Dimensioned values enter
-through the environment — as free variables — never by naming a unit.
+through the environment (as free variables), never by naming a unit.
 
 ## Scope
 
-Every form of Λs except `ucon` and `root` — variables, abstraction, application,
+Every form of Λs except `ucon` and `root`: variables, abstraction, application,
 literals, the arithmetic, spaces and linear maps, conversion, and unit and
 dimension abstraction and application. The two exclusions are `Tm.Parametric`'s,
 and each is argued where it bites: `ucon` below, `root` here.
@@ -104,7 +104,7 @@ variable {Δ : DCtx D j k}
 
 /-- An environment: a denotation for each type in the context.
 
-`@[reducible]` for the same reason `Ty.den` is — the elaborator must see through
+`@[reducible]` for the same reason `Ty.den` is: the elaborator must see through
 it to project a pair. -/
 @[reducible] def Env : Ctx B D j k → Type
   | [] => PUnit
@@ -425,7 +425,7 @@ is exactly as expressive and considerably simpler. -/
 Both exclusions are forced, and for different reasons.
 
 `ucon u : Q u` denotes the number `1`, so self-relatedness would demand
-`1 = ψ(u) · 1` — false for any scaling that actually moves the unit. **A term
+`1 = ψ(u) · 1`, false for any scaling that actually moves the unit. **A term
 that can name a unit can detect a rescaling.** This is why Kennedy's calculus
 has no unit constants, and why his "converting kg into lb" example rewrites the
 literals rather than the environment: `1.0<kg>` becomes `2.2<lb>`. Λs *does*
@@ -433,7 +433,7 @@ have unit constants, because a language needs them; the cost is that they sit
 outside the invariance theory, and this predicate is where that is recorded.
 
 `root` is excluded because `relQ_rpow` needs `0 ≤ x`, and admitting it here would
-mean denoting quantities by non-negative reals — which `log` would then break.
+mean denoting quantities by non-negative reals, which `log` would then break.
 That is Kennedy's positivity assumption appearing as a genuine constraint on the
 domain rather than a footnote. -/
 def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
@@ -523,7 +523,7 @@ environment supplies, and that need not be constant.
 
 The fix is the usual one: state it as a logical relation. `Indep` is equality at
 every observable type and, at `∀u:δ. τ`, relates the two families **at
-independent indices** — which is exactly the constancy the naive statement
+independent indices**, which is exactly the constancy the naive statement
 silently assumed. -/
 
 /-- Two denotations are **independent of the valuation** when they agree
@@ -608,7 +608,7 @@ theorem indepEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv 
 /-- **A convert-free term cannot read the valuation.**
 
 Note that `ucon` is *not* excluded: naming a unit breaks parametricity, but it
-does not read how big that unit is — `ucon u` denotes `1` whatever `u` is worth.
+does not read how big that unit is: `ucon u` denotes `1` whatever `u` is worth.
 Only `convert` consults the valuation, which is the precise sense in which units
 are static. -/
 theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
@@ -681,7 +681,7 @@ theorem den_eq_of_convertFree {j k : ℕ} {Δ : DCtx D j k} {e : Tm B D j k}
 
 /-- **The fundamental theorem, for coherent rescalings.**
 
-Every parametric term — conversions and all — is related to itself at its type,
+Every parametric term (conversions and all) is related to itself at its type,
 under every rescaling that factors through dimension.
 
 `convert` is the only operation that pays, and this is where it pays: the case
@@ -774,7 +774,7 @@ theorem fundamental : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
 
 Every parametric, convert-free term is related to itself at its type, under
 *every* scaling. This is Kennedy's theorem, and it is the version the Pi theorem
-consumes — now at the whole calculus rather than a first-order fragment, so the
+consumes, now at the whole calculus rather than a first-order fragment, so the
 quantifier cases are present and carry their weight.
 
 Rescaling acts on the declared valuation as well as on the environment, which is
@@ -864,7 +864,7 @@ The theorems above say coherence *suffices*. This section says it is *forced*:
 one conversion, applied to a nonzero argument, is scale-invariant exactly when
 the scaling identifies the two units.
 
-So `fundamental`'s hypothesis is not an artefact of the proof. A term that
+So `fundamental`'s hypothesis is not an artifact of the proof. A term that
 converts can detect any rescaling that separates units of the same dimension,
 and the coherent scalings are precisely the ones it cannot detect. -/
 
@@ -883,7 +883,7 @@ Left to right is the converse of `fundamental`, restricted to this term: if the
 relation holds for a nonzero input then the scaling must identify `u` and `v`.
 Right to left is `fundamental` itself.
 
-The hypothesis `x ≠ 0` is necessary and not a technicality — the zero function is
+The hypothesis `x ≠ 0` is necessary and not a technicality: the zero function is
 invariant under everything, which is the same degeneracy that makes
 `eq_zero_of_relQ_self` true. -/
 theorem cvt_rel_iff_coherent {j k : ℕ} {Δ : DCtx D j k} {u v : UExp B k}
@@ -911,7 +911,7 @@ theorem cvt_rel_iff_coherent {j k : ℕ} {Δ : DCtx D j k} {u v : UExp B k}
     field_simp
 
 /-- **Scaling invariance for closed terms.** A closed convert-free term of scalar
-type denotes a number invariant under *every* rescaling of the units — which
+type denotes a number invariant under *every* rescaling of the units, which
 forces it to be zero unless its unit is trivial.
 
 The immediate corollary, and the reason `ucon` had to be excluded from
@@ -1012,11 +1012,11 @@ decision.
 A term that names a unit is not scale-invariant, and it *should not be*. `1.3 m`
 is a definite physical quantity, but the number `1.3` is its magnitude *in
 metres*. Rescale the metre and the same quantity has a different magnitude, so
-the numeral must change with it — which is exactly why Kennedy's kg-to-lb
+the numeral must change with it, which is exactly why Kennedy's kg-to-lb
 example rewrites `1.0<kg>` as `2.2<lb>` rather than leaving the program alone.
 
 The fix is to stop treating unit constants as *term* constructors and treat them
-as **environment entries** — precisely Kennedy's "pervasive environment", now
+as **environment entries**: precisely Kennedy's "pervasive environment", now
 with a reason rather than a convention. A program mentioning metres is a program
 with a free variable standing for *one metre*, and it is scale-invariant
 relative to environments that scale that variable along with everything else.

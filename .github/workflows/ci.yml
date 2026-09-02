@@ -29,4 +29,16 @@ jobs:
             echo "::error::a headline theorem depends on sorryAx"
             exit 1
           fi
+          if grep -v 'propext, Classical.choice, Quot.sound' axioms.txt | grep -q 'depends on axioms'; then
+            echo "::error::a theorem depends on axioms beyond the standard three"
+            exit 1
+          fi
           cat axioms.txt
+
+      - name: Run the compiled binary and assert its numeric checks
+        run: |
+          out=$(.lake/build/bin/lambdas)
+          echo "$out"
+          echo "$out" | grep -Eq "all numeric checks pass +=[[:space:]]*true" || { echo "::error::binary numeric self-checks failed"; exit 1; }
+          echo "$out" | grep -q "300.000000 ft" || { echo "::error::yard-to-feet line missing from the binary output"; exit 1; }
+          echo "$out" | grep -Eq "via ft.*91\.440000 m" || { echo "::error::path-independence line missing from the binary output"; exit 1; }

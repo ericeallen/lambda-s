@@ -1,23 +1,23 @@
 import LambdaS.Soundness
 
 /-!
-# Normalisation: enough fuel always exists
+# Normalization: enough fuel always exists
 
 `eval_sound` is preservation: *if* evaluation returns a value, that value has the
 predicted type. The `if` is an artifact of the evaluator being a function in a
-total logic — a definitional interpreter cannot be structurally recursive even
-for a normalising calculus, because `app` recurses into a closure body, which is
+total logic: a definitional interpreter cannot be structurally recursive even
+for a normalizing calculus, because `app` recurses into a closure body, which is
 not a subterm. Fuel buys past that, and the price is that `none` conflates
 "ill-typed" with "ran out".
 
-Λs is normalising, so the price is refundable. This file proves that a
+Λs is normalizing, so a large enough bound always exists. This file proves that a
 well-typed term evaluates for *some* fuel, which together with `eval_sound`
 gives the statement one actually wants: every well-typed term evaluates to a
 value of the predicted type.
 
 ## Why this is Tait and not Girard
 
-Λs's quantifiers range over units and dimensions — elements of a free abelian
+Λs's quantifiers range over units and dimensions: elements of a free abelian
 group, first-order algebraic data. There is no `∀X:Type`, hence no
 impredicativity, hence no need for reducibility candidates. Erase the unit
 annotations from a Λs type and what remains is a plain simple type, so the
@@ -149,7 +149,7 @@ termination_by n j k e m η δ ρ v hnm h => (n, sizeOf e)
 /-! ## Reducibility
 
 Tait's predicate. At scalar, vector and linear-map types it is just "has the
-right shape"; at the three binding types it is the interesting clause — a
+right shape"; at the three binding types it is the interesting clause: a
 closure is reducible when applying it to anything reducible *terminates* at a
 reducible value. -/
 
@@ -507,14 +507,14 @@ environments are empty, so reducibility is stated at the type the checker wrote.
   have hD : nilU D = idU D 0 := funext fun i => i.elim0
   rw [hB, hD, Ty.ground_id]
 
-/-- **Strong normalization.** Every well-typed closed term evaluates — at *some*
-finite fuel — to a value reducible at its type.
+/-- **Strong normalization.** Every well-typed closed term evaluates (at *some*
+finite fuel) to a value reducible at its type.
 
 This is what the fuel costs and what it buys. `eval` is a total function only
 because it may answer `none`. Here the fuel is produced rather than assumed, so
 `none` is not a
 possible answer for a well-typed term: `eval` is partial in its definition and
-total on the language. The fuel is an artefact of Lean's termination checker,
+total on the language. The fuel is an artifact of Lean's termination checker,
 not of Λs. -/
 theorem eval_terminates (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
     {τ : Ty B D 0 0} (ht : HasTy (DCtx.nil D) [] e τ) :

@@ -5,7 +5,7 @@ import LambdaS.Syntax
 
 Two things live here, and the point is that only one of them can be wrong:
 
-* `HasTy`, the **declarative** typing relation — what it *means* for a term to
+* `HasTy`, the **declarative** typing relation: what it *means* for a term to
   have a type;
 * `check`, an **executable** decision procedure that returns the derivation.
 
@@ -21,7 +21,7 @@ but *the* one it was given. Since `check Δ Γ e` is a single value, uniqueness 
 derivations follows at once, and `HasTy` is a `Subsingleton`.
 
 `HasTy` is `Type`-valued rather than `Prop`-valued, so that a derivation may be
-eliminated into `Type` — which is what a denotation of terms requires. By the
+eliminated into `Type`, which is what a denotation of terms requires. By the
 `Subsingleton` instance nothing is lost by this: the data a derivation carries
 is determined by the judgement it proves.
 
@@ -49,15 +49,15 @@ design:
 
 Typing carries a dimension context `Δ` alongside the usual `Γ`. `Δ` records the
 declared dimension of each unit variable in scope, which is what `dimOf` needs
-to give a total answer under a binder — and hence what makes `convert` usable in
+to give a total answer under a binder, and hence what makes `convert` usable in
 polymorphic code. `∀u. τ` is `∀δ. ∀u:δ. τ`, so an "unbounded" unit variable is
 bounded by a dimension *variable*: `dimOf` reports it, and it matches nothing
 concrete, which is exactly the rejection an unbounded quantifier should give.
 
 ## Why completeness is available
 
-The calculus is explicitly typed — lambdas are annotated, `Λu.e` and `e[μ]` are
-written rather than inferred — so typing is syntax-directed and types are
+The calculus is explicitly typed (lambdas are annotated, `Λu.e` and `e[μ]` are
+written rather than inferred), so typing is syntax-directed and types are
 *unique*. `infer` therefore returns **the** type or nothing, with no
 most-general-type caveat, and `infer_complete` holds. Inferring the `Λu` and
 `[μ]` instead would require let-generalization and hence the abelian-group
@@ -111,11 +111,11 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
       HasTy Δ Γ e (.Q 1) → HasTy Δ Γ (.exp e) (.Q 1)
   /-- Unit abstraction, `Λu:d. e`. Both contexts move: `Δ` records the bound
   variable's declared dimension, and `Γ` is weakened so the variable is
-  genuinely fresh — nothing already in scope can mention it. -/
+  genuinely fresh: nothing already in scope can mention it. -/
   | ulam {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {d e τ} :
       HasTy (Δ.cons d) Γ.weaken e τ → HasTy Δ Γ (.ulam d e) (.all d τ)
   /-- Unit application. The instantiating expression must have the **declared
-  dimension** — the check that makes bounded quantification mean something. -/
+  dimension**: the check that makes bounded quantification mean something. -/
   | uapp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f d τ σ} :
       HasTy Δ Γ f (.all d τ) → dimOf Δ σ = d → HasTy Δ Γ (.uapp f σ) (τ.subst σ)
   /-- Dimension abstraction, `Λδ. e`. -/
@@ -132,13 +132,13 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
 
 section Check
 
-/-- The checker. Syntax-directed, total, executable — and it returns the
+/-- The checker. Syntax-directed, total, executable, and it returns the
 **derivation**, not merely the type.
 
 That is the whole of soundness. A separate "anything the checker accepts is
 well-typed" theorem would have to reconstruct a derivation the checker had
 already built and thrown away; here there is nothing to reconstruct and nothing
-to prove. What remains — `check_eq` — is the only direction with content: that
+to prove. What remains (`check_eq`) is the only direction with content: that
 the checker never rejects a term the rules accept, and indeed finds the very
 derivation it was given. -/
 def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm B D j k) →
@@ -221,14 +221,14 @@ def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm
 def infer {j k : ℕ} (Δ : DCtx D j k) (Γ : Ctx B D j k) (e : Tm B D j k) :
     Option (Ty B D j k) := (check Δ Γ e).map Sigma.fst
 
-/-- **Completeness.** Everything the rules accept, the checker finds — at
+/-- **Completeness.** Everything the rules accept, the checker finds, at
 exactly that type, and returning *that very derivation*.
 
 The equation is stated against the given `d` rather than against some derivation
 the checker happens to build, which is stronger than completeness usually is and
 costs nothing: the proof is the same induction. Two things fall out. Together
 with `check` returning its derivation it is the whole correctness statement, so
-soundness needs no theorem — the checker cannot produce a type without producing
+soundness needs no theorem: the checker cannot produce a type without producing
 the derivation that justifies it. And since `check Δ Γ e` is one value, any two
 derivations of the same judgement are equal. -/
 theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k}
@@ -264,7 +264,7 @@ theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm 
   | convert _ hsd ih => simp [check, ih, hsd]
 
 /-- **Derivations are unique.** A judgement is justified in at most one way, so
-`HasTy` is a proposition in everything but its sort — it carries data only in
+`HasTy` is a proposition in everything but its sort: it carries data only in
 the sense that the data is determined.
 
 This is what licenses speaking of *the* denotation of a term. Anything defined

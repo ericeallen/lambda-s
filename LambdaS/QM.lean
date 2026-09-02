@@ -9,7 +9,7 @@ import LambdaS.Notation
 generic in its numeric carrier, so the *same* definition that
 `unit_soundness_total` and `erasure_correct` are proved about is instantiated
 here at `Float` and
-executed by `#eval` — and compiled to C by `lake build`.
+executed by `#eval`, and compiled to C by `lake build`.
 
 ## What the type checker is asked to prove
 
@@ -44,7 +44,7 @@ open LambdaS.Examples
 /-- The joule, `kg·m²/s²`. -/
 abbrev joule : UExp Base 0 := Term.div (Term.mul kg (Term.mul m m)) (Term.mul sec sec)
 
-/-- Action, `kg·m²/s` — the unit of `ħ`. -/
+/-- Action, `kg·m²/s`, the unit of `ħ`. -/
 abbrev action : UExp Base 0 := Term.div (Term.mul kg (Term.mul m m)) sec
 
 /-- Momentum, `kg·m/s`. -/
@@ -69,7 +69,7 @@ def hbar : Term₀ := qty (1054571817 / 10 ^ 43) action
 /-- Electron mass, `9.1093837015e-31 kg`. -/
 def mass : Term₀ := qty (91093837015 / 10 ^ 41) kg
 
-/-- Box width, one nanometre. -/
+/-- Box width, one nanometer. -/
 def width : Term₀ := qty (1 / 10 ^ 9) m
 
 /-- π, to fourteen places. Dimensionless, as every literal in Λs is. -/
@@ -85,7 +85,7 @@ def groundEnergy : Term₀ := ⟪ (pi * pi * hbar * hbar) / (2 * mass * width * 
 #guard typeOf groundEnergy == some (.Q joule)
 
 /- And it is *not* any of the units one might have slipped into by dropping a
-factor — these are the errors the rule for `add` and the rule for `div` exist to
+factor: these are the errors the rule for `add` and the rule for `div` exist to
 catch. -/
 #guard typeOf groundEnergy != some (.Q action)
 #guard typeOf groundEnergy != some (.Q momentum)
@@ -113,10 +113,10 @@ def uncertainty : Term₀ := ⟪ (deltaX * deltaP) / hbar ⟫
 
 `ψ(x) = √(2/L)·sin(πx/L)`. The amplitude carries `m^(-1/2)`. -/
 
-/-- The normalisation amplitude `√(2/L)`, at unit `m^(-1/2)`. -/
+/-- The normalization amplitude `√(2/L)`, at unit `m^(-1/2)`. -/
 def amplitude : Term₀ := ⟪ √2 (2 / width) ⟫
 
-/- Half a negative power of length — inexpressible in any ℤ-exponent system. -/
+/- Half a negative power of length: inexpressible in any ℤ-exponent system. -/
 #guard typeOf amplitude == some (.Q (Term.rpow (Term.div 1 m) (1 / 2)))
 #guard (Term.rpow (Term.div (1 : UExp Base 0) m) (1 / 2)).base .metre == (-1 / 2 : ℚ)
 
@@ -125,7 +125,7 @@ def density : Term₀ := ⟪ amplitude * amplitude ⟫
 
 #guard typeOf density == some (.Q (Term.div 1 m))
 
-/-- `|ψ|²·dx` is dimensionless — which is what makes the normalisation integral
+/-- `|ψ|²·dx` is dimensionless, which is what makes the normalization integral
 a pure number, and what makes `log` of it well-typed while `log |ψ|²` is not. -/
 def probability : Term₀ := ⟪ density * ‹m› ⟫
 
@@ -138,8 +138,8 @@ cannot be logged, its ratio against another density can. -/
 
 /-! ## Running it
 
-`eval` is the evaluator of `LambdaS.Dynamics` — proved sound in
-`LambdaS.Soundness` and total in `LambdaS.Normalization` — instantiated at
+`eval` is the evaluator of `LambdaS.Dynamics` (proved sound in
+`LambdaS.Soundness` and total in `LambdaS.Normalization`), instantiated at
 `Float`. No conversions occur here, so the conversion-factor argument is the
 constant `1`. -/
 
@@ -149,7 +149,7 @@ def run (e : Term₀) : Option Float :=
   | some (.scalar x) => some x.mag
   | _ => none
 
-/-- Evaluate, keeping the unit the value carries at runtime — which
+/-- Evaluate, keeping the unit the value carries at runtime, which
 `unit_soundness_total` guarantees equals the one the checker predicted. -/
 def runMeas (e : Term₀) : Option (Val Float Base Dim) :=
   evalC (D := Dim) (fun _ _ => (1.0 : Float)) 1000 [] e
@@ -183,8 +183,8 @@ The particle in a box is closed-form scalars. This exercises the other half of
 the calculus: spaces, linear maps, and the rank-one condition that makes their
 units cheap.
 
-The system is a symmetric two-level system — an ammonia molecule, a spin in a
-transverse field, a qubit — with Hamiltonian
+The system is a symmetric two-level system (an ammonia molecule, a spin in a
+transverse field, a qubit) with Hamiltonian
 
 ```
 H = [ 0  -A ]        A = 10⁻⁴ eV
@@ -194,7 +194,7 @@ H = [ 0  -A ]        A = 10⁻⁴ eV
 Amplitudes are dimensionless, so the state space is `[1, 1]`; the Hamiltonian
 maps it to `[J, J]`, and by `LambdaS.Map`'s rank-one condition its entries carry
 `J / 1 = J`. Applying it to a state therefore yields energies, and
-`⟨ψ|H|ψ⟩ : Q J` — the physics statement is the type. -/
+`⟨ψ|H|ψ⟩ : Q J`; the physics statement is the type. -/
 
 section TwoState
 
@@ -211,11 +211,11 @@ unit constants do (`LambdaS.Fundamental`): a program that could *name* its data
 would not be scale-invariant. A numeric program takes its operators as input. -/
 abbrev qmCtx : Ctx Base Dim 0 0 := [.lin St En, .vec St]
 
-/-- `(H|ψ⟩)ᵢ` — an energy. -/
+/-- `(H|ψ⟩)ᵢ`: an energy. -/
 abbrev ket (i : ℕ) : Term₀ := .idx (.mapp (.var 0) (.var 1)) i
 
 /-- `⟨ψ|H|ψ⟩`, summed over the two basis states. Real amplitudes, so no
-conjugation is needed — see the note on carriers in `LambdaS.Num`. -/
+conjugation is needed; see the note on carriers in `LambdaS.Num`. -/
 def expectH : Term₀ :=
   ⟪ %1 ! 0 * (%0 ⊙ %1) ! 0 + %1 ! 1 * (%0 ⊙ %1) ! 1 ⟫
 
@@ -265,7 +265,7 @@ the C actually executes, so that is where the checks belong. -/
 
 /-! ### Dimensionless phase
 
-Not evaluated — the point is the *type*. `exp` demands a dimensionless argument,
+Not evaluated: the point is the *type*. `exp` demands a dimensionless argument,
 so a phase `A·t/ħ` typechecks only because the units of an energy, a time and an
 action cancel. Get the Hamiltonian's units wrong and the program does not
 compile. -/
@@ -273,7 +273,7 @@ compile. -/
 def splitting : Term₀ := qty (1602176634 / 10 ^ 32) joule
 def elapsed : Term₀ := qty (1 / 10 ^ 11) sec
 
-/-- `A·t/ħ`. Dimensionless — and the checker says so. -/
+/-- `A·t/ħ`. Dimensionless, and the checker says so. -/
 def phase : Term₀ := ⟪ (splitting * elapsed) / hbar ⟫
 
 #guard typeOf phase == some (.Q 1)
@@ -324,7 +324,7 @@ def twoStateChecks : Bool :=
 
 `Num.matVec` is what `eval` reaches when it applies a linear map, and the `Float`
 carrier overrides it with a single `dgemv`, which is `@[extern]`. So in the
-compiled binary this runs in C — on a flat array of doubles, with no unit
+compiled binary this runs in C, on a flat array of doubles, with no unit
 information present, because the checker has already discharged all of it. -/
 
 def twoStateReport : String :=

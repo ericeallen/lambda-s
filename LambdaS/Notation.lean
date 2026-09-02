@@ -14,12 +14,12 @@ the same term reads
 
 Identifiers inside the bracket are ordinary Lean names bound to terms, so the
 notation composes with definitions rather than replacing them. It is a
-convenience layer over `Tm` and nothing more — no separate parser, no separate
+convenience layer over `Tm` and nothing more: no separate parser, no separate
 AST, and every guard elsewhere still checks the same core terms.
 
 ## Elaboration, and where `convert` gets its annotation
 
-`Tm.convert` carries the unit it converts **from**, because the machine must
+`Tm.convert` carries the unit it converts **from**, because the evaluator must
 recover the factor from the term and the unit environment alone. Making the user write it would be both tedious
 and unsafe. `elabConvert` supplies it by running the *verified* checker: it
 checks the subject, reads the unit off the type it derived, and builds the
@@ -93,14 +93,14 @@ variable [UnitSys B D]
 
 The surface writes `e in v`; the core needs `convert e u v` with `u` the unit of
 `e`. This runs the verified checker to find it, so the annotation is derived
-rather than trusted — and `convert`'s own typing rule still checks it. -/
+rather than trusted, and `convert`'s own typing rule still checks it. -/
 def elabConvert {j k : ℕ} (Δ : DCtx D j k) (Γ : Ctx B D j k) (e : Tm B D j k)
     (v : UExp B k) : Option (Σ e' : Tm B D j k, HasTy Δ Γ e' (.Q v)) :=
   match check Δ Γ e with
   | some ⟨.Q u, d⟩ => if h : SameDim Δ u v then some ⟨.convert e u v, .convert d h⟩ else none
   | _ => none
 
-/-- **Elaboration succeeds exactly when the surface syntax is meaningful** — the
+/-- **Elaboration succeeds exactly when the surface syntax is meaningful**: the
 subject is a scalar, and its unit shares the target's dimension.
 
 That is the whole specification. There is no companion theorem saying the

@@ -10,7 +10,7 @@ a term whose conversions are all inert is invariant under every scaling. Between
 those lies the general question: a term may convert many times, and what matters
 is whether the conversions **cancel**.
 
-`Twist` assigns a term its accumulated ratio, an element of `Tw` — the
+`Twist` assigns a term its accumulated ratio, an element of `Tw`, the
 first-order ratio syntax of `LambdaS.Ratio`. Multiplication multiplies ratios,
 division divides them, addition forces its branches to agree, and `convert u v`
 contributes `u/v`. Abstraction binds a ratio variable and application applies
@@ -123,7 +123,7 @@ theorem twRelEnv_lookup {j k : ℕ} {ψ : Scaling B k} : ∀ {Γ : Ctx B D j k}
 
 /-- **Weakening related environments under a unit binder.** The value
 environments are retyped by `Env.weaken`; the ratio environment is untouched,
-because shape is blind to units — which is the entire design working as
+because shape is blind to units, which is the entire design working as
 intended. -/
 theorem twRelEnv_weaken {j k : ℕ} {ψ : Scaling B k} (s : ℝ) :
     ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ : TwEnv Θ} {ρ ρ' : Env Γ},
@@ -160,7 +160,7 @@ private theorem div_twist (xu xv xs xt A Bv : ℝ) :
   rw [mul_div_mul_comm, mul_div_mul_comm, mul_div_mul_comm]
 
 /-- **The scaling law with a twist.** A term whose conversions accumulate to `t`
-rescales by its type's factor times the *square* of `t`'s value — both readings
+rescales by its type's factor times the *square* of `t`'s value: both readings
 carry the conversion factor, so it appears twice. At trivial ratio this is the
 fundamental theorem.
 
@@ -277,7 +277,7 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
 
 /-! ## The characterization at first order
 
-A term of scalar type over a context of scalars — a program computing a number
+A term of scalar type over a context of scalars: a program computing a number
 from numbers, whatever abstraction and application it uses inside. Its ratio is
 a closed scalar `Tw`, and the characterization says: the program obeys the
 unrestricted scaling law exactly when that ratio's value is `1` under every
@@ -302,7 +302,7 @@ theorem twRelEnv_scaleEnv {j k : ℕ} (ψ : Scaling B k) :
 
 /-- **Invariance under all scalings forces the ratio's value to `1`.**
 
-The general converse for any term of scalar type over a context of scalars —
+The general converse for any term of scalar type over a context of scalars,
 higher-order structure and unit polymorphism inside the term included. A nonzero
 denotation obeying the scaling law for *every* scaling has a ratio worth `1`
 under every scaling.
@@ -342,7 +342,7 @@ theorem Twist.eq_one_of_invariant {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
 
 /-- **Cancelling conversions are invisible.** A term whose ratio is worth `1`
 under every scaling obeys the unrestricted scaling law, exactly as a
-convert-free term does — even though it may convert repeatedly along the way. -/
+convert-free term does, even though it may convert repeatedly along the way. -/
 theorem Twist.invariant_of_eq_one {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
     {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
     {t : Tw B k (us.map fun _ => Shape.scalar) .scalar}
@@ -385,7 +385,7 @@ def Tw.nfOne {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar) : UExp B k :=
   Tw.nf (idU B k) t (SynEnv.ones Θ)
 
 /-- **Triviality of a ratio is decidable.** It is worth `1` under *every*
-scaling exactly when its normal form is the unit of the group — an equality in a
+scaling exactly when its normal form is the unit of the group: an equality in a
 free ℚ-vector space, decided coordinatewise.
 
 This is the theorem that turns the characterization into an algorithm. -/
@@ -407,7 +407,7 @@ theorem Tw.nfOne_eq_one_iff [DecidableEq B] {k : ℕ} {Θ : List Shape}
 
 /-- **The decidable characterization.** For a first-order program with nonzero
 denotation, unrestricted scale invariance holds exactly when the normal form of
-its accumulated ratio is the unit of the group — one equality of exponent
+its accumulated ratio is the unit of the group: one equality of exponent
 vectors, decided coordinatewise.
 
 The compiler diagnostic, as a theorem: check `Tw.nfOne t = 1` and either
@@ -426,16 +426,16 @@ theorem Twist.invariant_iff_nfOne {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
 /-! ## Computing the ratio
 
 `Twist` is a relation; the compiler needs a function. `twistOf` computes, for a
-derivation, a ratio together with its `Twist` derivation — or `none`.
+derivation, a ratio together with its `Twist` derivation, or `none`.
 
 It fails in exactly two circumstances, and they are different in kind. At `add`
-the two branches' ratios must be *the same term*, and the check is syntactic —
+the two branches' ratios must be *the same term*, and the check is syntactic:
 sound, and incomplete only when the branches compute equal ratios by different
 syntax; the semantic question "are these two ratio terms equal in value" is the
 one `Tw.nfOne` decides for a *closed* interface, and sharpening the check to it
 is possible but not done here. At `root`, `log`, `exp`, `idx`, `mapp`, `comp`
 and `ucon` there is no rule to apply. `root` is outside for `Tm.Parametric`'s
-reason — its scaling law needs positivity. `log` and `exp` are nonlinear, so no
+reason: its scaling law needs positivity. `log` and `exp` are nonlinear, so no
 single ratio describes how they move; `idx`, `mapp` and `comp` would need
 ratios at space shapes, which `triv` does not carry. And `ucon` names a unit,
 which no scaling story survives. -/
@@ -613,7 +613,7 @@ def Tw.scalarEq {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar) : Bool :=
     && a.flat.2.2.isPerm b.flat.2.2
 
 /-- `scalarEq` is sound: it implies evaluation equality in every scaling and
-every environment — the hypothesis `Twist.add` carries. -/
+every environment: the hypothesis `Twist.add` carries. -/
 theorem Tw.scalarEq_sound {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar)
     (h : Tw.scalarEq a b = true) :
     ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ := by
@@ -630,16 +630,16 @@ theorem Tw.scalarEq_sound {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar)
   rw [Tw.flat_eval ψ θρ a, Tw.flat_eval ψ θρ b, hweq, hneq, hdeq]
 
 /-- **Computing the ratio.** For a derivation, the accumulated conversion ratio
-together with its `Twist` derivation — or `none` where the analysis does not
+together with its `Twist` derivation, or `none` where the analysis does not
 apply.
 
 The `add` check is `Tw.scalarEq`: branch ratios compare with their unit
 constants merged into one exponent vector and their opaque atoms compared as
 bags, so the same conversions reordered or reassociated are accepted. What the
-check never does is cancel an atom against itself across the fraction bar — an
-atom is the ratio of a free variable and may be zero, where `x / x = 1` fails —
+check never does is cancel an atom against itself across the fraction bar (an
+atom is the ratio of a free variable and may be zero, where `x / x = 1` fails),
 and completeness at that boundary would need nonzero-ness tracked through the
-relation. Everything downstream of the check is complete — `Tw.nfOne` decides
+relation. Everything downstream of the check is complete: `Tw.nfOne` decides
 triviality of the *resulting* ratio exactly. -/
 def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : Tm B D j k} →
     {τ : Ty B D j k} → (Θ : List Shape) → (hΘ : Θ = Γ.shapes) →
@@ -713,7 +713,7 @@ every rescaling holds precisely when the answer is `1`.
 
 This is the compiler check: one group computation per derivation, one equality
 of exponent vectors, and the program's dependence on the declared unit
-magnitudes is decided — with unit polymorphism, higher-order structure and
+magnitudes is decided, with unit polymorphism, higher-order structure and
 conversion chains all inside. -/
 theorem unitDrift_spec {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
     {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
@@ -731,7 +731,7 @@ A closed dimensionless program whose conversions cancel computes a number that
 does not depend on the declared unit magnitudes at all. Composed with adequacy,
 the same statement holds of the compiled program: its output is invariant
 across every consistent extension of the declaration set. This is the
-ratio-level analogue of `evalC_convert_declared` — `Twist` joined to `Declare`
+ratio-level analogue of `evalC_convert_declared`: `Twist` joined to `Declare`
 the way `eval_adeq` joined `Dynamics` to `Declare`. -/
 
 /-- Any scaling is reachable from any other by composition: log-space is a
@@ -744,7 +744,7 @@ theorem Scaling.comp_sub {k : ℕ} (V V' : Scaling B k) :
 
 /-- **Drift-free programs are declaration-independent.** A closed dimensionless
 program with cancelling conversions denotes the same number under every
-valuation — however the units it converts between are declared. -/
+valuation, however the units it converts between are declared. -/
 theorem den_indep_of_driftFree {e : Tm B D 0 0}
     {d : HasTy (DCtx.nil D) ([] : Ctx B D 0 0) e (.Q 1)}
     (h1 : unitDrift (us := []) d = some 1) (V V' : Scaling B 0) :
@@ -762,7 +762,7 @@ theorem den_indep_of_driftFree {e : Tm B D 0 0}
   exact this.symm
 
 /-- **The compiled program is declaration-independent**, drift-free case. The
-binary's output — a real scalar at the trivial unit — is the same number under
+binary's output (a real scalar at the trivial unit) is the same number under
 every valuation, hence under every consistent set of unit declarations that the
 conversion oracle is drawn from. The theorem the diagnostic justifies. -/
 theorem evalC_indep_of_driftFree {e : Tm B D 0 0}

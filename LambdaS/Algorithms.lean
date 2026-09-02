@@ -6,22 +6,22 @@ import LambdaS.Dynamics
 # Numeric algorithms, as a sanity check on the calculus
 
 Λs is pure and total: no recursion, no conditionals, no mutable state. The
-question this file answers is whether that leaves enough to write recognisable
+question this file answers is whether that leaves enough to write recognizable
 numerical methods, or only formulas.
 
 The answer is that **straight-line numerical methods transcribe directly**, and
 their types are their specifications. A central difference has type
-`(Q v → Q u) → Q v → Q v → Q (u/v)` — differentiate a position with respect to a
+`(Q v → Q u) → Q v → Q v → Q (u/v)`: differentiate a position with respect to a
 time and you get a velocity, by derivation rather than by comment. What is
 missing is iteration: one Runge–Kutta step is expressible, a solver loop is not.
 
 ## What the checker is doing that a syntactic system could not
 
 Unit equality here is decided by *arithmetic on exponent vectors*, not by
-normalising syntax. In the Runge–Kutta step below, the intermediate
+normalizing syntax. In the Runge–Kutta step below, the intermediate
 `(h/2)·k₁` has unit `t · (y/t)`, and `add` demands it equal `y`. As exponent
 vectors those are `t + (y − t)` and `y`, and the checker settles it by adding
-rationals. There is no normalisation pass, so there is nothing to get wrong.
+rationals. There is no normalization pass, so there is nothing to get wrong.
 -/
 
 namespace LambdaS.Algorithms
@@ -94,7 +94,7 @@ This is where unit equality does real work. `k₁ : Q (y/t)`, so `(h/2)·k₁` h
 unit `t·(y/t)`, and adding it to `y` requires the checker to see those as the
 same exponent vector. -/
 
-/- `Λδy. Λy:δy. Λδt. Λt:δt.` — note the value unit is bound first here, so
+/- `Λδy. Λy:δy. Λδt. Λt:δt.`: note the value unit is bound first here, so
 inside the body `uU` is the *state* unit and `vU` the *time* unit. -/
 def rk4 : Term₀ :=
   poly ⟪ fn[.arrow (.Q vU) (.arrow (.Q uU) (.Q (Term.div uU vU)))]
@@ -122,7 +122,7 @@ abbrev tolCtx : Ctx Base Dim 0 0 := [.Q m, .Q m]
 /- `x − y` carries the unit, so any tolerance compared against it must too. -/
 #guard typeOfIn tolCtx ⟪ %0 - %1 ⟫ == some (.Q m)
 
-/- `(x − y)/x` is dimensionless, so a bare numeric tolerance is correct here —
+/- `(x − y)/x` is dimensionless, so a bare numeric tolerance is correct here,
 and only here. -/
 #guard typeOfIn tolCtx ⟪ (%0 - %1) / %0 ⟫ == some (.Q 1)
 
@@ -152,12 +152,12 @@ def twoSec : Term₀ := .mul (.lit 2) (.ucon sec)
 def zeroSec : Term₀ := .mul (.lit 0) (.ucon sec)
 def milliSec : Term₀ := .mul (.lit (1 / 1000)) (.ucon sec)
 
-/- `deriv[m][s] freeFall 2s 0.001s` — the speed after two seconds. -/
+/- `deriv[m][s] freeFall 2s 0.001s`: the speed after two seconds. -/
 def speedAt2 : Term₀ := ⟪ derivMS ◃ freeFall ◃ twoSec ◃ milliSec ⟫
 
 #guard typeOf speedAt2 == some (.Q (Term.div m sec))
 
-/- `simpson[m][s] freeFall 0s 2s` — the integral of position over time. -/
+/- `simpson[m][s] freeFall 0s 2s`: the integral of position over time. -/
 def absementTo2 : Term₀ := ⟪ simpsonMS ◃ freeFall ◃ zeroSec ◃ twoSec ⟫
 
 #guard typeOf absementTo2 == some (.Q (Term.mul m sec))
@@ -180,13 +180,13 @@ def report : String :=
 /-! ## Declared conversions, compiled
 
 The conversion oracle below is not `fun _ _ => 1.0`: it is computed from the
-declared magnitudes — metre `1`, foot `0.3048`, yard `0.9144`, the `Float`
+declared magnitudes (metre `1`, foot `0.3048`, yard `0.9144`), the `Float`
 shadow of the valuation `ψyd` that `LambdaS.Examples` proves satisfies the
 declaration set. `evalC_convert_declared` is the theorem that the instrumented
-machine multiplies by exactly the declared factor; this is that theorem's
+evaluator multiplies by exactly the declared factor; this is that theorem's
 number coming out of the compiled binary.
 
-Two routes from yards to metres — direct, and through feet — print the same
+Two routes from yards to metres (direct, and through feet) print the same
 number, which is `convChain_eq` and `yard_forced` made observable: the factors
 are forced by the declarations, so there is no route to get wrong. -/
 
@@ -233,6 +233,14 @@ def reportDecl : String :=
     ++ "  100 yd in m, via ft   = " ++ fmt (runDecl viaFeet) ++ " m    (same: paths agree)\n"
 
 #eval reportDecl
+
+/- The yard-demo numbers, checked at build time. All three comparisons are
+exact `Float` equalities and hold bit for bit: 100 yd converts to feet as
+exactly `300.0`, the direct conversion to meters equals the literal `91.44`,
+and the route through feet produces the same `Float` as the direct route. -/
+#guard runDecl inFeet == some 300.0
+#guard runDecl inMetres == some 91.44
+#guard runDecl inMetres == runDecl viaFeet
 
 /- Both methods are exact on this integrand, so the checks are tight. -/
 #guard (run speedAt2).any (fun x => decide (Float.abs (x - 19.62) < 1e-9))

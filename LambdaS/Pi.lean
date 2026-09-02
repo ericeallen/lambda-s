@@ -22,7 +22,7 @@ how much.
 
 The **linear-algebra core**: the dimensionless power-products of the arguments
 form the kernel of the exponent matrix, its dimension is `n − r` by
-rank-nullity, and — the pedagogically important part — a unit variable occurring
+rank-nullity, and (the pedagogically important part) a unit variable occurring
 in exactly one argument forces that argument out of every dimensionless group
 *and* out of the answer.
 
@@ -31,9 +31,9 @@ it has nothing to cancel against.
 
 ## What is not proved here
 
-Kennedy's **syntactic** route to the isomorphism — applying primitive
+Kennedy's **syntactic** route to the isomorphism (applying primitive
 isomorphisms corresponding to row and column operations until the matrix is in
-normal form — is not taken, because its witnesses need a term-level rational
+normal form) is not taken, because its witnesses need a term-level rational
 power of a value, which Λs does not have, and positivity to make it meaningful.
 `LambdaS.PiTheorem` proves the isomorphism (`piEquiv`) by the *semantic* route
 instead: the scaling law plus the exponent-matrix linear algebra of this file.
@@ -86,7 +86,7 @@ out of every dimensionless group.**
 
 This is the pendulum. The mass dimension `M` appears only in the mass, so it has
 nothing to cancel against, and the `M` row of the exponent matrix reduces to the
-single equation `x_mass = 0` — with no physics involved.
+single equation `x_mass = 0`, with no physics involved.
 
 It is also the precise sense in which the Pi theorem does *not* claim mass is
 irrelevant to pendulums. It claims that **given this list of variables**, mass
@@ -108,7 +108,7 @@ theorem eq_zero_of_appears_once (A : ExpMatrix m n) (v : Fin m) (j : Fin n)
 
 If unit variable `v` occurs only in argument `j`, and the **result** unit does
 not mention `v`, then every solution of `A X = B` has `X j = 0`. So argument `j`
-does not appear in the answer at all — which is the pendulum's conclusion, that
+does not appear in the answer at all, which is the pendulum's conclusion, that
 the period is independent of the mass. -/
 theorem solution_eq_zero_of_appears_once (A : ExpMatrix m n) (Bv : Fin m → ℚ)
     (v : Fin m) (j : Fin n) (hne : A v j ≠ 0) (hrow : ∀ j', j' ≠ j → A v j' = 0)
@@ -147,5 +147,24 @@ theorem pendulum_period_independent_of_mass
     {X : Fin 4 → ℚ} (hX : pendulum.mulVec X = ![0, 0, 2]) : X 0 = 0 :=
   solution_eq_zero_of_appears_once pendulum ![0, 0, 2] 0 0
     pendulum_mass_only.1 pendulum_mass_only.2 rfl hX
+
+/-- The witness the pendulum system admits: the exponent vector `(0, 1, -1, 0)`,
+which is `T^2 = l / g`, solves `pendulum.mulVec X = ![0, 0, 2]`. This exhibits a
+solution of the linear system, so the hypothesis of
+`pendulum_period_independent_of_mass` (and of `pendulum_mass_absent` in
+`LambdaS.PiTheorem`) is satisfied by an actual vector rather than assumed. -/
+theorem pendulum_period_solution : pendulum.mulVec ![0, 1, -1, 0] = ![0, 0, 2] := by
+  funext v
+  fin_cases v <;> simp [pendulum, Matrix.mulVec, dotProduct, Fin.sum_univ_four]
+
+/-- The system `pendulum.mulVec X = ![0, 0, 2]` is solvable, so the conclusion
+that mass drops out of every solution is a statement about a nonempty set. -/
+theorem pendulum_period_solvable : ∃ X : Fin 4 → ℚ, pendulum.mulVec X = ![0, 0, 2] :=
+  ⟨![0, 1, -1, 0], pendulum_period_solution⟩
+
+/-- The mass exponent of the exhibited solution is zero, as
+`pendulum_period_independent_of_mass` requires of every solution. -/
+example : (![0, 1, -1, 0] : Fin 4 → ℚ) 0 = 0 :=
+  pendulum_period_independent_of_mass pendulum_period_solution
 
 end LambdaS.Pi

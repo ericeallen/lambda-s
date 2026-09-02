@@ -12,7 +12,7 @@ completion appears in the eighteen years since.
 ## The route taken
 
 Kennedy proves it by reducing the exponent matrix through a sequence of
-*syntactic* type isomorphisms — column operations `C1`–`C3`, row operations
+*syntactic* type isomorphisms: column operations `C1`–`C3`, row operations
 `R1`–`R3`, then `r` instances of an elimination isomorphism `D`. That route
 needs the isomorphism witnesses to be terms, hence a term-level rational power
 `xᵠ`, hence positivity, and it is what has been blocking progress here.
@@ -20,13 +20,13 @@ needs the isomorphism witnesses to be terms, hence a term-level rational power
 This file takes the **semantic** route instead. The fundamental theorem
 (`fundamental_free`) already gives every parametric convert-free term an
 unrestricted scaling law. Working
-directly from that law — in logarithmic coordinates, where the scaling action is
-a *translation* — the theorem becomes a statement in linear algebra and no term
+directly from that law (in logarithmic coordinates, where the scaling action is
+a *translation*), the theorem becomes a statement in linear algebra and no term
 witnesses are needed.
 
 Concretely, in log coordinates `ξ = log x` the action of a scaling `ψ` is
 `ξ ↦ ξ + Aᵀψ`, and the scaling law reads `F(ξ + Aᵀψ) = F(ξ) + ⟨b, ψ⟩`. Given a
-solution `X` of `A X = b` — Kennedy's solvability hypothesis — subtracting the
+solution `X` of `A X = b` (Kennedy's solvability hypothesis), subtracting the
 linear functional `⟨X, ·⟩` produces a function invariant under the *entire*
 action. That invariant function is exactly the "function of the dimensionless
 groups", and
@@ -39,8 +39,8 @@ is Buckingham's conclusion.
 
 Kennedy reduces the matrix to **Smith Normal Form**, which is what ℤ forces.
 Here the orbit subspace is `range Aᵀ` over a field, its dimension is `rank A`,
-and the quotient has dimension `n − r` by rank-nullity — Mathlib's, off the
-shelf. The rational-exponent decision keeps paying in places it was not made for.
+and the quotient has dimension `n − r` by rank-nullity (Mathlib's, off the
+shelf). The rational-exponent decision keeps paying in places it was not made for.
 -/
 
 namespace LambdaS.Pi
@@ -78,7 +78,7 @@ theorem sum_act_eq (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n → ℝ)
 /-- **The Pi theorem.**
 
 Any function satisfying the scaling law factors as an explicit power-product
-times a function that is **invariant under every rescaling** — hence a function
+times a function that is **invariant under every rescaling**, hence a function
 of the dimensionless groups alone, of which there are `n − r`.
 
 In the original coordinates this reads
@@ -105,7 +105,7 @@ theorem pi_theorem (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n → ℝ)
 
 /-- **The invariants are exactly the dimensionless groups.**
 
-A monomial `∏ xᵢ^{cᵢ}` — a linear functional `⟨c, ·⟩` in log coordinates — is
+A monomial `∏ xᵢ^{cᵢ}` (a linear functional `⟨c, ·⟩` in log coordinates) is
 invariant under every rescaling precisely when `c` lies in the kernel of the
 exponent matrix, which is `Dimensionless A`.
 
@@ -133,7 +133,7 @@ theorem invariant_iff_dimensionless (A : ExpMatrix m n) (c : Fin n → ℝ) :
 so `pi_theorem`'s `G` depends on exactly that many arguments.
 
 Restated here from `finrank_dimensionless_add_rank` to keep the theorem's two
-halves — the factorization and the count — in one place. -/
+halves (the factorization and the count) in one place. -/
 theorem pi_count (A : ExpMatrix m n) :
     Module.finrank ℚ (Dimensionless A) + Matrix.rank A = n :=
   finrank_dimensionless_add_rank A
@@ -145,7 +145,7 @@ bijection: the functions satisfying a signature's scaling law correspond exactly
 to the scale-invariant functions, and the correspondence is adding and
 subtracting the power-product `∏ xᵢ^{Xᵢ}`. -/
 
-/-- A function invariant under every rescaling — a function of the dimensionless
+/-- A function invariant under every rescaling: a function of the dimensionless
 groups alone, by `invariant_iff_dimensionless`. -/
 def Invariant (A : ExpMatrix m n) (G : (Fin n → ℝ) → ℝ) : Prop :=
   ∀ ψ ξ, G (fun i => ξ i + act A ψ i) = G ξ
@@ -195,12 +195,197 @@ noncomputable def piEquiv (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n →
   left_inv F := by ext ξ; show (∑ i, X i * ξ i) + (F.1 ξ - ∑ i, X i * ξ i) = F.1 ξ; ring
   right_inv G := by ext ξ; show ((∑ i, X i * ξ i) + G.1 ξ) - ∑ i, X i * ξ i = G.1 ξ; ring
 
+/-! ## The multiplicative bridge
+
+`ScaleLaw` lives in log coordinates. The law the calculus itself delivers
+(`scaleLaw` in `LambdaS.Fundamental`) is multiplicative: rescaling each
+argument by the scale factor of its unit multiplies the result by the scale
+factor of the result unit. This section states that multiplicative law as a
+predicate on functions and proves the transport into log coordinates, so that
+`pi_theorem` applies. The transport requires the function to be positive on
+positive inputs. That is a genuine hypothesis, not bookkeeping: denotations
+can be zero or negative, and the logarithm sees nothing there. -/
+
+/-- **The multiplicative scale law.** Scaling each base unit `v` by a positive
+factor `κ v` scales argument `i` by `∏ v, κ v ^ A v i` and the result by
+`∏ v, κ v ^ b v`. This is the form of the scaling law a Λs term actually
+satisfies (`den_mulScaleLaw` below); `ScaleLaw` is its image in log
+coordinates. Exponents are rational, so the powers are `Real.rpow` under a
+cast. -/
+def MulScaleLaw (A : ExpMatrix m n) (b : Fin m → ℚ) (f : (Fin n → ℝ) → ℝ) : Prop :=
+  ∀ κ : Fin m → ℝ, (∀ v, 0 < κ v) → ∀ x : Fin n → ℝ,
+    f (fun i => (∏ v, κ v ^ ((A v i : ℚ) : ℝ)) * x i)
+      = (∏ v, κ v ^ ((b v : ℚ) : ℝ)) * f x
+
+/-- The log conjugate `log ∘ f ∘ exp` of a function on magnitudes. This is the
+`F` that `ScaleLaw` and `pi_theorem` speak about, produced from the
+multiplicative function the calculus provides. -/
+noncomputable def logConj (f : (Fin n → ℝ) → ℝ) (ξ : Fin n → ℝ) : ℝ :=
+  Real.log (f fun i => Real.exp (ξ i))
+
+/-- A product of real powers of exponentials is the exponential of a dot
+product. The computation that carries the multiplicative law into log
+coordinates and back. -/
+theorem prod_exp_rpow (ψ : Fin m → ℝ) (c : Fin m → ℚ) :
+    ∏ v, Real.exp (ψ v) ^ ((c v : ℚ) : ℝ) = Real.exp (∑ v, (c v : ℝ) * ψ v) := by
+  rw [Real.exp_sum]
+  exact Finset.prod_congr rfl fun v _ => by
+    rw [mul_comm ((c v : ℚ) : ℝ) (ψ v), Real.exp_mul]
+
+/-- **The bridge theorem.** A function satisfying the multiplicative scale law
+and positive on positive inputs has a log conjugate satisfying the additive
+`ScaleLaw` with the same exponent matrix and result vector. This is the
+missing link between the term-level law `scaleLaw` and the hypotheses of
+`pi_theorem`: before this theorem the two were connected only in prose.
+
+Positivity cannot be dropped. The zero function satisfies every multiplicative
+law, and its log conjugate is the constant `log 0 = 0`, which satisfies
+`ScaleLaw A b` only when `b = 0`. -/
+theorem scaleLaw_of_mulScaleLaw (A : ExpMatrix m n) (b : Fin m → ℚ)
+    {f : (Fin n → ℝ) → ℝ} (hmul : MulScaleLaw A b f)
+    (hpos : ∀ x : Fin n → ℝ, (∀ i, 0 < x i) → 0 < f x) :
+    ScaleLaw A b (logConj f) := by
+  intro ψ ξ
+  have hfpos : 0 < f fun i => Real.exp (ξ i) :=
+    hpos _ fun i => Real.exp_pos _
+  have harg : ∀ i, Real.exp (ξ i + act A ψ i)
+      = (∏ v, Real.exp (ψ v) ^ ((A v i : ℚ) : ℝ)) * Real.exp (ξ i) := by
+    intro i
+    rw [prod_exp_rpow, ← Real.exp_add, add_comm (ξ i) (act A ψ i)]
+    rfl
+  simp only [logConj, harg]
+  rw [hmul (fun v => Real.exp (ψ v)) (fun v => Real.exp_pos _) (fun i => Real.exp (ξ i)),
+    Real.log_mul (by positivity) (ne_of_gt hfpos), prod_exp_rpow, Real.log_exp]
+  exact add_comm _ _
+
+/-- **Buckingham's factorization for multiplicative data.** The composition of
+the bridge theorem with `pi_theorem`, stated back in the original coordinates:
+a function satisfying the multiplicative scale law and positive on positive
+inputs factors, on the positive orthant, as the power product `∏ i, x i ^ X i`
+times a positive function of the log magnitudes that is invariant under every
+rescaling, hence a function of the dimensionless groups alone
+(`invariant_iff_dimensionless`, `pi_count`). -/
+theorem mulScaleLaw_factorization (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n → ℝ)
+    (hX : ∀ v, ∑ i, (A v i : ℝ) * X i = (b v : ℝ))
+    {f : (Fin n → ℝ) → ℝ} (hmul : MulScaleLaw A b f)
+    (hpos : ∀ x : Fin n → ℝ, (∀ i, 0 < x i) → 0 < f x) :
+    ∃ G : (Fin n → ℝ) → ℝ, Invariant A G ∧
+      ∀ x : Fin n → ℝ, (∀ i, 0 < x i) →
+        f x = (∏ i, x i ^ X i) * Real.exp (G fun i => Real.log (x i)) := by
+  obtain ⟨G, hGinv, hGeq⟩ := pi_theorem A b X hX (scaleLaw_of_mulScaleLaw A b hmul hpos)
+  refine ⟨G, hGinv, fun x hx => ?_⟩
+  have hxfun : (fun i => Real.exp (Real.log (x i))) = x :=
+    funext fun i => Real.exp_log (hx i)
+  have hfx : 0 < f x := hpos x hx
+  have hlog : Real.log (f x)
+      = (∑ i, X i * Real.log (x i)) + G fun i => Real.log (x i) := by
+    have h := hGeq fun i => Real.log (x i)
+    simp only [logConj] at h
+    rwa [hxfun] at h
+  calc f x = Real.exp (Real.log (f x)) := (Real.exp_log hfx).symm
+    _ = Real.exp ((∑ i, X i * Real.log (x i)) + G fun i => Real.log (x i)) := by
+        rw [hlog]
+    _ = (∏ i, x i ^ X i) * Real.exp (G fun i => Real.log (x i)) := by
+        rw [Real.exp_add]
+        congr 1
+        rw [Real.exp_sum]
+        exact Finset.prod_congr rfl fun i _ => by
+          rw [Real.rpow_def_of_pos (hx i), mul_comm (Real.log (x i)) (X i)]
+
+/-! ## From terms to the multiplicative law
+
+The last gap: `scaleLaw` in `LambdaS.Fundamental` speaks about environments
+and `Scaling`s, while `MulScaleLaw` speaks about vectors of magnitudes and a
+matrix of exponents. This section closes it. For a first-order term over `n`
+scalar arguments, the denotation as a function of the argument magnitudes
+satisfies `MulScaleLaw` with the matrix whose column `i` is the base exponent
+vector of argument `i`'s unit and the vector of the result unit's base
+exponents. Base units are enumerated by an equivalence `Fin m ≃ B` so the
+matrix has the index types `ScaleLaw` expects. -/
+
+section TermBridge
+
+variable {B D : Type} [Fintype B] [Fintype D] [UnitSys B D] {j k : ℕ}
+
+/-- The environment of a first-order scalar signature, assembled from a vector
+of argument magnitudes. Inverse to reading the magnitudes off the
+environment. -/
+def envOf : (us : List (UExp B k)) → (Fin us.length → ℝ) →
+    Env (scalarCtx (B := B) (D := D) (j := j) us)
+  | [], _ => PUnit.unit
+  | _ :: us, x => (x 0, envOf us fun i => x i.succ)
+
+omit [Fintype D] [UnitSys B D] in
+/-- Rescaling the environment of a scalar signature is rescaling each
+magnitude by the scale factor of its unit. Connects `scaleEnv`, which walks
+the context, to the componentwise scaling `MulScaleLaw` quantifies over. -/
+theorem scaleEnv_envOf (ψ : Scaling B k) :
+    ∀ (us : List (UExp B k)) (x : Fin us.length → ℝ),
+      scaleEnv (D := D) (j := j) ψ us (envOf us x)
+        = envOf us fun i => ψ.scale (us.get i) * x i
+  | [], _ => rfl
+  | u :: us, x => by
+      simp only [scaleEnv, envOf, scaleEnv_envOf ψ us]
+      rfl
+
+/-- The scaling whose base factors are a given vector of positive reals, read
+through an enumeration of the base units, and whose unit-variable factors are
+all `1`. The witness that instantiates `scaleLaw` at the scalings
+`MulScaleLaw` quantifies over. -/
+noncomputable def scalingOfFactors (e : Fin m ≃ B) (κ : Fin m → ℝ) : Scaling B k :=
+  ⟨fun b => Real.log (κ (e.symm b)), fun _ => 0⟩
+
+/-- The scale factor of `scalingOfFactors e κ` on a unit is the power product
+of the factors against the unit's base exponents. Positivity of the factors is
+required: `scale` exponentiates the logs of `κ`, and `log` collapses
+nonpositive inputs. -/
+theorem scale_scalingOfFactors (e : Fin m ≃ B) (κ : Fin m → ℝ)
+    (hκ : ∀ v, 0 < κ v) (u : UExp B k) :
+    (scalingOfFactors (k := k) e κ).scale u
+      = ∏ v, κ v ^ ((u.base (e v) : ℚ) : ℝ) := by
+  simp only [Scaling.scale, Scaling.logScale, scalingOfFactors, mul_zero,
+    Finset.sum_const_zero, add_zero]
+  rw [← Equiv.sum_comp e fun b => (u.base b : ℝ) * Real.log (κ (e.symm b))]
+  simp only [Equiv.symm_apply_apply]
+  rw [Real.exp_sum]
+  exact Finset.prod_congr rfl fun v _ => by
+    rw [Real.rpow_def_of_pos (hκ v), mul_comm (Real.log (κ v)) ((u.base (e v) : ℚ) : ℝ)]
+
+/-- **The term-level multiplicative scale law.** The denotation of a
+first-order parametric convert-free term, as a function of its argument
+magnitudes, satisfies `MulScaleLaw` for the matrix of its arguments' base
+exponents and the vector of its result unit's base exponents.
+
+Together with `scaleLaw_of_mulScaleLaw` and `pi_theorem` this closes the chain
+from a well-typed Λs term to Buckingham's factorization: the term supplies the
+multiplicative law with no positivity assumption, and positivity of the
+denotation on positive inputs is exactly what remains to be assumed before the
+logarithmic transport applies.
+
+The law quantifies over base-unit rescalings only; the unit-variable factors
+of the underlying scaling are held at `1`. For a signature whose units also
+mention unit variables this is the restriction of the full scaling law, not
+its entirety. -/
+theorem den_mulScaleLaw {m : ℕ} {Δ : DCtx D j k} {e : Tm B D j k}
+    {us : List (UExp B k)} {u₀ : UExp B k}
+    (d : HasTy Δ (scalarCtx us) e (.Q u₀)) (hp : e.Parametric)
+    (hf : e.ConvertFree) (V : Scaling B k) (eqv : Fin m ≃ B) :
+    MulScaleLaw (Matrix.of fun v i => (us.get i).base (eqv v))
+      (fun v => u₀.base (eqv v)) (fun x => den V d (envOf us x)) := by
+  intro κ hκ x
+  have h := scaleLaw d hp hf V (scalingOfFactors eqv κ) (envOf us x)
+  rw [scaleEnv_envOf] at h
+  simp only [scale_scalingOfFactors eqv κ hκ] at h
+  simpa [Matrix.of_apply] using h
+
+end TermBridge
+
 /-! ## The pendulum, again
 
 With the general theorem in hand, the running example collapses in one line: the
 mass exponent is zero in the solution, so the power-product `∏ xᵢ^{Xᵢ}` does not
 mention the mass, and by `eq_zero_of_appears_once` neither does any dimensionless
-group. So `G` cannot mention it either — the period is independent of the mass,
+group. So `G` cannot mention it either: the period is independent of the mass,
 and both halves of the theorem say so. -/
 
 theorem pendulum_mass_absent {X : Fin 4 → ℚ}

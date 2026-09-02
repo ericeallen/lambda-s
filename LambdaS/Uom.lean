@@ -6,7 +6,7 @@ import Mathlib.Tactic
 A unit of measure over a set `B` of base units is a **ℚ-valued exponent vector**:
 a function `B → ℚ` recording the power of each base unit.
 
-Units are written *multiplicatively* — `m * s⁻¹`, `m ^ (-1/2 : ℚ)` — so the
+Units are written *multiplicatively* (`m * s⁻¹`, `m ^ (-1/2 : ℚ)`), so the
 carrier is `Multiplicative ℚ` pointwise. Unit multiplication is then exponent
 addition, and `Pi.commGroup` supplies the whole abelian group structure.
 

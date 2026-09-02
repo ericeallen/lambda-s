@@ -13,7 +13,7 @@ Three, all forced by wanting a *decidable* checker rather than chosen for
 elegance.
 
 **Unit expressions are exponent vectors, not trees.** A unit expression with `k`
-unit variables in scope is a `Term B (Fin k)` — the very structure
+unit variables in scope is a `Term B (Fin k)`: the very structure
 `LambdaS.Unify` solves systems over. Units form a free abelian group, so a
 normal form *is* an exponent vector, and equality is vector equality with no
 normalization pass to write or verify. `m * s / m` and `s` are literally the
@@ -24,7 +24,7 @@ enclosing `∀δ` and `∀u:d` binders, so well-scopedness is a typing invariant
 rather than a side condition, and substitution has nowhere to go wrong.
 
 **A space is the list of units its components carry.** This is `LambdaS.Space`
-at a finite index type, written structurally — a space *is* its unit
+at a finite index type, written structurally: a space *is* its unit
 assignment. Ordering is the indexing: `[m, s]` and `[s, m]` are isomorphic but
 not equal, because a linear map's entry `(j,i)` carries `δ_W(j)/δ_V(i)` and
 identifying them would let a matrix's columns permute silently.
@@ -122,7 +122,7 @@ def subst (t : UExp B (k + 1)) (σ : UExp B k) : UExp B k :=
 def weaken (t : UExp B k) : UExp B (k + 1) :=
   ⟨t.base, fun i => Fin.cases 0 (fun j => t.vars j) i⟩
 
-/-- Substituting into a weakened expression changes nothing — the fresh
+/-- Substituting into a weakened expression changes nothing: the fresh
 variable was unused. -/
 @[simp] theorem subst_weaken (t : UExp B k) (σ : UExp B k) : subst (weaken t) σ = t := by
   ext b i <;> simp [subst, weaken]
@@ -201,7 +201,7 @@ def nilU (B : Type) : Fin 0 → UExp B 0 := fun i => i.elim0
   | nil => rfl
   | cons a t ih => simp [ih]
 
-/-- Substitution is a homomorphism of the unit group — which is what lets a
+/-- Substitution is a homomorphism of the unit group, which is what lets a
 typing rule that multiplies units survive it. -/
 @[simp] theorem substU_one {k k₀ : ℕ} (η : Fin k → UExp B k₀) :
     substU η (1 : UExp B k) = 1 := by
@@ -261,7 +261,7 @@ theorem substU_weaken {k k₀ : ℕ} (η : Fin k → UExp B k₀) (u : UExp B k)
       simp [Term.ofVar, UExp.weaken]
 
 /-- Substituting into a weakened expression ignores whatever was put at index
-zero — the weakened expression does not mention it. -/
+zero: the weakened expression does not mention it. -/
 theorem substU_weaken_cons {k k₀ : ℕ} (w : UExp B k₀) (ξ : Fin k → UExp B k₀)
     (t : UExp B k) : substU (Fin.cons w ξ) (UExp.weaken t) = substU ξ t := by
   refine Term.ext' (funext fun b => ?_) (funext fun v => ?_) <;>
@@ -305,8 +305,8 @@ end Sp
 A dimension expression has exactly the structure a unit expression does: the
 dimension group is free abelian on base dimensions, just as the unit group is
 free abelian on base units. So `DExp` *is* `UExp` at the dimension alphabet, and
-every operation — multiplication, division, rational powers, substitution,
-weakening, decidable equality — is reused rather than rebuilt.
+every operation (multiplication, division, rational powers, substitution,
+weakening, decidable equality) is reused rather than rebuilt.
 
 `dimension Velocity = Length/Time` is therefore `Term.div`, an abbreviation with
 nothing left to check. Unit definitions are the interesting case and live in
@@ -333,13 +333,13 @@ nothing, and there is a single quantifier rule to state and prove.
 -/
 
 /-- A dimension expression with `j` dimension variables in scope. Literally a
-unit expression over base dimensions — the two are the same free abelian group
+unit expression over base dimensions: the two are the same free abelian group
 construction, so `UExp`'s whole API applies. -/
 abbrev DExp (D : Type) (j : ℕ) := UExp D j
 
 /-- A **unit system**: the dimension each base unit measures.
 
-`dim` need not be injective — `metre` and `foot` share a dimension, which is what
+`dim` need not be injective: `metre` and `foot` share a dimension, which is what
 lets Λs avoid restricting compound units to one named unit per dimension. Nor
 need it land on a generator: `joule` can be declared directly at
 `Mass·Length²·Time⁻²` rather than needing a base dimension of its own, which is
@@ -381,7 +381,7 @@ end DCtx
 
 /-- The **dimension of a unit expression**, relative to a dimension context.
 
-Linear in the exponent vector — a matrix product, with the naive "each base unit
+Linear in the exponent vector: a matrix product, with the naive "each base unit
 has one base dimension" the special case where every column is a standard basis
 vector. Base units contribute only to base dimensions; the dimension *variables*
 of the result come entirely from the context. -/
@@ -429,7 +429,7 @@ def dimOf [Fintype B] [UnitSys B D] {j k} (Δ : DCtx D j k) (u : UExp B k) : DEx
 Note what is *not* here. Before dimension contexts this also demanded
 `u.vars = v.vars`, a conservative stand-in for not knowing a unit variable's
 dimension. With `Δ` supplying it the clause is gone, and `convert` works under a
-bounded quantifier — which is what makes a dimension-typed quantity usable. -/
+bounded quantifier, which is what makes a dimension-typed quantity usable. -/
 def SameDim [Fintype B] [UnitSys B D] {j k} (Δ : DCtx D j k) (u v : UExp B k) : Prop :=
   dimOf (D := D) Δ u = dimOf (D := D) Δ v
 
@@ -442,7 +442,7 @@ instance [Fintype B] [Fintype D] [DecidableEq D] [UnitSys B D] {j k}
 /-- Types of Λs, indexed by the number of **dimension** variables and the number
 of **unit** variables in scope.
 
-Six formers, one unit quantifier. `∀u. τ` is not primitive — it is
+Six formers, one unit quantifier. `∀u. τ` is not primitive: it is
 `∀δ. ∀u:δ. τ`, and the free theorems that need a genuinely unconstrained unit
 get one by abstracting its dimension. -/
 inductive Ty (B D : Type) : ℕ → ℕ → Type where
@@ -567,7 +567,7 @@ def decEq [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] :
 instance [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] {j k : ℕ} :
     DecidableEq (Ty B D j k) := decEq
 
-/-- Weakening then grounding by an extended environment ignores the extension —
+/-- Weakening then grounding by an extended environment ignores the extension:
 the weakened type does not mention the new variable. This is what lets a context
 captured outside a unit binder be reused inside it. -/
 theorem ground_weaken {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
@@ -646,7 +646,7 @@ theorem ground_substDim {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
 
 Erase every unit and dimension and a type becomes a plain simple type. Nothing in
 the calculus's *shape* depends on units, which is why substituting one leaves the
-skeleton alone — and that is what makes the normalisation argument in
+skeleton alone. That is what makes the normalization argument in
 `LambdaS.Normalization` Tait's rather than Girard's. -/
 
 /-- The size of a type's skeleton. -/

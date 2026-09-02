@@ -3,14 +3,14 @@ import LambdaS.Scaling
 /-!
 # Conversion, and why paths cannot disagree
 
-Λs has a conversion operator — `convert`, a core term constructor — and
+Λs has a conversion operator (`convert`, a core term constructor), and
 conversion is the right place to be
 careful: with units nameable and definable in terms of combinations of other
 units, a system that defines conversion by *walking a declared structure* can
 offer more than one route between two units, with no guarantee the routes
 agree.
 
-This file answers that. Conversion is not a path at all — it is a **ratio of
+This file answers that. Conversion is not a path at all; it is a **ratio of
 valuations**, and the object that supplies the valuations already exists:
 `Scaling`. A scaling assigns a positive magnitude to every base unit and extends
 to a homomorphism, which is exactly what "reduce every unit to a canonical
@@ -26,7 +26,7 @@ problem does not arise, and there is nothing an implementation could get wrong.
 There is a real alternative, and it is the one Comp 311's Fall 2016 assignment
 adopts: restrict compound units to *at most one named unit per dimension*, so
 that lining up two compounds has a unique pairing. That works, and it kills the
-ambiguity — but it buys uniqueness by shrinking the algebra. Under it
+ambiguity, but it buys uniqueness by shrinking the algebra. Under it
 `meter / foot` is illegal, because both are units of Length; yet that is exactly
 a conversion factor, dimensionless, and worth naming.
 
@@ -57,7 +57,7 @@ theorem conv_ne_zero (ψ : Scaling B k) (u v : UExp B k) : conv ψ u v ≠ 0 :=
 @[simp] theorem conv_self (ψ : Scaling B k) (u : UExp B k) : conv ψ u u = 1 :=
   div_self (ne_of_gt (ψ.scale_pos u))
 
-/-- The conversion factor is the scale of the *ratio* — so it is itself the
+/-- The conversion factor is the scale of the *ratio*, so it is itself the
 valuation of a dimensionless unit, which is what makes conversion factors
 nameable as units. -/
 theorem conv_eq_scale_div (ψ : Scaling B k) (u v : UExp B k) :
@@ -88,7 +88,7 @@ noncomputable def convChain (ψ : Scaling B k) :
 `v` gives exactly the direct factor.
 
 This is the theorem the multiple-paths problem asks for. It holds because the
-factors are ratios of a single valuation, so intermediates telescope — not
+factors are ratios of a single valuation, so intermediates telescope, not
 because anyone checked the declarations for consistency. There is no route by
 which two paths could disagree. -/
 theorem convChain_eq (ψ : Scaling B k) :
@@ -179,7 +179,7 @@ theorem dimOf_rpow (u : UExp B k) (q : ℚ) :
   · simp only [dimOf, Term.rpow_base, Term.rpow_vars, Finset.mul_sum]
     exact Finset.sum_congr rfl fun _ _ => by ring
 
-/-- Interchangeable units have a **dimensionless ratio** — which is why their
+/-- Interchangeable units have a **dimensionless ratio**, which is why their
 conversion factor is a pure number and can itself be named as a unit.
 
 Under the "one named unit per dimension" restriction this ratio is not even
@@ -195,8 +195,8 @@ end Dimensions
 /-! ## Coherence: which scalings are physically meaningful
 
 Parametricity quantifies over **all** scalings, including ones that scale
-`metre` and `foot` independently. That is physical nonsense — rescale the metre
-and the foot must follow — but it is exactly the freedom that lets Λs treat
+`metre` and `foot` independently. That is physical nonsense (rescale the metre
+and the foot must follow), but it is exactly the freedom that lets Λs treat
 same-dimension units as independent generators, and so avoid restricting
 compound units to one named unit per dimension.
 
@@ -206,7 +206,7 @@ bridge between the two roles a `Scaling` plays: fixed declared data on the one
 hand, quantified-over transformation on the other.
 
 It is also the exact price of `convert`. A parametric term without `convert` is
-scale-invariant for *every* scaling — that is `fundamental_free`, and it is what
+scale-invariant for *every* scaling: that is `fundamental_free`, and it is what
 the Pi theorem consumes. A term *with* `convert` is scale-invariant for the
 coherent ones, and `conv_invariant_of_coherent` is the lemma that discharges its
 case. Nothing else in Λs can observe a unit, so nothing else pays. -/
@@ -215,7 +215,7 @@ section Coherence
 
 variable [UnitSys B D] {j : ℕ}
 
-/-- A scaling is **coherent** for `Δ` when interchangeable units scale alike —
+/-- A scaling is **coherent** for `Δ` when interchangeable units scale alike;
 that is, when it factors through `dim`. -/
 def Scaling.Coherent (Δ : DCtx D j k) (ψ : Scaling B k) : Prop :=
   ∀ u v : UExp B k, SameDim Δ u v → ψ.scale u = ψ.scale v
@@ -223,7 +223,7 @@ def Scaling.Coherent (Δ : DCtx D j k) (ψ : Scaling B k) : Prop :=
 /-- **Conversion factors are invariant under coherent rescaling.**
 
 Change the unit system by any scaling that respects dimensions and every
-conversion factor is unchanged — `1 m = 3.28 ft` whatever reference you measure
+conversion factor is unchanged: `1 m = 3.28 ft` whatever reference you measure
 against. -/
 theorem conv_invariant_of_coherent (V : Scaling B k) {Δ : DCtx D j k} {ψ : Scaling B k}
     (hψ : ψ.Coherent Δ) {u v : UExp B k} (h : SameDim Δ u v) :
@@ -242,7 +242,7 @@ statement that the scaling is pulled back from one on *dimensions*.
 
 Naming the dimension scaling is what makes unit abstraction tractable. Under
 `Λu:δ` the factor the bound unit must receive is then not merely constrained to
-some coherent value — it is **determined**, namely `Φ δ`. A coherent rescaling is
+some coherent value; it is **determined**, namely `Φ δ`. A coherent rescaling is
 a rescaling of dimensions, and unit abstraction has no freedom left. -/
 structure Scaling.Factors [Fintype D] (ψ : Scaling B k) (Δ : DCtx D j k)
     (Φ : Scaling D j) : Prop where
@@ -290,7 +290,7 @@ theorem Scaling.Factors.cons [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k}
     · simpa [Scaling.cons, DCtx.cons] using h.vars i
 
 /-- **Factoring survives a dimension binder**, at whatever the new dimension is
-worth — dimension abstraction is unconstrained, which is what makes `∀δ. ∀u:δ`
+worth: dimension abstraction is unconstrained, which is what makes `∀δ. ∀u:δ`
 genuinely unbounded. -/
 theorem Scaling.Factors.weakenDim [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k}
     {Φ : Scaling D j} (h : ψ.Factors Δ Φ) (t : ℝ) :

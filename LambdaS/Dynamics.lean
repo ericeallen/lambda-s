@@ -25,9 +25,9 @@ So there are three things, and they are complementary rather than competing:
 | `eeval_erase` (`LambdaS.Erasure`) | dropping units **does not change the numbers** |
 | scaling parametricity (`LambdaS.Fundamental`) | units have **observable meaning** |
 
-Kennedy did the third column. This file defines the instrumented machine; its
+Kennedy did the third column. This file defines the instrumented evaluator; its
 soundness lives in `LambdaS.Soundness` and `LambdaS.Normalization`, and erasure
-in `LambdaS.Erasure` — all three at the whole language.
+in `LambdaS.Erasure`: all three at the whole language.
 -/
 
 namespace LambdaS
@@ -51,7 +51,7 @@ a value for each value variable, a **ground unit** for each unit variable, and a
 
 Units are *looked up*, never substituted. Substituting a unit into a term during
 evaluation would be compile-time work done at runtime, and it would also force
-the evaluator to live only at the closed scope — a term under a unit binder
+the evaluator to live only at the closed scope: a term under a unit binder
 could not be evaluated at all without first eliminating the binder. With an
 environment, `eval` is defined at every scope, which is what makes the ordinary
 induction principles apply to it. -/
@@ -66,9 +66,9 @@ abbrev DEnv (D : Type) (j : ℕ) := Fin j → DExp D 0
 between spaces, or a closure.
 
 Vectors and matrices carry their spaces, not a unit per entry. That is not an
-optimisation: `LambdaS.Map` proves the units of a linear map are rank-one, entry
+optimization: `LambdaS.Map` proves the units of a linear map are rank-one, entry
 `(j,i)` carrying `δ_W(j)/δ_V(i)`, so an `n×m` map needs `n+m` units rather than
-`nm`. After type checking the numeric payload is a plain array — which is what
+`nm`. After type checking the numeric payload is a plain array, which is what
 makes a BLAS kernel usable underneath without any per-entry tagging.
 
 Closures package the scope they were built at, along with all three environments,
@@ -87,7 +87,7 @@ inductive Val (R B D : Type) where
 /-- The dot product an application of a linear map performs.
 
 Forwards to `Num.dot`, which the `Float` carrier overrides with the native
-kernel — so this is the point where a compiled Λs program crosses into C. -/
+kernel, so this is the point where a compiled Λs program crosses into C. -/
 def dotp [Num R] (a b : List R) : R := Num.dot a b
 
 /-- Column `i` of a matrix, padded with zero. -/
@@ -211,14 +211,14 @@ abbrev evalC (cf : UExp B 0 → UExp B 0 → R) (n : ℕ) (ρ : List (Val R B D)
 
 A measurement read from a file carries a unit *name*, resolved against the
 declared system to a `UExp B 0`. What arrives is a `Meas`, and using it in typed
-code means committing to a unit — a **checked cast**.
+code means committing to a unit: a **checked cast**.
 
 That cast is the whole content of a dimension-typed value `∃u:d. Q u`, and it is
 deliberately *not* a type former. At runtime such a value is the pair
 `(magnitude, factor)`: the magnitude, and the dictionary a bounded quantifier
 would have been instantiated with. Once the unit name is resolved that pair is
 exactly a `Meas`. Keeping it here rather than in `Ty` leaves every type in Λs
-erasable, and confines the trust to one partial function — whose partiality is
+erasable, and confines the trust to one partial function, whose partiality is
 the trust boundary, since nothing checks that a name off a disk denotes a
 declared unit.
 -/
@@ -246,7 +246,7 @@ theorem asUnit_preserves {Δ : DCtx D 0 0} {ψ : Scaling B 0} {x : Meas ℝ B} {
 
 omit [DecidableEq B] in
 /-- **The cast rejects a dimension mismatch.** Reading a duration as a length
-fails rather than silently scaling — the Mars Climate Orbiter failure at the one
+fails rather than silently scaling: the Mars Climate Orbiter failure at the one
 place in Λs where it could still occur. -/
 theorem asUnit_eq_none {Δ : DCtx D 0 0} {ψ : Scaling B 0} {x : Meas ℝ B} {μ : UExp B 0}
     (h : ¬ SameDim Δ x.unit μ) : asUnit Δ ψ x μ = none := by
@@ -264,14 +264,14 @@ theorem asUnit_eq_eval_convert {Δ : DCtx D 0 0} {ψ : Scaling B 0} {a : Tm B D 
 /-! ### What has to be passed at runtime
 
 The target unit `μ` of a cast is itself often read from I/O, so it too is a
-runtime value — which raises the question of what a compiler actually has to
+runtime value, which raises the question of what a compiler actually has to
 carry. The answer splits cleanly in two, and the split is the difference between
 the dimension check and the arithmetic.
 
 **The arithmetic needs only the factor.** Past the dimension check the unit
 expression is not observable: the cast is computed from the magnitude and
 `ψ.scale`, so two measurements with the same magnitude and the same scale factor
-cast identically whatever units they name. That pair — magnitude and factor — is
+cast identically whatever units they name. That pair (magnitude and factor) is
 exactly the dictionary a bounded quantifier is instantiated with, which is why
 `∃u:d. Q u` needs no type former to be implementable.
 
@@ -300,7 +300,7 @@ omit [DecidableEq B] in
 /-- **The dictionary determines the answer.** Two measurements agreeing on
 magnitude and scale factor cast to the same number, whatever units they name.
 
-This is the precise sense in which the unit need not survive past the check —
+This is the precise sense in which the unit need not survive past the check;
 and, read the other way, the precise sense in which it must survive *up to* it,
 since `SameDim` is not a function of the scale factor. -/
 theorem asUnit_dict_determined {Δ : DCtx D 0 0} {ψ : Scaling B 0} {x y : Meas ℝ B}

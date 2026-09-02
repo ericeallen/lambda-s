@@ -12,7 +12,7 @@ This file makes that a theorem.
 
 Applying `scaleLaw` to a hypothetical term of type `Q (u·u) → Q u` gives
 `f(k²x) = k·f(x)` for every `k > 0`, hence `f(y) = √y · f(1)`. So parametricity
-says any such function **is** square root — it does not say none exists. That is
+says any such function **is** square root; it does not say none exists. That is
 exactly why Kennedy needs a strengthening for his semantic proof: *"a more
 generous notion of scaling environment (homomorphisms from subgroups of Unt)"*.
 
@@ -23,7 +23,7 @@ argument suffices and gives a stronger conclusion: the fragment's type is
 **uninhabited**, not merely uncomputable.
 
 The key observation is that `mul` and `div` add and subtract exponent vectors,
-so the reachable units form the **ℤ**-span of the arguments' units — not the
+so the reachable units form the **ℤ**-span of the arguments' units, not the
 ℚ-span. Over ℚ we would have `u = (u²)^(1/2)` and the argument would collapse;
 over ℤ, `u ∉ {u^(2n)}`. The distinction between what the *unit algebra* permits
 and what the *term grammar* can build is the whole content, and it is why roots
@@ -68,8 +68,8 @@ inductive InSpan (S : List (UExp B k)) : UExp B k → Prop where
   | div {u v} : InSpan S u → InSpan S v → InSpan S (Term.div u v)
 
 /-- From a single generator, the reachable units are exactly its **integer**
-powers. This is where `mul`/`div` being addition and subtraction of exponents —
-rather than arbitrary ℚ-scaling — does its work. -/
+powers. This is where `mul`/`div` being addition and subtraction of exponents
+(rather than arbitrary ℚ-scaling) does its work. -/
 theorem inSpan_single {w v : UExp B k} (h : InSpan [w] v) :
     ∃ n : ℤ, v = Term.rpow w (n : ℚ) := by
   induction h with
@@ -129,23 +129,23 @@ theorem arith_inSpan {S : List (UExp B k)} {u : UExp B k} (e : Arith S u) :
 /-- **Square root is not definable.**
 
 Given only a quantity of unit `u²`, no arithmetic expression has unit `u`. The
-type is *uninhabited* — not merely hard to reach, and not merely uncomputable.
+type is *uninhabited*: not merely hard to reach, and not merely uncomputable.
 
 So `root` is not a convenience: without it the field operations cannot express
-the square root of a dimensioned quantity at all — no expression they build even
+the square root of a dimensioned quantity at all: no expression they build even
 has the right unit. (For full Λs the syntactic claim needs the caveat that
 `ucon` inhabits `Q u` in any context, so the *type* is inhabited; what this
 result pins down is that arithmetic alone never reaches the unit.) Together with
-the admissibility criterion — a primitive may take any type whose denotation is
-scale-invariant, and `√` is — this says `root` is both **necessary** and
+the admissibility criterion (a primitive may take any type whose denotation is
+scale-invariant, and `√` is) this says `root` is both **necessary** and
 **permitted**. -/
 theorem sqrt_not_definable {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
     IsEmpty (Arith [Term.mul u u] u) :=
   ⟨fun e => not_inSpan_sq hb (arith_inSpan e)⟩
 
 /-- The same statement for Newton's iteration, which is where the intuition
-usually goes. The iteration itself is well-typed — `(x + a/x)/2` has unit `u`
-whenever `x` does — but no *seed* of unit `u` exists to start it, so the whole
+usually goes. The iteration itself is well-typed (`(x + a/x)/2` has unit `u`
+whenever `x` does), but no *seed* of unit `u` exists to start it, so the whole
 construction is unavailable. Kennedy's Exercise 14 hint in miniature. -/
 theorem no_newton_seed {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
     ¬ Nonempty (Arith [Term.mul u u] u) := by
@@ -156,20 +156,20 @@ theorem no_newton_seed {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
 
 The results above concern `sqrt`, and there they are weaker than the literature:
 Atkey, Johann and Kennedy (POPL'13, Examples 6 and 8) prove non-definability of
-square root semantically, in Coq, and go further — cube root stays undefinable
+square root semantically, in Coq, and go further: cube root stays undefinable
 even if square root is added as a primitive.
 
 This section proves something their framework cannot state, because their
 calculus has no operation that reads a unit: **`convert` is a genuine
 primitive**. Any parametric, convert-free function from `Q u` to `Q v` is
-constantly zero whenever some scaling separates `u` from `v` — parametricity
+constantly zero whenever some scaling separates `u` from `v`. Parametricity
 matters, since `λx. (x / ucon u) · ucon v` is convert-free and denotes the
 identity at that type. So conversion is not a derived
 operation dressed up as a constructor, and the coherence hypothesis on
 `fundamental` is not the price of a redundant feature.
 
-The proof is the semantic one — apply `fundamental_free` at a scaling that
-fixes `u` and moves `v` — which is exactly AJK's technique, used on a question
+The proof is the semantic one (apply `fundamental_free` at a scaling that
+fixes `u` and moves `v`), which is exactly AJK's technique, used on a question
 that only arises once conversion exists. -/
 
 section ConvertPrimitive
@@ -188,7 +188,7 @@ theorem scale_ofBase (ψ : Scaling B k) (b : B) :
 
 /-- A scaling that fixes one generator and doubles another. Two base units of the
 same dimension are separated by such a scaling, which is exactly the freedom
-`Scaling.Coherent` forbids — and the freedom that makes conversion observable. -/
+`Scaling.Coherent` forbids, and the freedom that makes conversion observable. -/
 noncomputable def separate (b c : B) : Scaling B k :=
   ⟨fun b' => if b' = c then Real.log 2 else 0, fun _ => 0⟩
 

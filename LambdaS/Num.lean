@@ -5,8 +5,8 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 The evaluator in `LambdaS.Dynamics` is generic in its numbers. That is what lets
 one definition serve both masters: instantiated at `ℝ` it is the object the
-soundness and erasure theorems are about — necessarily noncomputable, since
-`Real.exp` is — and instantiated at `Float` it is compiled to C by
+soundness and erasure theorems are about (necessarily noncomputable, since
+`Real.exp` is), and instantiated at `Float` it is compiled to C by
 Lean's code generator.
 
 Everything about units is carrier-independent, which is why the proofs never
@@ -19,14 +19,14 @@ about which branch an evaluator takes, not about arithmetic.
 the object the soundness and erasure theorems are about, and necessarily
 noncomputable since `Real.exp` is. At `Float` it is compiled to C. Nothing about
 units differs between them, which is the point: the dimensional content of the
-calculus is carrier-independent, and a carrier can be swapped — for complex
-amplitudes, intervals, dual numbers for differentiation — without touching the
+calculus is carrier-independent, and a carrier can be swapped (for complex
+amplitudes, intervals, dual numbers for differentiation) without touching the
 type system or a single theorem.
 
 ## Positivity
 
 `nroot` and `nlog` assume a positive argument, which is the same assumption that
-appears in `relQ_rpow` — where `rpow` needs `0 ≤ x` — and in Kennedy's Pi
+appears in `relQ_rpow` (where `rpow` needs `0 ≤ x`) and in Kennedy's Pi
 theorem. Λs's `root` is applied to positive magnitudes in practice, but the
 language does not enforce it.
 -/
@@ -35,8 +35,8 @@ namespace LambdaS
 
 /-! ## The native kernel
 
-`LambdaS.Map` proves the units of a linear map are rank-one — entry `(j,i)`
-carries `δ_W(j)/δ_V(i)` — so an `m×n` map needs `m+n` units rather than `mn`, and
+`LambdaS.Map` proves the units of a linear map are rank-one (entry `(j,i)`
+carries `δ_W(j)/δ_V(i)`), so an `m×n` map needs `m+n` units rather than `mn`, and
 those live in the *type*. By the time a numeric kernel runs, the checker has
 discharged every dimensional obligation and the payload is a flat array of
 doubles: no tagging, no strides, no per-entry metadata.
@@ -62,7 +62,7 @@ def ddot (a x : @& FloatArray) : Float := Id.run do
 is the shape `cblas_dgemv` wants.
 
 Written as a `map` over `Array.range` rather than a push loop so that the size of
-the result is manifest — `dgemv_size` is what the soundness proof needs, and the
+the result is manifest: `dgemv_size` is what the soundness proof needs, and the
 C is trusted to agree with this body. -/
 @[extern "lambdas_dgemv"]
 def dgemv (m n : @& Nat) (a x : @& FloatArray) : FloatArray :=
@@ -83,7 +83,7 @@ class Num (R : Type) where
   mul : R → R → R
   div : R → R → R
   /-- The `n`-th root. Primitive because it is not definable from the field
-  operations — see `LambdaS.NonDef.sqrt_not_definable`. -/
+  operations; see `LambdaS.NonDef.sqrt_not_definable`. -/
   nroot : ℕ → R → R
   nlog : R → R
   nexp : R → R

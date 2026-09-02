@@ -10,19 +10,19 @@ Two halves of the conversion story have been proved separately and never joined.
 `LambdaS.Declare` says when a set of unit declarations determines a valuation,
 and rejects the sets that do not. `LambdaS.Conversion` says a valuation makes
 conversion path-independent. `LambdaS.Fundamental` gives the denotational
-semantics, in which `convert` reads that valuation for its factor — unit
+semantics, in which `convert` reads that valuation for its factor (unit
 application also consults it, but only to pick the index at which a family is
-sampled. And
-`LambdaS.Dynamics` gives the evaluator — which takes the conversion factor from
+sampled). And
+`LambdaS.Dynamics` gives the evaluator, which takes the conversion factor from
 an **abstract oracle** `cf`, constrained by nothing at all.
 
 So the declarations determine a number, and the evaluator multiplies by a
 number, and until now there was no theorem saying they are the same number.
-Every worked example passes `fun _ _ => 1.0`, so the feature at the centre of the
+Every worked example passes `fun _ _ => 1.0`, so the feature at the center of the
 calculus was never actually exercised.
 
-`eval_adeq` is the join. Take the oracle to be `conv V` — the conversion the
-valuation determines, hence the one the declarations determine — and evaluation
+`eval_adeq` is the join. Take the oracle to be `conv V` (the conversion the
+valuation determines, hence the one the declarations determine), and evaluation
 of a well-typed term agrees with its denotation, unit and magnitude both. The
 `convert` case is where the content is: the evaluator's factor is
 `conv V (substU η u) (substU η v)` and the denotation's is
@@ -38,10 +38,10 @@ follows the environments by `Scaling.pull`, and `pull_cons` is the lemma that
 says instantiating a unit variable and extending the scaling agree.
 
 Function, unit-polymorphic and dimension-polymorphic values are related
-behaviourally, as in `LambdaS.Normalization`: a closure is adequate when
+behaviorally, as in `LambdaS.Normalization`: a closure is adequate when
 applying it to adequate arguments yields adequate results. Nothing is said about
 the closure's captured scope, which is what lets the relation live at a single
-type while the machine works at many.
+type while the evaluator works at many.
 -/
 
 namespace LambdaS
@@ -83,7 +83,7 @@ def Adeq (V : Scaling B 0) : {j k : ℕ} → UEnv B k → DEnv D j → (τ : Ty 
             Adeq V η (Fin.cons dd δ) τ v' F
 
 /-- Adequacy of an environment, pointwise. An inductive rather than a recursive
-definition so that its indices unify up to definitional equality — the binder
+definition so that its indices unify up to definitional equality: the binder
 cases present the context as `Γ.weaken`, not as a literal list. -/
 inductive EnvAdeq (V : Scaling B 0) {j k : ℕ} (η : UEnv B k) (δ : DEnv D j) :
     (Γ : Ctx B D j k) → List (Val ℝ B D) → Env Γ → Prop where
@@ -323,10 +323,10 @@ theorem adeq_lookup (V : Scaling B 0) : ∀ {j k : ℕ} {η : UEnv B k} {δ : DE
       exact ⟨w', by simpa using hw', ha⟩
 
 /-- **Adequacy.** With the conversion oracle taken to be the one the valuation
-determines, evaluation of a well-typed term agrees with its denotation — the
+determines, evaluation of a well-typed term agrees with its denotation: the
 unit it carries and the magnitude it holds.
 
-This is the theorem that joins the declaration story to the machine. The
+This is the theorem that joins the declaration story to the evaluator. The
 `convert` case is its content: the evaluator multiplies by
 `conv V (substU η u) (substU η v)` and the denotation by `conv (V.pull η) u v`,
 and `Scaling.scale_pull` says those agree. Everything else is bookkeeping. -/
@@ -662,11 +662,11 @@ theorem eval_adeq (V : Scaling B 0) :
 
 `LambdaS.Declare` decides whether a set of unit declarations determines a
 valuation, and rejects the sets that do not. `eval_adeq` says what a valuation
-is worth to the machine. Composing them is the point of this file: the number
+is worth to the evaluator. Composing them is the point of this file: the number
 the evaluator multiplies by is the number the declarations name.
 
 And when the declarations conflict, `not_satisfiable_of_chain` says no valuation
-exists — so there is no oracle to run with, rather than a choice of oracles to
+exists, so there is no oracle to run with, rather than a choice of oracles to
 pick wrongly between. -/
 
 /-- **Adequacy for closed terms of scalar type.** -/
@@ -679,7 +679,7 @@ theorem evalC_adeq (V : Scaling B 0) {e : Tm B D 0 0} {u : UExp B 0}
   simpa [Adeq] using h
 
 /-- **The evaluator computes the denotation.** Every well-typed closed term of
-scalar type evaluates — at some finite fuel, by normalization — to exactly the
+scalar type evaluates (at some finite fuel, by normalization) to exactly the
 magnitude its denotation predicts, carrying exactly the unit its type predicts,
 provided the conversion oracle is the one the valuation determines.
 
@@ -693,11 +693,11 @@ theorem evalC_eq_den (V : Scaling B 0) {e : Tm B D 0 0} {u : UExp B 0}
 
 /-- **The evaluator multiplies by the declared factor.** Converting along a
 declaration multiplies the magnitude by exactly the number the declaration
-names — not by something equal to it up to a chain of intermediate steps, but by
+names, not by something equal to it up to a chain of intermediate steps, but by
 that number.
 
 `Decl.conv_eq_factor` said the *valuation* assigns that factor; this says the
-machine uses it. -/
+evaluator uses it. -/
 theorem evalC_convert_declared {ψ : Scaling B 0} {dcl : Decl B}
     (hsat : Decl.Satisfies ψ dcl) {e : Tm B D 0 0}
     (d : HasTy (DCtx.nil D) ([] : Ctx B D 0 0) e (.Q (Term.ofBase dcl.lhs)))

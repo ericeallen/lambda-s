@@ -9,14 +9,14 @@ burden is to preserve the semantics. An ancestor in `LambdaS.Dynamics`, since
 deleted, discharged that burden for the first-order arithmetic fragment; this
 file discharges it for the whole of Λs.
 
-## The erased machine
+## The erased evaluator
 
-`eeval` is `eval` with two things removed: the **annotations** — values carry no
-units, closures carry no type or dimension ascriptions — and the **checks** —
-`add` does not compare units, `log` and `exp` do not demand dimensionlessness,
+`eeval` is `eval` with two things removed: the **annotations** (values carry no
+units, closures carry no type or dimension ascriptions) and the **checks**
+(`add` does not compare units, `log` and `exp` do not demand dimensionlessness,
 `convert` does not verify its source, `mapp` and `comp` do not compare spaces,
-and `root` does not test its index. Nothing is checked because there is nothing
-left to check against, which is the point: the erased machine is the one a
+and `root` does not test its index). Nothing is checked because there is nothing
+left to check against, which is the point: the erased evaluator is the one a
 compiler would emit.
 
 Two things deliberately survive erasure, and neither is a unit.
@@ -26,24 +26,25 @@ count, without which the composite of a zero-row matrix has no width. That is
 array-dimension information, and no compiler erases it.
 
 **The unit environments** survive: `convert` under a unit binder takes its
-factor from the unit the caller supplies at runtime, so the machine keeps `η`
-and `δ` — a value the size of the *scope*, not of the data. This is the honest
-residue of conversion: units are static except for the finitely many scale
+factor from the unit the caller supplies at runtime, so the evaluator keeps `η`
+and `δ`: a value the size of the *scope*, not of the data. This is the residue
+of conversion: units are static except for the finitely many scale
 factors a polymorphic conversion must receive, exactly as a dictionary-passing
 compiler would arrange.
 
 ## The theorems
 
 `eeval_erase` is a **simulation, with no typing hypothesis**: whenever the
-instrumented machine produces a value, the erased machine produces its erasure —
-step for step, at the same fuel. Typing is not needed because the instrumented
-machine's success already witnesses that every erased check would have passed.
+instrumented evaluator produces a value, the erased evaluator produces its
+erasure, step for step, at the same fuel. Typing is not needed because the
+instrumented evaluator's success already witnesses that every erased check would
+have passed.
 
 Typing enters with the corollaries, which compose the simulation with
 normalization and adequacy. `erasure_correct` says a well-typed closed scalar
-term evaluates on **both** machines, to the same magnitude, at the unit the type
-predicts — so the type system knows statically everything the erased machine no
-longer carries. `eeval_den` says the erased machine computes the denotation,
+term evaluates on **both** evaluators, to the same magnitude, at the unit the type
+predicts, so the type system knows statically everything the erased evaluator no
+longer carries. `eeval_den` says the erased evaluator computes the denotation,
 with the conversion oracle the valuation determines: the compiled program's
 output is the mathematical meaning, with the units gone from the values and
 alive in the types.
@@ -56,7 +57,7 @@ variable [UnitSys B D]
 variable {R : Type} [Num R]
 
 /-- **Erased runtime values.** No units, no spaces, no ascriptions. A matrix
-keeps its column count — shape, not units. -/
+keeps its column count: shape, not units. -/
 inductive EVal (R B D : Type) where
   | scalar : R → EVal R B D
   | vector : List R → EVal R B D
@@ -170,11 +171,11 @@ theorem eraseList_getElem? : ∀ (ρ : List (Val R B D)) (n : ℕ),
   | _ :: _, 0 => by simp [Val.eraseList]
   | _ :: ρ, n + 1 => by simpa [Val.eraseList] using eraseList_getElem? ρ n
 
-/-- **The simulation.** Whenever the instrumented machine produces a value, the
-erased machine produces its erasure — same term, same fuel, erased environment.
+/-- **The simulation.** Whenever the instrumented evaluator produces a value, the
+erased evaluator produces its erasure: same term, same fuel, erased environment.
 
-No typing hypothesis: the instrumented machine's success already witnesses that
-every check the erased machine skips would have passed. -/
+No typing hypothesis: the instrumented evaluator's success already witnesses that
+every check the erased evaluator skips would have passed. -/
 theorem eeval_erase (cf : UExp B 0 → UExp B 0 → R) :
     ∀ (n : ℕ) {j k : ℕ} (e : Tm B D j k) (η : UEnv B k) (δ : DEnv D j)
       (ρ : List (Val R B D)) (v : Val R B D),
@@ -332,14 +333,14 @@ termination_by n j k e => (n, sizeOf e)
 
 /-! ## Erasure is safe, at the whole language -/
 
-/-- **Erasure preserves results** — the full-language statement. A well-typed
-closed term of scalar type evaluates on both machines at some common fuel: the
+/-- **Erasure preserves results**: the full-language statement. A well-typed
+closed term of scalar type evaluates on both evaluators at some common fuel: the
 instrumented one to a measurement carrying exactly the unit its type predicts,
 the erased one to exactly that measurement's magnitude.
 
-Everything the erased machine no longer carries, the type system knew
+Everything the erased evaluator no longer carries, the type system knew
 statically. This is "units are static", proved rather than asserted, with unit
-polymorphism, higher-order structure, spaces and conversion all included —
+polymorphism, higher-order structure, spaces and conversion all included;
 the fragment restriction of the old statement is gone, and so is its fuel
 hypothesis, which normalization now discharges. -/
 theorem erasure_correct (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
@@ -350,9 +351,9 @@ theorem erasure_correct (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
   obtain ⟨n, m, hm⟩ := unit_soundness_total cf d
   exact ⟨n, m, hm, eeval_erase cf n e (nilU B) (nilU D) [] _ hm⟩
 
-/-- **The erased machine computes the denotation.** With the conversion oracle
+/-- **The erased evaluator computes the denotation.** With the conversion oracle
 the valuation determines, the compiled program's output is the mathematical
-meaning — units gone from the values, alive in the types. Adequacy composed
+meaning: units gone from the values, alive in the types. Adequacy composed
 with the simulation. -/
 theorem eeval_den (V : Scaling B 0) {e : Tm B D 0 0} {u : UExp B 0}
     (d : HasTy (DCtx.nil D) ([] : Ctx B D 0 0) e (.Q u)) :

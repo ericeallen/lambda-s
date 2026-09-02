@@ -15,7 +15,7 @@ over a field.
 
 Better, it **decomposes**. A unit term's variable coefficients are *scalars*
 (`vars : V → ℚ`), not per-base vectors, so a single system of equations gives an
-independent linear system for each base unit — all sharing the same coefficient
+independent linear system for each base unit, all sharing the same coefficient
 matrix. One elimination serves every base unit. That structural fact is built
 into `Term` rather than proved about it, and `Term.solves_iff` below is where it
 becomes visible.
@@ -40,14 +40,14 @@ Proved here:
 
 * the per-base decomposition (`Term.solves_iff`);
 * single-equation elimination, **sound** (`Term.solves_elim`) and **principal**
-  (`Term.elim_eq_of_solves` — any solution is *forced* to agree with it);
+  (`Term.elim_eq_of_solves`: any solution is *forced* to agree with it);
 * row reduction kills the pivot and preserves solutions (`Term.reduce_pivot`,
   `Term.solves_reduce_iff`);
 * multi-equation systems, with reduction preserving the solution set
   (`System.solves_reduceAll_iff`) and isolating the pivot
   (`System.reduceAll_pivot_zero`);
 * triangularization, terminating structurally, preserving the solution set
-  **exactly** — an `iff`, so nothing is lost and nothing gained
+  **exactly**: an `iff`, so nothing is lost and nothing gained
   (`System.solves_triangulate_iff`);
 * the rigid residual case, decided by inspection with no search
   (`System.solves_of_no_vars`, `System.solves_of_pivot_none`).
@@ -81,7 +81,7 @@ variable {B V : Type*}
 /-- An assignment sends each unification variable to a ground unit.
 
 Reducible, so `Function.update` and the rest of the `Pi` API apply to it
-directly — the same structurality choice made for `Space`. -/
+directly: the same structurality choice made for `Space`. -/
 abbrev Assign (B V : Type*) := V → Uom B
 
 /-- Applying an assignment: exponents combine linearly. -/
@@ -91,7 +91,7 @@ def eval [Fintype V] (t : Term B V) (σ : Assign B V) : Uom B :=
 @[simp] theorem exp_eval [Fintype V] (t : Term B V) (σ : Assign B V) (b : B) :
     Uom.exp (t.eval σ) b = t.base b + ∑ v, t.vars v * Uom.exp (σ v) b := rfl
 
-/-- An assignment *solves* a term when the term evaluates to the trivial unit —
+/-- An assignment *solves* a term when the term evaluates to the trivial unit,
 i.e. when the equation it encodes holds. -/
 def Solves [Fintype V] (σ : Assign B V) (t : Term B V) : Prop := t.eval σ = 1
 
@@ -276,10 +276,10 @@ theorem reduceAll_pivot_zero {sys : System B V} {t : Term B V} {v₀ : V}
 /-! ## Triangularization
 
 Repeatedly pivot on the head equation, reducing the tail against it. Recursion is
-on a list whose length strictly decreases, so **termination is structural** — no
+on a list whose length strictly decreases, so **termination is structural**: no
 measure to invent, no well-founded argument to discharge. -/
 
-/-- Reduction preserves the number of equations — it is a row operation, not an
+/-- Reduction preserves the number of equations: it is a row operation, not an
 elimination of rows. This is what makes `triangulate` structurally decreasing. -/
 @[simp] theorem length_reduceAll (sys : System B V) (t : Term B V) (v₀ : V) :
     (reduceAll sys t v₀).length = sys.length := List.length_map ..
@@ -291,7 +291,7 @@ def Pivot (B V : Type*) := Term B V → Option V
 
 /-- A pivot function is *faithful* when it finds a variable exactly when one
 occurs. Correctness of elimination (`solves_triangulate_iff`) needs none of
-this — the solution set is preserved whatever the pivot does. Faithfulness is
+this: the solution set is preserved whatever the pivot does. Faithfulness is
 what makes elimination *terminate usefully*, by guaranteeing that a `none`
 answer really does mean the equation has become rigid. -/
 structure Faithful (p : Pivot B V) : Prop where
@@ -358,7 +358,7 @@ theorem solves_of_no_vars {sys : System B V} (hv : ∀ t ∈ sys, t.vars = fun _
   · intro h t ht
     exact (Term.solves_of_no_vars t (hv t ht) σ).mpr (h t ht)
 
-/-- Solvability of a variable-free system does not depend on the assignment —
+/-- Solvability of a variable-free system does not depend on the assignment,
 so the check is a decision procedure, not a search. -/
 theorem no_vars_solves_iff_forall {sys : System B V}
     (hv : ∀ t ∈ sys, t.vars = fun _ => 0) (σ τ : Term.Assign B V) :

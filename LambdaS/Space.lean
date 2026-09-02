@@ -57,7 +57,7 @@ def ofUom (d : Uom B) : Space B PUnit := fun _ => d
 /-- **Scaling is tensoring.** `V ⊗ d` is the tensor product of `V` with the
 one-dimensional space carrying `d`, transported along `I × PUnit ≅ I`.
 
-So `⊗` is a single operator, not two that happen to share notation — the
+So `⊗` is a single operator, not two that happen to share notation: the
 scalar case is the one-point case. It holds definitionally. -/
 theorem scale_eq_tensor (V : Space B I) (d : Uom B) (i : I) :
     (V ⊗ d) i = tensor V (ofUom d) (i, PUnit.unit) := rfl
@@ -80,7 +80,7 @@ theorem scale_eq_tensor (V : Space B I) (d : Uom B) (i : I) :
 theorem dual_scale (V : Space B I) (d : Uom B) : (V ⊗ d).dual = V.dual ⊗ d⁻¹ := by
   funext i; simp [mul_comm]
 
-/-- A uniform space is *equal* to a scaled dimensionless space — not merely
+/-- A uniform space is *equal* to a scaled dimensionless space, not merely
 isomorphic to one. This equality is what structurality buys, and it is what
 makes `LambdaS.Map.svd_entry_const` a statement about types. -/
 theorem uniform_iff_scale_triv (V : Space B I) :

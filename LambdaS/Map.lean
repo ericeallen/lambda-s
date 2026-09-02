@@ -5,8 +5,8 @@ import LambdaS.Space
 
 George Hart's *Multidimensional Analysis* (1995) is the only serious theory of
 dimensioned matrices. Its central observation is that an array of dimensioned
-entries is only well-behaved when its exponent structure is **rank one** —
-entry `(j,i)` must carry `aⱼ · bᵢ` — and from there Hart derives a taxonomy of
+entries is only well-behaved when its exponent structure is **rank one**
+(entry `(j,i)` must carry `aⱼ · bᵢ`), and from there Hart derives a taxonomy of
 five classes, each licensing a different set of operations:
 
 | Hart's class        | operations licensed                    |
@@ -55,7 +55,7 @@ theorem entry_rank_one (V : Space B I) (W : Space B J) (j : J) (i : I) :
 /-! ## 1. Multipliable -/
 
 /-- **Composition.** The summand `entry V W k j * entry U V j i` does not depend
-on the summation index `j`, so the sum is dimensionally legal — and its value is
+on the summation index `j`, so the sum is dimensionally legal, and its value is
 exactly the entry of the composite `U ⊸ W`.
 
 Hart's "multipliable" is not a class one checks. It is the only thing writable. -/
@@ -64,7 +64,7 @@ theorem entry_comp (U : Space B I) (V : Space B J) (W : Space B K)
     entry V W k j * entry U V j i = entry U W k i := by
   ext b; simp
 
-/-! ## 2. Endomorphic — `V ⊸ V` -/
+/-! ## 2. Endomorphic: `V ⊸ V` -/
 
 /-- Diagonal entries of an endomorphism are dimensionless, so **trace is
 dimensionless** without a side condition. -/
@@ -80,7 +80,7 @@ theorem entry_perm_prod [Fintype I] (V : Space B I) (σ : Equiv.Perm I) :
   rw [Equiv.prod_comp σ V]
   simp
 
-/-- The identity map is dimensionless on the diagonal — and its off-diagonal
+/-- The identity map is dimensionless on the diagonal, and its off-diagonal
 entries are `0`, which inhabits *every* unit.
 
 That zero is unit-polymorphic is not a convenience here but a structural
@@ -88,13 +88,13 @@ requirement: without it neither the identity matrix nor the `n = 0` term of
 `exp` would be well-typed. It is the parametricity fact doing load-bearing work. -/
 theorem entry_id_diag (V : Space B I) (i : I) : entry V V i i = 1 := entry_diag V i
 
-/-! ## 3. Squarable — `V ⊸ V ⊗ d` -/
+/-! ## 3. Squarable: `V ⊸ V ⊗ d` -/
 
 /-- **Squaring.** `A ∘ A` does *not* typecheck for `A : V ⊸ V ⊗ d`: the inner
 codomain is `V ⊗ d` and the outer domain is `V`. What typechecks is
 `(A ⊗ d) ∘ A : V ⊸ V ⊗ d²`, and this is the identity that makes it work.
 
-The requirement it exposes — that `⊗` be functorial on spaces — is recorded as
+The requirement it exposes (that `⊗` be functorial on spaces) is recorded as
 `entry_scale_scale` below. -/
 theorem entry_square (V : Space B I) (d : Uom B) (k j i : I) :
     entry (V ⊗ d) (V ⊗ (d * d)) k j * entry V (V ⊗ d) j i
@@ -111,7 +111,7 @@ the paper test surfaced it. -/
   ext b; simp
 
 /-- **Eigenvalues.** For `A : V ⊸ V ⊗ d`, the equation `A v = λ v` forces `λ` to
-carry exactly `d` — the unit by which the map fails to be an endomorphism.
+carry exactly `d`: the unit by which the map fails to be an endomorphism.
 
 "Only squarable matrices have eigenstructure" becomes: a map has eigenvalues
 exactly when it is an endomorphism up to a scalar unit, and that scalar *is* the
@@ -119,9 +119,9 @@ unit of the eigenvalues. Read off the type; nothing declared. -/
 theorem eigenvalue_uom (V : Space B I) (d : Uom B) (i : I) : (V ⊗ d) i / V i = d := by
   ext b; simp
 
-/-! ## 4. Dimensionally symmetric — `V ⊸ dual V` -/
+/-! ## 4. Dimensionally symmetric: `V ⊸ dual V` -/
 
-/-- Entries of a map into the dual are **symmetric in their two indices** —
+/-- Entries of a map into the dual are **symmetric in their two indices**:
 Hart's "symmetric about the main diagonal", derived. -/
 theorem entry_dual_symm (V : Space B I) (j i : I) :
     entry V V.dual j i = ((V j) * (V i))⁻¹ := by
@@ -136,14 +136,14 @@ theorem weighted_norm_dimensionless (V : Space B I) (j i : I) :
 composability forces `Y = dual Y`, and torsion-freeness of the unit group forces
 `Y` to be the *dimensionless* space.
 
-So the Cholesky factor lands in `triv` — it is the whitening transform, and the
+So the Cholesky factor lands in `triv`: it is the whitening transform, and the
 type derives that rather than the programmer asserting it. -/
 theorem cholesky_factor_dimensionless {Y : Space B I} (h : Y = Y.dual) :
     Y = Space.triv B I := by
   funext i
   exact Uom.eq_inv_iff_one.mp (congrFun h i)
 
-/-! ## 5. Uniform — `triv ⊗ u` -/
+/-! ## 5. Uniform: `triv ⊗ u` -/
 
 /-- **SVD.** Every entry of a map between uniform spaces carries the *same*
 unit `w / u`.
@@ -164,7 +164,7 @@ Hart lists "left uniform" as a separate precondition for the Moore–Penrose
 pseudo-inverse. It is not separate. -/
 
 /-- `Aᵀ ∘ A` for `A : V ⊸ W` requires the codomain of `A` to be the domain of
-`Aᵀ`, i.e. `W = dual W` — which happens only when `W` is dimensionless.
+`Aᵀ`, i.e. `W = dual W`, which happens only when `W` is dimensionless.
 
 In general the composition needs a **metric** `g : W ⊸ dual W`, giving the
 normal-equations map `Aᵀ ∘ g ∘ A : V ⊸ dual V`. -/
@@ -178,9 +178,9 @@ theorem transpose_comp_direct_iff (W : Space B J) :
 
 This is where Hart's "left uniform" condition comes from: it is the case in
 which the metric the pseudo-inverse needs exists canonically. For a non-uniform
-space no canonical metric exists and one must be supplied — which is exactly
+space no canonical metric exists and one must be supplied, which is exactly
 right, since least squares on components of differing units *is* weighted least
-squares, and the weighting is a modelling choice rather than a default. -/
+squares, and the weighting is a modeling choice rather than a default. -/
 theorem uniform_canonical_metric (u : Uom B) (j i : J) :
     entry (Space.triv B J ⊗ u) (Space.triv B J ⊗ u).dual j i = (u * u)⁻¹ := by
   ext b; simp; ring

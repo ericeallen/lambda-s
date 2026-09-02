@@ -7,7 +7,7 @@ Unit correctness is **not** type safety. Kennedy makes the point sharply
 (WMM 2008): *"What 'goes wrong' if a program contains a unit error? Nothing!"* A
 unit error does not get a program stuck; it gets you a wrong number. So progress
 and preservation are vacuous here, and the semantic content of unit correctness
-has to be something else — **invariance of program behaviour under scaling**.
+has to be something else: **invariance of program behavior under scaling**.
 
 This file builds the object that invariance is stated against.
 
@@ -36,7 +36,7 @@ That pain comes from unit expressions being **syntax trees**, so substitution is
 structural and the semantics has to be transported along it.
 
 Here unit expressions are **exponent vectors** and substitution is a linear map
-on them, so `logScale_subst` is an identity between two sums — pure arithmetic,
+on them, so `logScale_subst` is an identity between two sums: pure arithmetic,
 with no coercions and no transport. The representation choice made for
 decidability in `LambdaS.Syntax` pays off again, in a place it was not chosen
 for.
@@ -126,7 +126,7 @@ def cons (ψ : Scaling B k) (r : ℝ) : Scaling B (k + 1) :=
 scaling the original under an environment extended by the scale of the
 substituted expression.
 
-Pure exponent arithmetic — no coercions, no transport. -/
+Pure exponent arithmetic: no coercions, no transport. -/
 theorem logScale_subst (ψ : Scaling B k) (t : UExp B (k + 1)) (σ : UExp B k) :
     ψ.logScale (t.subst σ) = (ψ.cons (ψ.logScale σ)).logScale t := by
   simp only [logScale, UExp.subst, cons, Rat.cast_add, Rat.cast_mul,
@@ -161,7 +161,7 @@ def pull (ψ : Scaling B k₀) (η : Fin k → UExp B k₀) : Scaling B k :=
 /-- **The substitution lemma, in general.** Scaling a substituted expression is
 scaling the original under the pulled-back scaling.
 
-Pure exponent arithmetic, as before — substitution is a linear map and `logScale`
+Pure exponent arithmetic, as before: substitution is a linear map and `logScale`
 is a linear functional, so this is a change in summation order. -/
 theorem logScale_pull (ψ : Scaling B k₀) (η : Fin k → UExp B k₀) (u : UExp B k) :
     (ψ.pull η).logScale u = ψ.logScale (substU η u) := by
@@ -239,7 +239,7 @@ and pulling back is the same as pulling back and then extending. -/
 
 /-! ## The trivial scaling
 
-Scaling everything by `1` — the identity, and the reference point the Pi theorem
+Scaling everything by `1`: the identity, and the reference point the Pi theorem
 collapses a polymorphic type down to. -/
 
 /-- The scaling that changes nothing. -/

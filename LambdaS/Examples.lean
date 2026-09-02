@@ -10,18 +10,18 @@ Every line below **runs the checker** at build time via `#guard`. If any result
 were different, this file would not compile.
 
 A note on what that does and does not establish. `#guard` executes the compiled
-`infer`, so these are *tests*, not kernel-checked proofs — kernel reduction gets
+`infer`, so these are *tests*, not kernel-checked proofs: kernel reduction gets
 stuck on the `Rat` instance chain that Mathlib's algebraic hierarchy is built
 from, which is a known cost of building on it. The correctness guarantee does
 not come from here: it comes from `LambdaS.Typing`, where `check` returns the
-derivation — so soundness holds by construction — and `check_eq` is proved in
+derivation (so soundness holds by construction) and `check_eq` is proved in
 the kernel, saying nothing well-typed is rejected. These examples show the
 verified checker *running*.
 -/
 
 namespace LambdaS.Examples
 
-/-- Four base units — note **two** of them measure Length. That is deliberate:
+/-- Four base units; note **two** of them measure Length. That is deliberate:
 it is the configuration a "one named unit per dimension" restriction forbids,
 and the one conversion factors live in. -/
 inductive Base | metre | foot | yard | kilogram | second
@@ -76,12 +76,12 @@ abbrev kg : UExp Base 0 := bu .kilogram
 abbrev sec : UExp Base 0 := bu .second
 
 /- Because unit expressions are exponent vectors, `m·s/m` and `s` are literally
-the same object — there is no normalization step, and none to get wrong. -/
+the same object: there is no normalization step, and none to get wrong. -/
 #guard (Term.div (Term.mul m sec) m) == sec
 
 /-! ## Scalars -/
 
-/-- `1.3 m` — a literal times a unit constant. -/
+/-- `1.3 m`: a literal times a unit constant. -/
 def length : Term₀ := .mul (.lit 1.3) (.ucon m)
 
 /-- `5 s`. -/
@@ -93,7 +93,7 @@ def velocity : Term₀ := .div length duration
 #guard typeOf length == some (.Q m)
 #guard typeOf velocity == some (.Q (Term.div m sec))
 
-/- Literals are dimensionless — there is no unitless *type*, only the unit `1`. -/
+/- Literals are dimensionless: there is no unitless *type*, only the unit `1`. -/
 #guard typeOf (.lit 42 : Term₀) == some (.Q 1)
 
 /-! ## The error that motivates the whole exercise -/
@@ -120,7 +120,7 @@ def volume : Term₀ := .mul (.mul (.ucon m) (.ucon m)) (.ucon m)
 /- And `m^(3/2)` really is a half-integer exponent, not an artifact. -/
 #guard (Term.rpow (Term.mul (Term.mul m m) m) (1/2)).base .metre == (3/2 : ℚ)
 
-/- The zeroth root is rejected — the side condition is real. -/
+/- The zeroth root is rejected: the side condition is real. -/
 #guard (typeOf (.root 0 volume)).isNone
 
 /-! ## Spaces
@@ -131,7 +131,7 @@ since it parameterizes a type by a single unit. -/
 
 def State : Sp Base 0 := [m, Term.div (Term.mul kg m) sec]
 
-/- Indexing reads the unit out of the space — the operational content of
+/- Indexing reads the unit out of the space: the operational content of
 "units live on spaces". -/
 #guard typeOfIn [.vec State] (.idx (.var 0) 0) == some (.Q m)
 #guard typeOfIn [.vec State] (.idx (.var 0) 1) == some (.Q (Term.div (Term.mul kg m) sec))
@@ -154,12 +154,12 @@ def W : Sp Base 0 := [sec]
 
 /-! ## Unit polymorphism
 
-The reason Kennedy's calculus exists, now over spaces — and with the dimension
+The reason Kennedy's calculus exists, now over spaces, with the dimension
 bound that lets a polymorphic function still convert.
 
 `∀u. τ` is not primitive. It is `∀δ. ∀u:δ. τ`: a unit variable bounded by a
 *dimension* variable. That is what makes it genuinely unbounded, and the guards
-below check both halves — that `δ` matches any concrete dimension on
+below check both halves: that `δ` matches any concrete dimension on
 instantiation, and that nothing concrete matches `δ` inside the binder. -/
 
 /-- The bound unit variable, inside one unit binder. -/
@@ -168,7 +168,7 @@ abbrev uvar : UExp Base 1 := Term.ofVar 0
 /-- The bound dimension variable, inside one dimension binder. -/
 abbrev dvar : DExp Dim 1 := Term.ofVar 0
 
-/-- `Λδ. Λu:δ. λ(x : Q u). x * x` — squaring, at *any* unit. -/
+/-- `Λδ. Λu:δ. λ(x : Q u). x * x`: squaring, at *any* unit. -/
 def sqr : Term₀ := .dlam (.ulam dvar (.lam (.Q uvar) (.mul (.var 0) (.var 0))))
 
 #guard typeOf sqr
@@ -195,7 +195,7 @@ declared dimension. Bounded quantification would be decoration otherwise. -/
 #guard (typeOf (sqrAt velDim m)).isNone
 #guard (typeOf (sqrAt (Term.ofBase .length) (Term.div m sec))).isNone
 
-/- Metre and foot both satisfy the Length bound — the point of bounding by
+/- Metre and foot both satisfy the Length bound: the point of bounding by
 dimension rather than by unit. -/
 #guard typeOf (sqrAt (Term.ofBase .length) ft) == some (.arrow (.Q ft) (.Q (Term.mul ft ft)))
 
@@ -212,7 +212,7 @@ def badPoly : Term₀ := .dlam (.ulam dvar (.lam (.Q uvar) (.add (.var 0) (.lit 
 
 #guard (typeOf badPoly).isNone
 
-/-- Two *distinct* unit variables cannot be added either — nested binders really
+/-- Two *distinct* unit variables cannot be added either: nested binders really
 introduce fresh variables rather than shadowing. -/
 def twoVars : Term₀ :=
   .dlam (.ulam dvar (.ulam dvar
@@ -225,7 +225,7 @@ def twoVars : Term₀ :=
 This is what the dimension bound buys, and what an unbounded quantifier cannot
 express: a polymorphic function that converts its argument. -/
 
-/-- `Λu:Length. λ(x : Q u). convert x u metre` — take a length in any unit,
+/-- `Λu:Length. λ(x : Q u). convert x u metre`: take a length in any unit,
 return it in metres. -/
 def inMetres : Term₀ :=
   .ulam (Term.ofBase .length) (.lam (.Q uvar) (.convert (.var 0) uvar m.weaken))
@@ -233,7 +233,7 @@ def inMetres : Term₀ :=
 #guard typeOf inMetres
     == some (.all (Term.ofBase .length) (.arrow (.Q uvar) (.Q m.weaken)))
 
-/- It applies at any Length unit — that is the whole point. -/
+/- It applies at any Length unit; that is the whole point. -/
 #guard typeOf (.uapp inMetres ft) == some (.arrow (.Q ft) (.Q m))
 #guard typeOf (.uapp inMetres m) == some (.arrow (.Q m) (.Q m))
 
@@ -244,7 +244,7 @@ def inMetres : Term₀ :=
 is rejected: `dimOf` reports the dimension *variable* `δ`, which is not the
 dimension of the metre, so `SameDim` fails. This is the rejection an unbounded
 quantifier ought to give, and it is why the bound is a dimension variable rather
-than the trivial dimension — under the trivial dimension `u` would be claimed
+than the trivial dimension: under the trivial dimension `u` would be claimed
 dimensionless and the conversion would wrongly be accepted. -/
 def inMetresFree : Term₀ :=
   .dlam (.ulam dvar (.lam (.Q uvar) (.convert (.var 0) uvar m.weaken)))
@@ -266,7 +266,7 @@ abbrev G : UExp Base 0 :=
 abbrev c : UExp Base 0 := Term.div m sec
 
 /- **The Planck length**, √(ħG/c³). Three constants, three base dimensions, an
-exponent matrix of rank 3 — so by the Pi theorem the combination with dimension
+exponent matrix of rank 3, so by the Pi theorem the combination with dimension
 Length is *unique*. The checker confirms the standard formula lands on metres. -/
 def planckLength : Term₀ :=
   .root 2 (.div (.mul (.ucon hbar) (.ucon G))
@@ -285,7 +285,7 @@ def planckWrong : Term₀ :=
 dimension 4 and the kinetic term contributes `2[ψ] + 1`, forcing `[ψ] = 3/2`.
 
 This is the case that matters, and it is *not* like the Planck length. There the
-half-powers cancel inside the root — `ħG/c³` is already `m²`, so every
+half-powers cancel inside the root: `ħG/c³` is already `m²`, so every
 intermediate has integer exponents and F# types it fine after grouping. A
 fermion field carries `3/2` **standing alone**, appearing by itself in every
 interaction term with nothing to group against. No integer-exponent units system
@@ -297,7 +297,7 @@ def fermionField : Term₀ := .root 2 (.mul (.ucon kg) (.mul (.ucon kg) (.ucon k
 /- The exponent really is 3/2. -/
 #guard (Term.rpow (Term.mul kg (Term.mul kg kg)) (1/2)).base .kilogram == (3/2 : ℚ)
 
-/- A fermion field cannot be added to a mass or to a mass squared — the
+/- A fermion field cannot be added to a mass or to a mass squared: the
 half-integer is not an integer in disguise. -/
 #guard (typeOf (.add fermionField (.ucon kg))).isNone
 #guard (typeOf (.add fermionField (.ucon (Term.mul kg kg)))).isNone
@@ -313,7 +313,7 @@ end Physics
 /-! ## The base-measure problem, as a type error
 
 A probability density over a space whose measure carries `μ` itself carries
-`μ⁻¹` — that is what makes `∫ p dμ` dimensionless. So `log p` is **not**
+`μ⁻¹`; that is what makes `∫ p dμ` dimensionless. So `log p` is **not**
 well-typed, which is the base-measure problem: a density means nothing except
 relative to the measure it was taken against, and representing a distribution by
 its density silently discards that measure.
@@ -324,7 +324,7 @@ checker rejects it. -/
 
 namespace Measure
 
-/-- A probability density over a length-parameterised space: `m⁻¹`. -/
+/-- A probability density over a length-parameterized space: `m⁻¹`. -/
 abbrev density : UExp Base 0 := Term.inv m
 
 /-- A wavefunction is a *half*-density, at `m^(-1/2)`. Squaring it gives a
@@ -366,8 +366,8 @@ terms of other units, `convert` walks a declared structure, and two routes from
 valuation* (`LambdaS.Conversion`), so `convChain_eq` makes path independence a
 theorem rather than a proof obligation on declarations.
 
-What the checker enforces is the side condition — that the two units measure the
-same thing — and that is `SameDim`. -/
+What the checker enforces is the side condition (that the two units measure the
+same thing), and that is `SameDim`. -/
 
 section Conversion
 
@@ -377,7 +377,7 @@ section Conversion
 /- Metre and second do not. -/
 #guard !decide (SameDim Δ₀ (m : UExp Base 0) sec)
 
-/- `m/ft` is a perfectly good unit, and it is **dimensionless** — which is
+/- `m/ft` is a perfectly good unit, and it is **dimensionless**, which is
 exactly what a conversion factor is, and why it can itself be named. Under the
 "at most one named unit per dimension" restriction this expression is illegal. -/
 #guard decide (SameDim Δ₀ (Term.div m ft) (1 : UExp Base 0))
@@ -389,7 +389,7 @@ exponent vectors, so nothing has been identified. -/
 /- Converting `1.3 m` into feet: well-typed, at unit `ft`. -/
 #guard typeOf (.convert length m ft) == some (.Q ft)
 
-/- Converting a length into seconds is rejected — statically, by `SameDim`. -/
+/- Converting a length into seconds is rejected statically, by `SameDim`. -/
 #guard (typeOf (.convert length m sec)).isNone
 
 /- The annotation must match: `convert` states the unit it is converting *from*,
@@ -403,7 +403,7 @@ wrong and the term does not typecheck. -/
     == some (.Q (Term.div ft sec))
 #guard (typeOf (.convert velocity (Term.div m sec) ft)).isNone
 
-/- Speed of light in metres per second converted to feet per second — the shape
+/- Speed of light in metres per second converted to feet per second: the shape
 of every real unit conversion, and the round trip is the identity because
 `conv_symm` says the factors are inverse. -/
 #guard typeOf (.convert (.convert velocity (Term.div m sec) (Term.div ft sec))
@@ -416,11 +416,11 @@ end Conversion
 `unit yard = 3 foot` declares a generator **and** an equation. Three such
 declarations give two routes from yard to metre, which is the Comp 311 bug. Here
 the redundant declaration is either arithmetically right or the system has no
-solution — there is never a choice of route to get wrong. -/
+solution: there is never a choice of route to get wrong. -/
 
 section Declarations
 
-/-- Base units of equal declared dimension are interchangeable — via
+/-- Base units of equal declared dimension are interchangeable, via
 `dimOf_ofBase` rather than `decide`, since kernel reduction sticks on `ℚ`'s
 instance chain. The dimension equation is `rfl` for any two Length units. -/
 theorem sameDim_bu {b c : Base}
@@ -439,10 +439,10 @@ def dYardFoot : Decl Base := ⟨.yard, 3, by norm_num, ft⟩
 /-- `unit foot = 0.3048 metre` -/
 def dFootMetre : Decl Base := ⟨.foot, 3048 / 10000, by norm_num, m⟩
 
-/-- `unit yard = 0.9144 metre` — the redundant declaration, stated correctly. -/
+/-- `unit yard = 0.9144 metre`: the redundant declaration, stated correctly. -/
 def dYardMetre : Decl Base := ⟨.yard, 9144 / 10000, by norm_num, m⟩
 
-/-- `unit yard = 0.9 metre` — the same declaration, stated wrongly. This is the
+/-- `unit yard = 0.9 metre`: the same declaration, stated wrongly. This is the
 one that would have made `convert` route-dependent. -/
 def dYardMetreBad : Decl Base := ⟨.yard, 9 / 10, by norm_num, m⟩
 
@@ -452,13 +452,13 @@ Length. `unit yard = 3 second` would fail here. -/
 #guard decide (Decl.Sound (D := Dim) dFootMetre)
 #guard decide (Decl.Sound (D := Dim) dYardMetre)
 
-/- The consistency test is exact rational arithmetic — no reals, no rounding. -/
+/- The consistency test is exact rational arithmetic: no reals, no rounding. -/
 #guard dYardFoot.factor * dFootMetre.factor == dYardMetre.factor
 #guard dYardFoot.factor * dFootMetre.factor != dYardMetreBad.factor
 
 /-- **The consistent set forces the redundant factor.** Any valuation satisfying
 the first two determines the third, so the second route cannot disagree with the
-first — it is not free to. -/
+first; it is not free to. -/
 theorem yard_forced (ψ : Scaling Base 0)
     (h1 : Decl.Satisfies ψ dYardFoot) (h2 : Decl.Satisfies ψ dFootMetre)
     (h3 : Decl.Satisfies ψ dYardMetre) :
@@ -476,11 +476,11 @@ theorem yard_conflict :
         ∧ Decl.Satisfies ψ dYardMetreBad :=
   not_satisfiable_of_chain rfl rfl rfl (by norm_num [dYardFoot, dFootMetre, dYardMetreBad])
 
-/-! ### The valuation the declarations determine, and the machine using it
+/-! ### The valuation the declarations determine, and the compiled evaluator using it
 
 `yard_conflict` says the bad set has no valuation; this is the other half,
 exhibited rather than asserted: the consistent set has one, written down. Its
-factors then reach the machine through `evalC_convert_declared` — the number the
+factors then reach the compiled evaluator through `evalC_convert_declared`: the number the
 evaluator multiplies by is the number the declaration names, with no route
 through an informal reading of "3". -/
 
@@ -515,16 +515,16 @@ theorem ψyd_yardMetre : Decl.Satisfies ψyd dYardMetre := by
   rw [Real.exp_log (by norm_num), Real.exp_zero]
   norm_num
 
-/-- **The consistent set is satisfiable** — the counterpart to `yard_conflict`,
+/-- **The consistent set is satisfiable**: the counterpart to `yard_conflict`,
 with the witness constructed rather than assumed. -/
 theorem yard_satisfiable :
     ∃ ψ : Scaling Base 0, Decl.Satisfies ψ dYardFoot ∧ Decl.Satisfies ψ dFootMetre
       ∧ Decl.Satisfies ψ dYardMetre :=
   ⟨ψyd, ψyd_yardFoot, ψyd_footMetre, ψyd_yardMetre⟩
 
-/-- **One yard is three feet, on the machine.** Evaluating `(1 yd) in ft` with
+/-- **One yard is three feet, on the compiled evaluator.** Evaluating `(1 yd) in ft` with
 the conversion oracle the declarations determine multiplies by exactly the
-declared `3` and lands at `ft` — `evalC_convert_declared`, instantiated. -/
+declared `3` and lands at `ft`: `evalC_convert_declared`, instantiated. -/
 theorem one_yard_is_three_feet :
     ∃ n, evalC (conv ψyd) n [] ((.convert (.ucon yd) yd ft : Term₀))
       = some (.scalar ⟨3, ft⟩) := by
@@ -534,7 +534,7 @@ theorem one_yard_is_three_feet :
   show some (Val.scalar ⟨(1 : ℝ) * ((3 : ℚ) : ℝ), ft⟩) = some (Val.scalar ⟨(3 : ℝ), ft⟩)
   norm_num
 
-/-- And directly to metres, by the redundant declaration — the same number the
+/-- And directly to metres, by the redundant declaration: the same number the
 chain through feet produces, which is `yard_forced` made numeric. -/
 theorem one_yard_in_metres :
     ∃ n, evalC (conv ψyd) n [] ((.convert (.ucon yd) yd m : Term₀))
@@ -554,23 +554,23 @@ Attempting the type-soundness proof turned up a genuine defect in `Ty.subst`.
 
 Inside `∀u. τ`, de Bruijn index 0 is the **bound** variable and 1 is the outer
 one, so substituting for the outer variable must leave the binder alone. The
-original definition recursed as `τ.subst σ.weaken`, which substitutes index 0 —
-the bound variable — and shifts the outer one down into its place. `Ty.weaken`
+original definition recursed as `τ.subst σ.weaken`, which substitutes index 0
+(the bound variable) and shifts the outer one down into its place. `Ty.weaken`
 had the matching defect, inserting the fresh variable at index 0 rather than past
 the binder.
 
 Nothing here reached it. Every single-binder use is unaffected, and the one test
 with nested unit binders (`twoVars`) is *rejected* by the checker before
 substitution runs. The two definitions were also wrong in a way that cancelled,
-so `subst_weaken` — the only theorem about them — held regardless.
+so `subst_weaken` (the only theorem about them) held regardless.
 
 It took writing the soundness proof to surface it: the composition lemma for
 substitution refused to hold, and the reason was that `liftU` had no counterpart
 in the quantifier case. The fix was to define `subst` and `weaken` as instances
 of a simultaneous substitution that lifts properly. These guards pin the
-corrected behaviour.
+corrected behavior.
 
-That is the argument for mechanising a calculus rather than describing one. The
+That is the argument for mechanizing a calculus rather than describing one. The
 defect is invisible to inspection, invisible to the examples, and invisible to
 the one property anybody would have thought to state about it. -/
 
@@ -578,17 +578,17 @@ section SubstRegression
 
 abbrev dLen : DExp Dim 0 := Term.ofBase Dim.length
 
-/-- `∀u. Q v₁` — the body mentions the *outer* variable, not the bound one. -/
+/-- `∀u. Q v₁`: the body mentions the *outer* variable, not the bound one. -/
 abbrev polyOuter : Ty Base Dim 0 1 := .all dLen (.Q (Term.ofVar 1))
 
 /- Substituting for the outer variable leaves the binder untouched. -/
 #guard Ty.subst polyOuter m == Ty.all dLen (.Q (bu Base.metre : UExp Base 1))
 
-/- And does not capture the bound variable — which is precisely what the original
+/- And does not capture the bound variable, which is precisely what the original
 definition did. -/
 #guard Ty.subst polyOuter m != Ty.all dLen (.Q (Term.ofVar 0))
 
-/-- `∀u. Q v₀` — the body mentions the bound variable. -/
+/-- `∀u. Q v₀`: the body mentions the bound variable. -/
 abbrev polyBound : Ty Base Dim 0 0 := .all dLen (.Q (Term.ofVar 0))
 
 /- Weakening shifts the outer variables past the binder and leaves the bound one
@@ -610,7 +610,7 @@ grammar can miss both. Unit expressions are the free abelian group: a type may
 be indexed by an algebraic combination of *bound* unit variables, and a
 measurement is a literal times a unit constant at any compound unit. -/
 
-/-- `Λu:Length. Λv:Time. λx : Q (u·v). x` — a polymorphic identity at a
+/-- `Λu:Length. Λv:Time. λx : Q (u·v). x`: a polymorphic identity at a
 compound unit built from two distinct bound variables. Inside the two binders,
 de Bruijn variable 1 is `u` and 0 is `v`. -/
 def compoundPoly : Term₀ :=
@@ -624,19 +624,19 @@ def compoundPoly : Term₀ :=
 
 /-- `5 m/s`: a literal times the unit constant at a compound unit. The type is
 `Q (1 · m/s)`, and the exponent-vector representation makes that the *same*
-index as `Q (m/s)` — the `#guard` compares the vectors. -/
+index as `Q (m/s)`; the `#guard` compares the vectors. -/
 def fiveMps : Term₀ := .mul (.lit 5) (.ucon (Term.div m sec))
 
 #guard typeOf fiveMps == some (.Q (Term.div m sec))
 
 /-! ## The drift diagnostic, exercised
 
-Three programs, three answers. Converting metres to feet and back cancels —
+Three programs, three answers. Converting metres to feet and back cancels:
 `unitDrift` answers `1`, and the result is unit-system independent. Converting
-one way does not — the drift is `m/ft`, and the diagnostic names it. And a sum
+one way does not: the drift is `m/ft`, and the diagnostic names it. And a sum
 whose branches share a variable carries the branches' shared drift. -/
 
-/-- `x : Q m ⊢ (x in ft) in m` — a round trip. -/
+/-- `x : Q m ⊢ (x in ft) in m`: a round trip. -/
 def roundTrip : Term₀ := .convert (.convert (.var 0) m ft) ft m
 
 /-- `x : Q m ⊢ x in ft`, left in feet: drifted. -/
@@ -656,7 +656,7 @@ def oneWayDeriv : HasTy Δ₀ (scalarCtx [m]) oneWay (.Q ft) :=
 
 /-- Addition demands agreeing branch ratios, and `x in ft + x in ft` has them:
 both branches carry the same variable's ratio times `m/ft`. Note that
-`x in ft + y in ft` for *distinct* variables is rightly outside the relation —
+`x in ft + y in ft` for *distinct* variables is rightly outside the relation:
 its branches' ratios differ at some environments, and indeed that program is
 not scale-invariant. -/
 def addSame : Term₀ := .add (.convert (.var 0) m ft) (.convert (.var 0) m ft)
@@ -691,5 +691,63 @@ def addAssocDeriv : HasTy Δ₀ (scalarCtx [m, m]) addAssoc (.Q (Term.mul ft ft)
 reported. -/
 #guard (unitDrift addAssocDeriv).map (· == Term.div (Term.mul m m) (Term.mul ft ft))
   == some true
+
+/-! ## The coherent fundamental theorem, at a rescaling that moves a dimension
+
+`fundamental` quantifies over dimension rescalings `Φ`. This section
+instantiates it at a `Φ` that is not the identity: it multiplies every Length
+by 2 and fixes Mass and Time. The term is a conversion from meters to feet, so
+the instantiation exercises the `convert` case of the theorem, the case that
+requires coherence. -/
+
+section MovingRescale
+
+/-- A dimension rescaling that doubles Length and fixes Mass and Time. In log
+coordinates the Length entry is `log 2`, which is nonzero, so this rescaling
+moves a dimension. -/
+noncomputable def ΦDouble : Scaling Dim 0 where
+  base
+    | .length => Real.log 2
+    | .mass => 0
+    | .time => 0
+  vars i := i.elim0
+
+/-- `ΦDouble` is not the trivial rescaling: it moves the Length dimension. -/
+theorem ΦDouble_moves_length : ΦDouble.base Dim.length ≠ 0 :=
+  ne_of_gt (Real.log_pos (by norm_num))
+
+/-- The unit rescaling `ΦDouble` pulls back to: each base unit scales by the
+factor of its dimension, so meter, foot, and yard all scale by 2 while
+kilogram and second are fixed. -/
+noncomputable def ψDouble : Scaling Base 0 where
+  base b := ∑ d, ((UnitSys.dim (D := Dim) b).base d : ℝ) * ΦDouble.base d
+  vars i := i.elim0
+
+/-- `ψDouble` factors through dimension via `ΦDouble`, by construction: its
+`base` field is definitionally the sum `Scaling.Factors` requires. -/
+theorem ψDouble_factors : ψDouble.Factors Δ₀ ΦDouble where
+  base _ := rfl
+  vars i := i.elim0
+
+/-- `λ(x : Q m). convert x m ft`, closed and parametric: the conversion is the
+only non-variable subterm, and `Tm.Parametric` admits `convert`. -/
+def cvtMFDeriv : HasTy Δ₀ ([] : Ctx Base Dim 0 0)
+    (.lam (.Q m) (cvtTm m ft)) (.arrow (.Q m) (.Q ft)) :=
+  .lam (cvtDeriv sameDim_m_ft)
+
+/-- **`fundamental`, instantiated at a rescaling that moves a dimension.** The
+conversion program is related to itself under `ΦDouble`, which rescales Length
+by 2. Unfolding `RelCo` at the arrow type: for inputs related by
+`ψDouble.scale m`, the outputs are related by `ψDouble.scale ft`. The `convert`
+case of `fundamental` carries the content here, since the conversion factor
+`conv V m ft` must be invariant under the rescaling, and coherence of
+`ψDouble` (every Length unit scales by the same factor 2) is exactly what
+makes it so. -/
+theorem fundamental_at_moving_rescale (V : Scaling Base 0) :
+    RelCo Δ₀ ΦDouble (.arrow (.Q m) (.Q ft)) ψDouble
+      (den V cvtMFDeriv PUnit.unit) (den (V.comp ψDouble) cvtMFDeriv PUnit.unit) :=
+  fundamental cvtMFDeriv trivial V ψDouble ΦDouble ψDouble_factors trivial
+
+end MovingRescale
 
 end LambdaS.Examples

@@ -19,12 +19,12 @@ environment must assign each unit variable a unit whose *dimension* is the one
 the static context declared. `dimOf_substU` then says grounding commutes with
 taking dimensions. That is the only genuinely dimensional lemma in the file, and
 because units are exponent vectors it is a Fubini argument rather than an
-induction — the same simplification Kennedy identifies as the payoff of treating
+induction: the same simplification Kennedy identifies as the payoff of treating
 units as an abelian group rather than as syntax, here strengthened by the
 representation being a vector rather than a normal form.
 
-Everything else — that grounding commutes with product, quotient and rational
-power, that it composes, that weakening is invisible to it — is discharged in
+Everything else (that grounding commutes with product, quotient and rational
+power, that it composes, that weakening is invisible to it) is discharged in
 `LambdaS.Syntax` by linear algebra.
 
 ## What is proved
@@ -32,8 +32,8 @@ power, that it composes, that weakening is invisible to it — is discharged in
 If evaluation returns a value, that value has the type the checker predicted, at
 every type and every scope: closures, unit abstraction and dimension abstraction
 included. Totality is not claimed here; a fuel-bounded evaluator cannot have it
-without a normalisation argument, and `none` stays ambiguous between ill-typed
-and out-of-fuel. `LambdaS.Normalization` supplies the normalisation argument,
+without a normalization argument, and `none` stays ambiguous between ill-typed
+and out-of-fuel. `LambdaS.Normalization` supplies the normalization argument,
 and with it the "evaluation succeeds" statement at the whole language.
 -/
 
@@ -195,8 +195,8 @@ theorem ValTy.matrix_inv {v : Val R B D} {V W : Sp B 0} (h : ValTy v (.lin V W))
 /-! ## The theorem
 
 Strong induction on the fuel, then ordinary induction on the term. The fuel
-induction is needed only where evaluation leaves the term — entering a closure
-body — and the term induction handles everything else, exactly as in the System F
+induction is needed only where evaluation leaves the term (entering a closure
+body), and the term induction handles everything else, exactly as in the System F
 development. -/
 
 theorem eval_sound (cf : UExp B 0 → UExp B 0 → R) :

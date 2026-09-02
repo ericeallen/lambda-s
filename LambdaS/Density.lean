@@ -9,10 +9,10 @@ a time, three things usually treated as unrelated:
 
 | `w` | what it is | domain |
 |-----|------------|--------|
-| `0`   | ordinary scalar functions | — |
+| `0`   | ordinary scalar functions | – |
 | `1/2` | half-densities: `L2` amplitudes, wavefunctions | quantum mechanics |
 | `1`   | probability densities | statistics |
-| `-1`  | the measure itself | — |
+| `-1`  | the measure itself | – |
 
 The half-density case is a pleasing convergence: the design's L² space was
 derived purely from the normalization condition `∫|ψ|² dx = 1`, and it turns
@@ -26,7 +26,7 @@ density `p` **fails to typecheck**. That is the base-measure problem: a density
 only means something relative to the measure it was taken against, and
 representing a distribution by its density silently discards that measure.
 Radul and Alexeev (arXiv:2010.09647) identify exactly this failure in
-probabilistic programming systems, and solve it by library convention —
+probabilistic programming systems, and solve it by library convention:
 standardizing on Hausdorff measure and tracking corrections in a `Bijector`
 architecture. Here it is a *type error* instead, and the tracking is inferred.
 
@@ -41,7 +41,7 @@ remember.
 
 A metric is a map `V ⊸ dual V ⊗ d`, so its entries carry `d/(δᵢδⱼ)` and lowering
 an index shifts a unit by `d`. The invariant volume element then works out to
-`d^(n/2)` — independent of the coordinate units, as it must be.
+`d^(n/2)`, independent of the coordinate units, as it must be.
 
 Note the exponent. Rational weights are not a convenience here: `w = 1/2` for
 wavefunctions and `n/2` for volume elements in odd dimension both require them.
@@ -71,7 +71,7 @@ theorem density_mul (μ : Uom B) (w₁ w₂ : ℚ) (i : I) :
   simp only [density_apply, ← Uom.rpow_add]
   ring_nf
 
-/-- **`|ψ|²` of a half-density is a weight-1 density** — that is, exactly the
+/-- **`|ψ|²` of a half-density is a weight-1 density**: that is, exactly the
 thing that can be integrated. The normalization condition of quantum mechanics
 and the defining property of a probability density are the same statement at
 two different weights. -/
@@ -97,7 +97,7 @@ theorem ratio_weight_zero (μ : Uom B) (w : ℚ) (i : I) :
   simp
 
 /-- A density of nonzero weight is *not* dimensionless, unless the measure
-itself is. This is the statement that `log p` genuinely fails — the failure is
+itself is. This is the statement that `log p` genuinely fails: the failure is
 not an artifact of how the weight is written. -/
 theorem density_ne_triv (μ : Uom B) {w : ℚ} (hw : w ≠ 0) (i : I) {b : B}
     (hμ : Uom.exp μ b ≠ 0) : Density μ w I i ≠ Space.triv B I i := by
@@ -113,7 +113,7 @@ theorem density_ne_triv (μ : Uom B) {w : ℚ} (hw : w ≠ 0) (i : I) {b : B}
 /-! ## General relativity, on the same machinery -/
 
 /-- A **metric** is a map `V ⊸ dual V ⊗ d`, where `d` is the unit of the
-invariant interval. Its entries carry `d / (δⱼ δᵢ)` — symmetric in the two
+invariant interval. Its entries carry `d / (δⱼ δᵢ)`, symmetric in the two
 indices, as a metric must be, and dimensionally consistent with `gᵢⱼxⁱxʲ`
 having unit `d`. -/
 theorem metric_entry (V : Space B I) (d : Uom B) (j i : I) :
@@ -127,7 +127,7 @@ theorem lower_index (V : Space B I) (d : Uom B) (i : I) :
   ext b; simp; ring
 
 /-- **The interval is invariant.** Contracting a vector twice against the metric
-lands at `d`, whatever units the coordinates carry — which is the statement that
+lands at `d`, whatever units the coordinates carry, which is the statement that
 the metric determines a coordinate-independent scale. -/
 theorem interval_unit (V : Space B I) (d : Uom B) (j i : I) :
     V j * entry V (V.dual ⊗ d) j i * V i = d := by
