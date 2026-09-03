@@ -698,6 +698,58 @@ reported. -/
 #guard (unitDrift addAssocDeriv).map (· == Term.div (Term.mul m m) (Term.mul ft ft))
   == some true
 
+/-! ## The generic caster
+
+Under `∀δ. ∀u:δ`, conversion out of `u` is not blocked wholesale: it can
+target any expression of dimension `δ`, and in particular another variable
+bounded by the same `δ`. The generic caster
+
+`Λδ. Λu:δ. Λv:δ. λx:Q u. convert x u v`
+
+typechecks, at the polymorphic cast type, and instantiating both unit
+quantifiers at same-dimension ground units yields an ordinary cast. What
+remains rejected is conversion from `u` to a *concrete* unit, since no
+concrete unit has dimension `δ`. The caster is a term the two abstraction
+theorems separate: coherent rescalings give `u` and `v` one shared factor
+and leave it invariant; independent factors move it. -/
+
+section Caster
+
+/-- The single dimension variable, seen under one dimension binder. -/
+private abbrev δVar : DExp Dim 1 := Term.ofVar 0
+/-- The outer unit variable `u`, seen under two unit binders. -/
+private abbrev castU : UExp Base 2 := Term.ofVar 1
+/-- The inner unit variable `v`. -/
+private abbrev castV : UExp Base 2 := Term.ofVar 0
+
+/-- `Λδ. Λu:δ. Λv:δ. λx:Q u. convert x u v`. -/
+def caster : Term₀ :=
+  .dlam (.ulam δVar (.ulam δVar
+    (.lam (.Q castU) (.convert (.var 0) castU castV))))
+
+/- The caster typechecks, at exactly the polymorphic cast type. -/
+#guard typeOf caster ==
+  some (.allDim (.all δVar (.all δVar (.arrow (.Q castU) (.Q castV)))))
+
+/- Instantiated at Length, meter, and foot it is a meter-to-foot cast. -/
+#guard typeOf (.uapp (.uapp (.dapp caster (Term.ofBase Dim.length)) m) ft) ==
+  some (.arrow (.Q m) (.Q ft))
+
+/-- One δ-bounded variable, converting to a concrete unit. -/
+private abbrev castU1 : UExp Base 1 := Term.ofVar 0
+
+/- Conversion from `u` to a concrete unit is rejected: `metre` has dimension
+Length, not `δ`. -/
+#guard (typeOf (.dlam (.ulam δVar (.lam (.Q castU1)
+  (.convert (.var 0) castU1 (Term.ofBase Base.metre)))))).isNone
+
+/- The self-cast `u` to `u` is the one conversion a single δ-bounded
+variable admits, and it typechecks. -/
+#guard (typeOf (.dlam (.ulam δVar (.lam (.Q castU1)
+  (.convert (.var 0) castU1 castU1))))).isSome
+
+end Caster
+
 /-! ## The coherent fundamental theorem, at a rescaling that moves a dimension
 
 `fundamental` quantifies over dimension rescalings `Φ`. This section
