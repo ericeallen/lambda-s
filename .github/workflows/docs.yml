@@ -1,8 +1,11 @@
 name: Docs
 
+# Manual-only while the repository is private: the docs build is heavy
+# (doc-gen4 over the mathlib closure) and Pages is not yet enabled.
+# Restore the push trigger when the repository goes public:
+#   push:
+#     branches: [main]
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
