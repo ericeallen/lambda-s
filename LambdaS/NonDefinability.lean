@@ -152,6 +152,109 @@ theorem no_newton_seed {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
   rw [← not_isEmpty_iff]
   simp [sqrt_not_definable hb]
 
+/-! ## Lifting to the term grammar of Λs itself
+
+`sqrt_not_definable` speaks about `Arith`, a grammar defined in this file. The
+design claim is about Λs: no term of the calculus built from variables,
+rational literals, multiplication, division, and addition computes a square
+root. This section closes the gap between the two. `Tm.ArithOnly` carves the
+arithmetic fragment out of `Tm`, in the style of `Tm.Parametric` and
+`Tm.ConvertFree`; `arith_of_hasTy` reflects every typing derivation of an
+arithmetic term over a scalar context into `Arith`; and the grammar-level
+theorem then transfers verbatim.
+
+The caveat recorded at `sqrt_not_definable`, that `ucon` inhabits `Q u` in any
+context so the bare *type* is inhabited, disappears here: `ucon` is not an
+arithmetic operation and `ArithOnly` excludes it, so the term-level statement
+needs no qualification. -/
+
+section TermLevel
+
+variable {B D : Type} [Fintype B] [UnitSys B D] {j k : ℕ}
+variable {Δ : DCtx D j k}
+
+/-- A term of Λs lies in the **arithmetic fragment** when it is built from
+variables, rational literals, multiplication, division, and addition, and
+nothing else. In particular `ucon`, `root`, `convert`, `log`, `exp`, and every
+binder and application form are excluded. Same style as `Tm.Parametric` and
+`Tm.ConvertFree`: a predicate on terms, not on derivations, which by uniqueness
+of derivations loses nothing. -/
+def _root_.LambdaS.Tm.ArithOnly : {j k : ℕ} → Tm B D j k → Prop
+  | _, _, .var _ => True
+  | _, _, .lit _ => True
+  | _, _, .mul a b => a.ArithOnly ∧ b.ArithOnly
+  | _, _, .div a b => a.ArithOnly ∧ b.ArithOnly
+  | _, _, .add a b => a.ArithOnly ∧ b.ArithOnly
+  | _, _, _ => False
+
+/-- **Reflection.** A typing derivation of an arithmetic term over a scalar
+context lands in the `Arith` grammar. `scalarCtx us` assigns type `Q us[n]` to
+de Bruijn variable `n`, and `Arith.var` records only membership of the unit in
+the context, so the variable case collapses to a lookup. Everything else is the
+observation that each arithmetic typing rule is an `Arith` constructor. -/
+theorem arith_of_hasTy {us : List (UExp B k)} {e : Tm B D j k} :
+    ∀ {w : UExp B k}, HasTy Δ (scalarCtx us) e (.Q w) → e.ArithOnly →
+      Nonempty (Arith us w) := by
+  induction e
+  case var n =>
+    intro w d _
+    cases d with
+    | var h =>
+      simp only [scalarCtx, List.getElem?_map, Option.map_eq_some_iff] at h
+      obtain ⟨u, hu, huw⟩ := h
+      obtain rfl : u = w := by injection huw
+      exact ⟨.var (List.mem_of_getElem? hu)⟩
+  case lit q =>
+    intro w d _
+    cases d
+    exact ⟨.lit q⟩
+  case mul a b iha ihb =>
+    intro w d ha
+    cases d with
+    | mul da db =>
+      obtain ⟨ea⟩ := iha da ha.1
+      obtain ⟨eb⟩ := ihb db ha.2
+      exact ⟨.mul ea eb⟩
+  case div a b iha ihb =>
+    intro w d ha
+    cases d with
+    | div da db =>
+      obtain ⟨ea⟩ := iha da ha.1
+      obtain ⟨eb⟩ := ihb db ha.2
+      exact ⟨.div ea eb⟩
+  case add a b iha ihb =>
+    intro w d ha
+    cases d with
+    | add da db =>
+      obtain ⟨ea⟩ := iha da ha.1
+      obtain ⟨eb⟩ := ihb db ha.2
+      exact ⟨.add ea eb⟩
+  all_goals exact fun _ ha => ha.elim
+
+/-- **Square root is not definable in Λs.** The paper's sentence, at the
+calculus's own term grammar: given a single argument of unit `u²`, no Λs term
+built from variables, rational literals, and the field operations has type
+`Q u`. This is `sqrt_not_definable` lifted from the self-contained `Arith`
+grammar to `Tm` via the reflection, and the `ucon` caveat is gone because
+`ArithOnly` excludes `ucon`. -/
+theorem sqrt_not_definable_tm {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
+    ¬ ∃ (e : Tm B D j k) (_ : HasTy Δ (scalarCtx [Term.mul u u]) e (.Q u)),
+      e.ArithOnly := by
+  rintro ⟨e, d, ha⟩
+  obtain ⟨a⟩ := arith_of_hasTy d ha
+  exact not_inSpan_sq hb (arith_inSpan a)
+
+/-- The Newton-iteration reading at the term level: any well-typed Λs candidate
+for a seed of unit `u` from an argument at `u²` must step outside the field
+operations. The iteration body `(x + a/x)/2` is well-typed at `Q u`; the seed
+is what cannot be written. -/
+theorem no_newton_seed_tm {u : UExp B k} {b : B} (hb : u.base b ≠ 0)
+    {e : Tm B D j k} (d : HasTy Δ (scalarCtx [Term.mul u u]) e (.Q u)) :
+    ¬ e.ArithOnly :=
+  fun ha => sqrt_not_definable_tm hb ⟨e, d, ha⟩
+
+end TermLevel
+
 /-! ## Conversion is not definable either
 
 The results above concern `sqrt`, and there they are weaker than the literature:

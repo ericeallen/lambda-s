@@ -240,45 +240,6 @@ hypothesis), factor it through the span of the exponent vectors, and extend to
 all of `B → ℚ`. The question of whether real dependencies among rational
 vectors exceed the rational ones never arises. -/
 
-/-- **Prescribed values extend to a linear map when dependencies are
-respected.** Given finite families `r` in `M` and `v` in `V` over a field `K`,
-a single linear map sends each `r i` to `v i` exactly when every `K`-linear
-dependency among the `r i` also annihilates the corresponding combination of
-the `v i`. This is the extension step behind `dependency_sufficient`: the value
-assignment factors through the span of the family and then extends to the whole
-space. -/
-theorem exists_linearMap_of_dependencies {K M V : Type*} [Field K]
-    [AddCommGroup M] [Module K M] [AddCommGroup V] [Module K V]
-    {ι : Type*} [Fintype ι] [DecidableEq ι] (r : ι → M) (v : ι → V)
-    (h : ∀ c : ι → K, ∑ i, c i • r i = 0 → ∑ i, c i • v i = 0) :
-    ∃ φ : M →ₗ[K] V, ∀ i, φ (r i) = v i := by
-  -- The hypothesis says the value map kills the kernel of the combination map.
-  have hker : LinearMap.ker (Fintype.linearCombination K r)
-      ≤ LinearMap.ker (Fintype.linearCombination K v) := by
-    intro c hc
-    rw [LinearMap.mem_ker, Fintype.linearCombination_apply] at hc ⊢
-    exact h c hc
-  -- Factor the value map through the range of the combination map, then
-  -- extend from that subspace to all of `M`.
-  obtain ⟨φ, hφ⟩ := LinearMap.exists_extend
-    (((LinearMap.ker (Fintype.linearCombination K r)).liftQ
-        (Fintype.linearCombination K v) hker).comp
-      (Fintype.linearCombination K r).quotKerEquivRange.symm.toLinearMap)
-  refine ⟨φ, fun i => ?_⟩
-  have hri : Fintype.linearCombination K r (Pi.single i 1) = r i := by
-    rw [Fintype.linearCombination_apply_single, one_smul]
-  have hmem : r i ∈ LinearMap.range (Fintype.linearCombination K r) :=
-    ⟨Pi.single i 1, hri⟩
-  have h1 := LinearMap.congr_fun hφ ⟨r i, hmem⟩
-  simp only [LinearMap.comp_apply, Submodule.subtype_apply,
-    LinearEquiv.coe_toLinearMap] at h1
-  have h3 : (⟨r i, hmem⟩ : LinearMap.range (Fintype.linearCombination K r))
-      = ⟨Fintype.linearCombination K r (Pi.single i 1),
-          LinearMap.mem_range_self _ _⟩ :=
-    Subtype.ext hri.symm
-  rw [h1, h3, LinearMap.quotKerEquivRange_symm_apply_image, Submodule.mkQ_apply,
-    Submodule.liftQ_apply, Fintype.linearCombination_apply_single, one_smul]
-
 /-- **The criterion is sufficient.** If every ℚ-linear dependency among the
 declared ratios forces the matching combination of log-factors to vanish, then
 some valuation satisfies every declaration at once.

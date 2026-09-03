@@ -1,4 +1,8 @@
 import LambdaS.Scaling
+import Mathlib.Analysis.Complex.Exponential
+import Mathlib.LinearAlgebra.Basis.VectorSpace
+import Mathlib.LinearAlgebra.Isomorphisms
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 
 /-!
 # Conversion, and why paths cannot disagree
@@ -194,6 +198,51 @@ theorem dimOf_ratio_one {u v : UExp B k} (h : SameDim Δ u v) :
 
 end Dimensions
 
+/-! ## A linear extension lemma
+
+The classical fact both this file and `LambdaS.Declare` consume: a value
+assignment on a finite family extends to a linear map exactly when it respects
+the family's linear dependencies. -/
+
+/-- **Prescribed values extend to a linear map when dependencies are
+respected.** Given finite families `r` in `M` and `v` in `V` over a field `K`,
+a single linear map sends each `r i` to `v i` exactly when every `K`-linear
+dependency among the `r i` also annihilates the corresponding combination of
+the `v i`. This is the extension step behind `Scaling.Coherent.factors` in this
+file and `dependency_sufficient` in `LambdaS.Declare`: the value assignment
+factors through the span of the family and then extends to the whole space. -/
+theorem exists_linearMap_of_dependencies {K M V : Type*} [Field K]
+    [AddCommGroup M] [Module K M] [AddCommGroup V] [Module K V]
+    {ι : Type*} [Fintype ι] [DecidableEq ι] (r : ι → M) (v : ι → V)
+    (h : ∀ c : ι → K, ∑ i, c i • r i = 0 → ∑ i, c i • v i = 0) :
+    ∃ φ : M →ₗ[K] V, ∀ i, φ (r i) = v i := by
+  -- The hypothesis says the value map kills the kernel of the combination map.
+  have hker : LinearMap.ker (Fintype.linearCombination K r)
+      ≤ LinearMap.ker (Fintype.linearCombination K v) := by
+    intro c hc
+    rw [LinearMap.mem_ker, Fintype.linearCombination_apply] at hc ⊢
+    exact h c hc
+  -- Factor the value map through the range of the combination map, then
+  -- extend from that subspace to all of `M`.
+  obtain ⟨φ, hφ⟩ := LinearMap.exists_extend
+    (((LinearMap.ker (Fintype.linearCombination K r)).liftQ
+        (Fintype.linearCombination K v) hker).comp
+      (Fintype.linearCombination K r).quotKerEquivRange.symm.toLinearMap)
+  refine ⟨φ, fun i => ?_⟩
+  have hri : Fintype.linearCombination K r (Pi.single i 1) = r i := by
+    rw [Fintype.linearCombination_apply_single, one_smul]
+  have hmem : r i ∈ LinearMap.range (Fintype.linearCombination K r) :=
+    ⟨Pi.single i 1, hri⟩
+  have h1 := LinearMap.congr_fun hφ ⟨r i, hmem⟩
+  simp only [LinearMap.comp_apply, Submodule.subtype_apply,
+    LinearEquiv.coe_toLinearMap] at h1
+  have h3 : (⟨r i, hmem⟩ : LinearMap.range (Fintype.linearCombination K r))
+      = ⟨Fintype.linearCombination K r (Pi.single i 1),
+          LinearMap.mem_range_self _ _⟩ :=
+    Subtype.ext hri.symm
+  rw [h1, h3, LinearMap.quotKerEquivRange_symm_apply_image, Submodule.mkQ_apply,
+    Submodule.liftQ_apply, Fintype.linearCombination_apply_single, one_smul]
+
 /-! ## Coherence: which scalings are physically meaningful
 
 Parametricity quantifies over **all** scalings, including ones that scale
@@ -299,6 +348,100 @@ theorem Scaling.Factors.weakenDim [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j 
     ψ.Factors Δ.weakenDim (Φ.cons t) where
   base b := by simpa [Scaling.cons] using h.base b
   vars i := by simpa [DCtx.weakenDim] using h.vars i
+
+/-- **Every coherent scaling factors through dimension.** This is the converse
+of `Scaling.Factors.coherent`, and together they give the equivalence the
+paper's introduction asserts when it defines coherence as inheriting factors
+from dimensions.
+
+The proof is ℚ-linear algebra with values in ℝ. Each generator (base unit or
+unit variable) has a dimension exponent vector and a log factor. A rational
+dependency among the vectors assembles a dimensionless unit expression, which
+coherence sends to the scale of `1`, so the corresponding combination of log
+factors vanishes. `exists_linearMap_of_dependencies` then extends the
+assignment to a ℚ-linear functional on the whole dimension space, and reading
+that functional on the standard basis gives the dimension scaling. -/
+theorem Scaling.Coherent.factors [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k}
+    (hcoh : ψ.Coherent Δ) : ∃ Φ : Scaling D j, ψ.Factors Δ Φ := by
+  classical
+  -- Every rational dependency among the generators' dimension vectors kills
+  -- the matching combination of log factors.
+  have hdep : ∀ c : B ⊕ Fin k → ℚ,
+      ∑ x, c x • Sum.elim (fun b => Sum.elim (UnitSys.dim (D := D) b).base (0 : Fin j → ℚ))
+        (fun i => Sum.elim (Δ i).base (Δ i).vars) x = (0 : (D ⊕ Fin j) → ℚ) →
+      ∑ x, c x • Sum.elim ψ.base ψ.vars x = (0 : ℝ) := by
+    intro c hc
+    -- The coefficients assemble a unit expression, and the dependency says it
+    -- is dimensionless.
+    have hdim : dimOf (D := D) Δ
+        (⟨fun b => c (Sum.inl b), fun i => c (Sum.inr i)⟩ : UExp B k) = 1 := by
+      refine Term.ext' (funext fun d => ?_) (funext fun w => ?_)
+      · have hd := congrFun hc (Sum.inl d)
+        simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply,
+          Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr] at hd
+        simpa [dimOf] using hd
+      · have hw := congrFun hc (Sum.inr w)
+        simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply,
+          Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr] at hw
+        simpa [dimOf] using hw
+    -- Coherence gives the dimensionless expression the scale of `1`, so its
+    -- log scale is zero.
+    have hsame : SameDim Δ
+        (⟨fun b => c (Sum.inl b), fun i => c (Sum.inr i)⟩ : UExp B k) (1 : UExp B k) :=
+      hdim.trans (dimOf_one (D := D) Δ).symm
+    have hscale := hcoh _ _ hsame
+    rw [Scaling.scale_one] at hscale
+    have hlog : ψ.logScale
+        (⟨fun b => c (Sum.inl b), fun i => c (Sum.inr i)⟩ : UExp B k) = 0 :=
+      (Real.exp_eq_one_iff _).mp hscale
+    calc ∑ x, c x • Sum.elim ψ.base ψ.vars x
+        = ψ.logScale (⟨fun b => c (Sum.inl b), fun i => c (Sum.inr i)⟩ : UExp B k) := by
+          simp only [Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, Rat.smul_def,
+            Scaling.logScale]
+      _ = 0 := hlog
+  obtain ⟨φ, hφ⟩ := exists_linearMap_of_dependencies (K := ℚ)
+    (Sum.elim (fun b => Sum.elim (UnitSys.dim (D := D) b).base (0 : Fin j → ℚ))
+      (fun i => Sum.elim (Δ i).base (Δ i).vars))
+    (Sum.elim ψ.base ψ.vars) hdep
+  -- Read the functional on the standard basis of the dimension space.
+  have hstep : ∀ (x : D ⊕ Fin j) (q : ℚ),
+      (q : ℝ) * φ (Pi.single x 1) = φ (Pi.single x q) := by
+    intro x q
+    rw [← Rat.smul_def, ← map_smul]
+    congr 1
+    rw [← Pi.single_smul, smul_eq_mul, mul_one]
+  have hexpand : ∀ m : (D ⊕ Fin j) → ℚ,
+      φ m = (∑ d, (m (Sum.inl d) : ℝ) * φ (Pi.single (Sum.inl d) 1))
+        + ∑ w, (m (Sum.inr w) : ℝ) * φ (Pi.single (Sum.inr w) 1) := by
+    intro m
+    conv_lhs => rw [← Finset.univ_sum_single m]
+    rw [map_sum, Fintype.sum_sum_type]
+    exact congrArg₂ (· + ·)
+      (Finset.sum_congr rfl fun d _ => (hstep _ _).symm)
+      (Finset.sum_congr rfl fun w _ => (hstep _ _).symm)
+  refine ⟨⟨fun d => φ (Pi.single (Sum.inl d) 1), fun w => φ (Pi.single (Sum.inr w) 1)⟩,
+    ?_, ?_⟩
+  · intro b
+    have h1 := hφ (Sum.inl b)
+    simp only [Sum.elim_inl] at h1
+    rw [hexpand] at h1
+    simp only [Sum.elim_inl, Sum.elim_inr, Pi.zero_apply, Rat.cast_zero, zero_mul,
+      Finset.sum_const_zero, add_zero] at h1
+    exact h1.symm
+  · intro i
+    have h1 := hφ (Sum.inr i)
+    simp only [Sum.elim_inr] at h1
+    rw [hexpand] at h1
+    simp only [Sum.elim_inl, Sum.elim_inr] at h1
+    exact h1.symm
+
+/-- **Coherence is factoring through dimension.** A scaling respects
+interchangeability exactly when it is pulled back from some scaling of
+dimensions. The paper defines coherence by the right-hand side; this
+equivalence shows the two readings agree. -/
+theorem Scaling.coherent_iff_factors [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k} :
+    ψ.Coherent Δ ↔ ∃ Φ : Scaling D j, ψ.Factors Δ Φ :=
+  ⟨Scaling.Coherent.factors, fun ⟨_, hΦ⟩ => hΦ.coherent⟩
 
 /-- The trivial scaling is coherent, so the coherent theorems are never vacuous. -/
 theorem Scaling.coherent_id (Δ : DCtx D j k) : (Scaling.id B k).Coherent Δ := by

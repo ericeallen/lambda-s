@@ -15,6 +15,9 @@ Run with `lake env lean scripts/Audit.lean`.
 -- Typing
 #print axioms LambdaS.check_eq
 
+-- Conversion
+#print axioms LambdaS.Scaling.coherent_iff_factors
+
 -- Declare
 #print axioms LambdaS.dependency_forces
 #print axioms LambdaS.dependency_forces_mul
@@ -51,6 +54,9 @@ Run with `lake env lean scripts/Audit.lean`.
 -- NonDefinability
 #print axioms LambdaS.NonDef.sqrt_not_definable
 #print axioms LambdaS.NonDef.no_newton_seed
+#print axioms LambdaS.NonDef.arith_of_hasTy
+#print axioms LambdaS.NonDef.sqrt_not_definable_tm
+#print axioms LambdaS.NonDef.no_newton_seed_tm
 
 -- Pi and PiTheorem
 #print axioms LambdaS.Pi.pi_theorem

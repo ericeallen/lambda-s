@@ -20,10 +20,10 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 |---|---|---|
 | Consistency, necessity (log form) | `LambdaS.dependency_forces` | [`LambdaS/Declare.lean:180`](LambdaS/Declare.lean#L180) |
 | Consistency, necessity (product form) | `LambdaS.dependency_forces_mul` | [`LambdaS/Declare.lean:211`](LambdaS/Declare.lean#L211) |
-| Consistency, sufficiency | `LambdaS.dependency_sufficient` | [`LambdaS/Declare.lean:292`](LambdaS/Declare.lean#L292) |
-| Consistency characterized (log form) | `LambdaS.consistent_iff_dependencies` | [`LambdaS/Declare.lean:320`](LambdaS/Declare.lean#L320) |
-| Consistency characterized (Theorem 3.1) | `LambdaS.consistent_iff_dependencies_mul` | [`LambdaS/Declare.lean:334`](LambdaS/Declare.lean#L334) |
-| Redundant factor forced | `LambdaS.factor_chain_consistent` | [`LambdaS/Declare.lean:398`](LambdaS/Declare.lean#L398) |
+| Consistency, sufficiency | `LambdaS.dependency_sufficient` | [`LambdaS/Declare.lean:253`](LambdaS/Declare.lean#L253) |
+| Consistency characterized (log form) | `LambdaS.consistent_iff_dependencies` | [`LambdaS/Declare.lean:281`](LambdaS/Declare.lean#L281) |
+| Consistency characterized (Theorem 3.1) | `LambdaS.consistent_iff_dependencies_mul` | [`LambdaS/Declare.lean:295`](LambdaS/Declare.lean#L295) |
+| Redundant factor forced | `LambdaS.factor_chain_consistent` | [`LambdaS/Declare.lean:359`](LambdaS/Declare.lean#L359) |
 | One-dimension well-formedness | `LambdaS.Decl.Sound` | [`LambdaS/Declare.lean:133`](LambdaS/Declare.lean#L133) |
 | The yard set is satisfiable | `LambdaS.Examples.yard_satisfiable` | [`LambdaS/Examples.lean:520`](LambdaS/Examples.lean#L520) |
 | The mistyped yard set is refuted | `LambdaS.Examples.yard_conflict` | [`LambdaS/Examples.lean:474`](LambdaS/Examples.lean#L474) |
@@ -47,6 +47,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:696`](LambdaS/Fundamental.lean#L696) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:747`](LambdaS/Examples.lean#L747) |
 | The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:889`](LambdaS/Fundamental.lean#L889) |
+| Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:442`](LambdaS/Conversion.lean#L442) |
 
 ## Accumulated ratios and the drift diagnostic
 
@@ -77,7 +78,10 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Paper claim | Lean name | Location |
 |---|---|---|
 | Square root not definable by arithmetic | `LambdaS.NonDef.sqrt_not_definable` | [`LambdaS/NonDefinability.lean:142`](LambdaS/NonDefinability.lean#L142) |
+| The reflection into the arithmetic grammar | `LambdaS.NonDef.arith_of_hasTy` | [`LambdaS/NonDefinability.lean:195`](LambdaS/NonDefinability.lean#L195) |
+| Square root not definable, at the term grammar | `LambdaS.NonDef.sqrt_not_definable_tm` | [`LambdaS/NonDefinability.lean:240`](LambdaS/NonDefinability.lean#L240) |
 | No seed for Newton's method | `LambdaS.NonDef.no_newton_seed` | [`LambdaS/NonDefinability.lean:150`](LambdaS/NonDefinability.lean#L150) |
+| No seed, at the term grammar | `LambdaS.NonDef.no_newton_seed_tm` | [`LambdaS/NonDefinability.lean:251`](LambdaS/NonDefinability.lean#L251) |
 | The multiplicative scale law (definition) | `LambdaS.Pi.MulScaleLaw` | [`LambdaS/PiTheorem.lean:215`](LambdaS/PiTheorem.lean#L215) |
 | Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:369`](LambdaS/PiTheorem.lean#L369) |
 | Log transport, positivity hypothesis | `LambdaS.Pi.scaleLaw_of_mulScaleLaw` | [`LambdaS/PiTheorem.lean:244`](LambdaS/PiTheorem.lean#L244) |
