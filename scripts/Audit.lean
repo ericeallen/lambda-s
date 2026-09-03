@@ -41,6 +41,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.cvt_rel_iff_coherent
 #print axioms LambdaS.den_eq_of_convertFree
 #print axioms LambdaS.den_indep
+#print axioms LambdaS.sqrt_scales
 
 -- Twist
 #print axioms LambdaS.Twist.scaling

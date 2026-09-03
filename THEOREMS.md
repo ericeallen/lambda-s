@@ -42,12 +42,14 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:682`](LambdaS/Fundamental.lean#L682) |
-| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:619`](LambdaS/Fundamental.lean#L619) |
-| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:793`](LambdaS/Fundamental.lean#L793) |
-| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:701`](LambdaS/Fundamental.lean#L701) |
+| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:687`](LambdaS/Fundamental.lean#L687) |
+| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:624`](LambdaS/Fundamental.lean#L624) |
+| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:800`](LambdaS/Fundamental.lean#L800) |
+| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:706`](LambdaS/Fundamental.lean#L706) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:804`](LambdaS/Examples.lean#L804) |
-| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:894`](LambdaS/Fundamental.lean#L894) |
+| The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:359`](LambdaS/Parametricity.lean#L359) |
+| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1047`](LambdaS/Fundamental.lean#L1047) |
+| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:903`](LambdaS/Fundamental.lean#L903) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:447`](LambdaS/Conversion.lean#L447) |
 
 ## Accumulated ratios and the drift diagnostic
@@ -57,10 +59,10 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:174`](LambdaS/Twist.lean#L174) |
 | Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:373`](LambdaS/Twist.lean#L373) |
 | Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:397`](LambdaS/Twist.lean#L397) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:724`](LambdaS/Twist.lean#L724) |
-| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:617`](LambdaS/Twist.lean#L617) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:728`](LambdaS/Twist.lean#L728) |
+| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:621`](LambdaS/Twist.lean#L621) |
 | Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:683`](LambdaS/Examples.lean#L683) |
-| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:774`](LambdaS/Twist.lean#L774) |
+| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:778`](LambdaS/Twist.lean#L778) |
 
 ## Adequacy and erasure
 

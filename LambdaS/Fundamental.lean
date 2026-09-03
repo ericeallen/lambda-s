@@ -86,15 +86,19 @@ through the environment (as free variables), never by naming a unit.
 
 ## Scope
 
-Every form of Λs except `ucon` and `root`: variables, abstraction, application,
-literals, the arithmetic, spaces and linear maps, conversion, and unit and
-dimension abstraction and application. The two exclusions are `Tm.Parametric`'s,
-and each is argued where it bites: `ucon` in the previous section, `root` next.
+Every form of Λs except `ucon`: variables, abstraction, application, literals,
+the arithmetic, roots, spaces and linear maps, conversion, and unit and
+dimension abstraction and application. The one exclusion is `Tm.Parametric`'s,
+argued in the previous section.
 
-`root` is excluded for a reason already visible in `relQ_rpow`: it
-needs `0 ≤ x`, so admitting it means denoting quantities by non-negative reals,
-which `log` would then break. That is Kennedy's positivity assumption showing up
-as a real constraint on the domain rather than a footnote.
+Roots are parametric. `relQ_rpow` holds with no sign hypothesis on the value,
+because the scale factor is positive by construction and a positive factor
+distributes over `rpow` for every real base (`mul_rpow_of_pos_left`): on a
+negative base, `rpow` is the real part of the principal complex power, and the
+cosine factor is common to both sides. The caveat carries over unchanged: on a
+negative argument the primitive's value is not a root at all
+(`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, and the compiled `Float` path
+yields `NaN`), so the theorems certify covariance of that total function.
 -/
 
 namespace LambdaS
@@ -425,22 +429,23 @@ Both are properties of *terms*, not of derivations. That is legitimate because
 derivations are unique (`Subsingleton (HasTy Δ Γ e τ)`), so a predicate on terms
 is exactly as expressive and considerably simpler. -/
 
-/-- A term is **parametric** when it never names a unit and never takes a root.
+/-- A term is **parametric** when it never names a unit.
 
-Both exclusions are forced, and for different reasons.
+The exclusion is forced. `ucon u : Q u` denotes the number `1`, so
+self-relatedness would demand `1 = ψ(u) · 1`, false for any scaling that
+actually moves the unit. **A term that can name a unit can detect a
+rescaling.** This is why Kennedy's calculus has no unit constants, and why his
+"converting kg into lb" example rewrites the literals rather than the
+environment: `1.0<kg>` becomes `2.2<lb>`. Λs *does* have unit constants,
+because a language needs them; the cost is that they sit outside the
+invariance theory, and this predicate is where that is recorded.
 
-`ucon u : Q u` denotes the number `1`, so self-relatedness would demand
-`1 = ψ(u) · 1`, false for any scaling that actually moves the unit. **A term
-that can name a unit can detect a rescaling.** This is why Kennedy's calculus
-has no unit constants, and why his "converting kg into lb" example rewrites the
-literals rather than the environment: `1.0<kg>` becomes `2.2<lb>`. Λs *does*
-have unit constants, because a language needs them; the cost is that they sit
-outside the invariance theory, and this predicate is where that is recorded.
-
-`root` is excluded because `relQ_rpow` needs `0 ≤ x`, and admitting it here would
-mean denoting quantities by non-negative reals, which `log` would then break.
-That is Kennedy's positivity assumption appearing as a genuine constraint on the
-domain rather than a footnote. -/
+`root` is *not* excluded. Its scaling law is `relQ_rpow`, which needs no sign
+condition on the value: the scale factor is positive, and a positive factor
+distributes over `rpow` for every real base (`mul_rpow_of_pos_left`). On a
+negative argument the primitive does not compute a root (under `rpow` it is
+the real part of the principal complex power), and the fundamental theorem
+certifies covariance of that total function. -/
 def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .var _ => True
   | _, _, .lam _ b => b.Parametric
@@ -450,7 +455,7 @@ def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .mul a b => a.Parametric ∧ b.Parametric
   | _, _, .div a b => a.Parametric ∧ b.Parametric
   | _, _, .add a b => a.Parametric ∧ b.Parametric
-  | _, _, .root _ _ => False
+  | _, _, .root _ a => a.Parametric
   | _, _, .idx a _ => a.Parametric
   | _, _, .mapp f x => f.Parametric ∧ x.Parametric
   | _, _, .comp f g => f.Parametric ∧ g.Parametric
@@ -720,7 +725,9 @@ theorem fundamental : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | add a b iha ihb =>
     intro hp V ψ Φ hΦ ρ ρ' hr
     exact relQ_add (iha hp.1 V ψ Φ hΦ hr) (ihb hp.2 V ψ Φ hΦ hr)
-  | root hn a ih => intro hp _ _ _ _ _ _ _; exact absurd hp not_false
+  | root hn a ih =>
+    intro hp V ψ Φ hΦ ρ ρ' hr
+    exact relQ_rpow _ (ih hp V ψ Φ hΦ hr)
   | idx a hu ih =>
     intro hp V ψ Φ hΦ ρ ρ' hr
     have h := ih hp V ψ Φ hΦ hr ⟨_, (List.getElem?_eq_some_iff.mp hu).1⟩
@@ -814,7 +821,9 @@ theorem fundamental_free : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | add a b iha ihb =>
     intro hp hf V ψ ρ ρ' hr
     exact relQ_add (iha hp.1 hf.1 V ψ hr) (ihb hp.2 hf.2 V ψ hr)
-  | root hn a ih => intro hp _ _ _ _ _ _; exact absurd hp not_false
+  | root hn a ih =>
+    intro hp hf V ψ ρ ρ' hr
+    exact relQ_rpow _ (ih hp hf V ψ hr)
   | idx a hu ih =>
     intro hp hf V ψ ρ ρ' hr
     have h := ih hp hf V ψ hr ⟨_, (List.getElem?_eq_some_iff.mp hu).1⟩
@@ -1005,7 +1014,42 @@ theorem velocity_scales {j k : ℕ} {Δ : DCtx D j k} (u v : UExp B k)
       = ψ.scale (Term.div u v) * den V (velocityDeriv (Δ := Δ) u v) ρ :=
   scaleLaw _ velocityTm_parametric velocityTm_convertFree V ψ ρ
 
+/-! ## A root inside the fragment
 
+Witness of the strengthened `relQ_rpow`: a term that takes a root is
+parametric, and the fundamental theorem applies to it with no positivity side
+condition. -/
+
+/-- `λ x : Q (u·u). root 2 x`. -/
+def sqrtTm {j k : ℕ} (u : UExp B k) : Tm B D j k :=
+  .lam (.Q (Term.mul u u)) (.root 2 (.var 0))
+
+/-- Its derivation. The result type is `Q ((u·u)^(1/2))`, which the unit
+algebra puts over ℚ exponents; nothing about the term needs its argument to be
+non-negative. -/
+def sqrtDeriv {j k : ℕ} {Δ : DCtx D j k} (u : UExp B k) :
+    HasTy Δ ([] : Ctx B D j k) (sqrtTm u)
+      (.arrow (.Q (Term.mul u u))
+              (.Q (Term.rpow (Term.mul u u) (1 / ((2 : ℕ) : ℚ))))) :=
+  .lam (.root (by decide) (.var rfl))
+
+theorem sqrtTm_parametric {j k : ℕ} (u : UExp B k) :
+    (sqrtTm u : Tm B D j k).Parametric := trivial
+
+theorem sqrtTm_convertFree {j k : ℕ} (u : UExp B k) :
+    (sqrtTm u : Tm B D j k).ConvertFree := trivial
+
+/-- **The fundamental theorem covers roots.** The square root term is related
+to itself under every scaling: inputs related at `u·u` give outputs related at
+`(u·u)^(1/2)`, whose scale factor is `ψ(u·u)^(1/2)`. Before `relQ_rpow` lost
+its sign hypothesis this instance was unprovable, because `Tm.Parametric`
+rejected the term. -/
+theorem sqrt_scales {j k : ℕ} {Δ : DCtx D j k} (u : UExp B k) (V ψ : Scaling B k) :
+    Rel (.arrow (.Q (Term.mul u u))
+                (.Q (Term.rpow (Term.mul u u) (1 / ((2 : ℕ) : ℚ))))) ψ
+      (den V (sqrtDeriv (Δ := Δ) u) PUnit.unit)
+      (den (V.comp ψ) (sqrtDeriv (Δ := Δ) u) PUnit.unit) :=
+  fundamental_free (sqrtDeriv u) (sqrtTm_parametric u) (sqrtTm_convertFree u) V ψ trivial
 
 
 

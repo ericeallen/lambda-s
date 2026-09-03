@@ -10,7 +10,7 @@ import LambdaS.Fundamental
 
 `fundamental` says a parametric term is scale-invariant for coherent scalings,
 and `fundamental_free` says a parametric convert-free term is invariant for
-*all* of them (parametric meaning no `ucon` and no `root`).
+*all* of them (parametric meaning no `ucon`).
 This file proves the converse: invariance under all scalings detects **exactly**
 the conversions that do something.
 
@@ -214,7 +214,7 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
   | root hn a ih =>
     intro hi
     obtain ⟨a', da, hf, hp, hd⟩ := ih hi
-    refine ⟨_, .root hn da, hf, fun h => absurd h not_false, fun V ρ => ?_⟩
+    refine ⟨_, .root hn da, hf, hp, fun V ρ => ?_⟩
     show _ ^ _ = _ ^ _; rw [hd]
   | idx a hu ih =>
     intro hi

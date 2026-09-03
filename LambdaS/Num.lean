@@ -28,10 +28,13 @@ type system or a single theorem.
 
 ## Positivity
 
-`nroot` and `nlog` assume a positive argument, which is the same assumption that
-appears in `relQ_rpow` (where `rpow` needs `0 ≤ x`) and in Kennedy's Pi
-theorem. Λs's `root` is applied to positive magnitudes in practice, but the
-language does not enforce it.
+`nroot` and `nlog` are meaningful on positive arguments. Λs's `root` is
+applied to positive magnitudes in practice, but the language does not enforce
+it, and off that domain the two carriers disagree: at `ℝ`, `nroot` reads
+through `Real.rpow`, whose value on a negative base is the real part of the
+principal complex power (`(-8) ^ (1/3 : ℝ)` denotes `1`), while the `Float`
+path yields `NaN`. The invariance theory needs no positivity (`relQ_rpow`
+carries no sign hypothesis); Kennedy's Pi theorem still does.
 -/
 
 namespace LambdaS

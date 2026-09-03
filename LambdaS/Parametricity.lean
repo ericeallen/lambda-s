@@ -39,11 +39,16 @@ Three read as design justifications rather than lemmas:
 * `relQ_add` requires **both operands at the same unit**. State it at different
   units and it is false: the summands would scale by different factors and the
   sum by neither. The typing rule is forced by the semantics, not chosen.
-* `relQ_rpow` requires the value to be **non-negative**: precisely Kennedy's
-  standing assumption that floats are positive. Here it appears as a hypothesis
-  that cannot be dropped, since `(k·x)^p = k^p · x^p` fails without it. Note
-  that only the *value* needs it: the scale factor is positive by construction
-  (`Scaling.scale_pos`).
+* `relQ_rpow` carries **no sign hypothesis on the value**, and that is a
+  theorem about `Real.rpow`, not a convention. For a negative base, `x ^ q` is
+  the real part of the principal complex power, `|x| ^ q * cos (π * q)`, and
+  the cosine factor is common to both sides of `(k·x)^q = k^q · x^q` once the
+  factor `k` is positive, which scale factors are by construction
+  (`Scaling.scale_pos`); `mul_rpow_of_pos_left` is the identity. What remains
+  true is that on a negative argument the primitive's value is not a root at
+  all (`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, and the compiled `Float`
+  path yields `NaN`), so the lemma certifies covariance of that total
+  function, not root-ness.
 * `relQ_log` holds **only at the trivial unit**, which is the semantic content of
   the base-measure problem. A dimensioned quantity has no scale-invariant
   logarithm, so `log p` for a density cannot mean anything that survives a
@@ -342,16 +347,44 @@ theorem relQ_add {u : UExp B k} {ψ : Scaling B k} {x y x' y' : ℝ}
   simp only [RelQ] at *
   rw [h, h']; ring
 
-/-- **Rational powers need positivity.**
+/-- **A positive factor distributes over real powers, for every real base.**
 
-Kennedy's standing assumption that floats are positive, appearing as the
-hypothesis it actually is. The scale factor is positive by construction, so only
-the value needs it. -/
+For `0 ≤ x` this is `Real.mul_rpow`. For `x < 0` both `x` and `k * x` are
+negative, so both sides read through `Real.rpow_def_of_neg`: each is
+`exp (q * log |·|) * cos (π * q)`, the real part of the principal complex
+power, and the cosine factor is the same on both sides, leaving the ordinary
+law of exponents on the positive parts. Mathlib's two-sided `Real.mul_rpow`
+asks for both factors non-negative; the one-sided statement needs only the
+factor to be positive. -/
+theorem mul_rpow_of_pos_left {k : ℝ} (hk : 0 < k) (x q : ℝ) :
+    (k * x) ^ q = k ^ q * x ^ q := by
+  rcases lt_trichotomy x 0 with hx | rfl | hx
+  · have hkx : k * x < 0 := mul_neg_of_pos_of_neg hk hx
+    rw [Real.rpow_def_of_neg hkx, Real.rpow_def_of_neg hx,
+        Real.rpow_def_of_pos hk]
+    rw [Real.log_mul (ne_of_gt hk) (ne_of_lt hx)]
+    ring_nf
+    rw [Real.exp_add]
+    ring
+  · rcases eq_or_ne q 0 with rfl | hq
+    · simp
+    · rw [mul_zero, Real.zero_rpow hq, mul_zero]
+  · exact Real.mul_rpow hk.le hx.le
+
+/-- **Rational powers preserve the relation, with no sign condition.**
+
+Kennedy assumes floats are positive; the mechanization does not need to. The
+scale factor is positive by construction (`Scaling.scale_pos`), and
+`mul_rpow_of_pos_left` shows a positive factor distributes over `rpow` for
+every real base: on negatives the common cosine factor of the principal
+complex power cancels. The caveat lives in the primitive, not the lemma: on a
+negative argument `rpow` does not compute a root, so what is certified is
+covariance of that total function. -/
 theorem relQ_rpow {u : UExp B k} {ψ : Scaling B k} {x y : ℝ} (q : ℚ)
-    (hx : 0 ≤ x) (h : RelQ u ψ x y) :
+    (h : RelQ u ψ x y) :
     RelQ (Term.rpow u q) ψ (x ^ (q : ℝ)) (y ^ (q : ℝ)) := by
   simp only [RelQ] at *
-  rw [h, Scaling.scale_rpow, Real.mul_rpow (le_of_lt (ψ.scale_pos u)) hx]
+  rw [h, Scaling.scale_rpow, mul_rpow_of_pos_left (ψ.scale_pos u)]
 
 /-- **`log` is invariant only at the trivial unit**: the semantic content of the
 base-measure problem. -/
