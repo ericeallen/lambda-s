@@ -670,7 +670,8 @@ def addSameDeriv : HasTy Δ₀ (scalarCtx [m]) addSame (.Q ft) :=
 /-- Branch ratios compare up to the unit algebra, not up to spelling. The two
 branches below convert the same product of meters to feet, placed differently:
 the first converts the product once at `m·m`, the second converts each factor
-at `m`. Their ratio terms differ syntactically (the old check rejected exactly
+at `m`. Their ratio terms differ syntactically (the syntactic check `Tw.beq`
+rejects exactly
 this pair), but `Tw.scalarEq` flattens both to the unit vector `m²/ft²` and
 the atom bag `{x, y}`, so the analysis answers, and the answer is the drift
 the branches share. -/

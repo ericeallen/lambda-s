@@ -218,6 +218,8 @@ def viaFeet : Term₀ := .convert (.convert hundredYards yd ft) ft m
 #guard typeOf inMetres == some (.Q m)
 #guard typeOf viaFeet == some (.Q m)
 
+/-- Run a closed term under the declared-conversion oracle `cfDecl`,
+returning its scalar magnitude; the declared-factor counterpart of `run`. -/
 def runDecl (e : Term₀) : Option Float :=
   match evalC (D := Dim) cfDecl 10000 [] e with
   | some (.scalar x) => some x.mag
@@ -236,7 +238,7 @@ def reportDecl : String :=
 
 /- The yard-demo numbers, checked at build time. All three comparisons are
 exact `Float` equalities and hold bit for bit: 100 yd converts to feet as
-exactly `300.0`, the direct conversion to meters equals the literal `91.44`,
+exactly `300.0`, the direct conversion to metres equals the literal `91.44`,
 and the route through feet produces the same `Float` as the direct route. -/
 #guard runDecl inFeet == some 300.0
 #guard runDecl inMetres == some 91.44

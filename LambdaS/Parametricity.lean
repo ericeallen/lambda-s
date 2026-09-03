@@ -53,8 +53,9 @@ other literal is `float<1>`.
 `Ty.den` and the full `Rel` are here, including the `∀u` case, and
 `free_theorem_sqr` is the first result that uses them: any `f` related to itself
 at `∀u. Q u → Q (u·u)` satisfies `f (r + log k) (k·x) = k²·f r x` for every
-positive `k`: the familiar `f (k·x) = k²·f x`, with the family index moved
-along by the rescaling. That is Kennedy's "theorems for free", mechanized.
+positive `k`. That is the familiar `f (k·x) = k²·f x`, with the family index
+moved along by the rescaling, and it is Kennedy's "theorems for free",
+mechanized.
 
 Two notes on getting `Ty.den` to work, since both looked like obstacles and
 neither was. Its type must generalize both scope indices (`{j k : ℕ} →

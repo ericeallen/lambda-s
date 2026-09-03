@@ -204,7 +204,7 @@ factor of the result unit. This section states that multiplicative law as a
 predicate on functions and proves the transport into log coordinates, so that
 `pi_theorem` applies. The transport requires the function to be positive on
 positive inputs. That is a genuine hypothesis, not bookkeeping: denotations
-can be zero or negative, and the logarithm sees nothing there. -/
+can be zero or negative, and the log transport is unavailable there. -/
 
 /-- **The multiplicative scale law.** Scaling each base unit `v` by a positive
 factor `κ v` scales argument `i` by `∏ v, κ v ^ A v i` and the result by
@@ -382,8 +382,10 @@ end TermBridge
 
 /-! ## The pendulum, again
 
-With the general theorem in hand, the running example collapses in one line: the
-mass exponent is zero in the solution, so the power-product `∏ xᵢ^{Xᵢ}` does not
+The mass conclusion, restated here so the full pipeline can see it: the
+statement and proof are those of `Pi.pendulum_period_independent_of_mass`,
+verbatim. The mass exponent is zero in the solution, so the power-product
+`∏ xᵢ^{Xᵢ}` does not
 mention the mass, and by `eq_zero_of_appears_once` neither does any dimensionless
 group. So `G` cannot mention it either: the period is independent of the mass,
 and both halves of the theorem say so. -/

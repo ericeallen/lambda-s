@@ -603,7 +603,8 @@ theorem Tw.flat_eval {k : ℕ} {Θ : List Shape} (ψ : Scaling B k) (θρ : TwEn
   | .app f a => by simp [Tw.flat]
   | .uapp t μ => by simp [Tw.flat]
 
-/-- Two scalar ratios are equal up to the unit algebra: equal unit-constant
+/-- Decides whether two scalar ratios are equal up to the unit algebra: equal
+unit-constant
 parts (one exponent-vector comparison) and permutation-equal atom bags on each
 side of the fraction bar. Sound, and strictly wider than `Tw.beq`: it accepts
 the same conversions reassociated, reordered, and with their unit constants
@@ -714,7 +715,7 @@ every rescaling holds precisely when the answer is `1`.
 This is the compiler check: one group computation per derivation, one equality
 of exponent vectors, and the program's dependence on the declared unit
 magnitudes is decided, with unit polymorphism, higher-order structure and
-conversion chains all inside. -/
+conversion chains all handled by the one computation. -/
 theorem unitDrift_spec {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
     {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
     {w : UExp B k} (hw : unitDrift d = some w) (V : Scaling B k)

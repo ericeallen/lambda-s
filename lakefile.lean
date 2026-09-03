@@ -15,6 +15,11 @@ package lambdas where
 
 require "leanprover-community" / "mathlib" @ git "v4.33.0"
 
+-- Documentation generation only; absent from ordinary builds. Enable with:
+--   lake -R -Kenv=dev build LambdaS:docs
+meta if get_config? env = some "dev" then
+  require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "v4.33.0"
+
 target lambdas_blas.o pkg : System.FilePath := do
   let oFile := pkg.buildDir / "c" / "lambdas_blas.o"
   let srcJob ← inputTextFile <| pkg.dir / "c" / "lambdas_blas.c"

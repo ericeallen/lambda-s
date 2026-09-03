@@ -84,7 +84,7 @@ through the environment (as free variables), never by naming a unit.
 Every form of Λs except `ucon` and `root`: variables, abstraction, application,
 literals, the arithmetic, spaces and linear maps, conversion, and unit and
 dimension abstraction and application. The two exclusions are `Tm.Parametric`'s,
-and each is argued where it bites: `ucon` below, `root` here.
+and each is argued where it bites: `ucon` in the previous section, `root` next.
 
 `root` is excluded for a reason already visible in `relQ_rpow`: it
 needs `0 ≤ x`, so admitting it means denoting quantities by non-negative reals,

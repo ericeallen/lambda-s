@@ -10,16 +10,16 @@ Two halves of the conversion story have been proved separately and never joined.
 `LambdaS.Declare` says when a set of unit declarations determines a valuation,
 and rejects the sets that do not. `LambdaS.Conversion` says a valuation makes
 conversion path-independent. `LambdaS.Fundamental` gives the denotational
-semantics, in which `convert` reads that valuation for its factor (unit
+semantics, in which `convert` reads that valuation for its factor. (Unit
 application also consults it, but only to pick the index at which a family is
-sampled). And
+sampled.)
 `LambdaS.Dynamics` gives the evaluator, which takes the conversion factor from
 an **abstract oracle** `cf`, constrained by nothing at all.
 
 So the declarations determine a number, and the evaluator multiplies by a
-number, and until now there was no theorem saying they are the same number.
-Every worked example passes `fun _ _ => 1.0`, so the feature at the center of the
-calculus was never actually exercised.
+number, and nothing but `eval_adeq` says they are the same number.
+Every worked example elsewhere passes `fun _ _ => 1.0`; this file is where the
+conversion oracle is finally pinned.
 
 `eval_adeq` is the join. Take the oracle to be `conv V` (the conversion the
 valuation determines, hence the one the declarations determine), and evaluation
@@ -692,8 +692,8 @@ theorem evalC_eq_den (V : Scaling B 0) {e : Tm B D 0 0} {u : UExp B 0}
   exact ⟨n, by rw [hv, evalC_adeq V d hv]⟩
 
 /-- **The evaluator multiplies by the declared factor.** Converting along a
-declaration multiplies the magnitude by exactly the number the declaration
-names, not by something equal to it up to a chain of intermediate steps, but by
+declaration multiplies the magnitude by the number the declaration
+names: not something equal to it up to a chain of intermediate steps, but
 that number.
 
 `Decl.conv_eq_factor` said the *valuation* assigns that factor; this says the

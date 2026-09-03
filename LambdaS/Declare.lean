@@ -1,4 +1,7 @@
 import LambdaS.Conversion
+import Mathlib.LinearAlgebra.Basis.VectorSpace
+import Mathlib.LinearAlgebra.Isomorphisms
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 
 /-!
 # Unit declarations, and why conflicting ones are rejected
@@ -12,7 +15,8 @@ unit yard = 3 foot
 ```
 
 declares a generator **and** an equation, and equations can conflict. This is
-the bug in Comp 311's unit-conversion assignment: with units nameable in terms
+the bug that the Comp 311 assignment's one-unit-per-dimension restriction
+(`LambdaS.Conversion`) exists to dodge: with units nameable in terms
 of other units, two routes from `yard` to `metre` need not agree, and nothing in
 a free abelian group of units forces them to.
 
@@ -24,10 +28,13 @@ intermediate conversions equals the direct factor: path independence is a
 theorem there, not an obligation here.
 
 What is left is the prior question: do the declarations determine a valuation at
-all? That is a linear system, and this file gives its solvability criterion.
-`dependency_forces` is the general statement: every ℚ-linear combination of the
-declarations whose *unit* parts cancel forces the corresponding combination of
-*factors* to vanish. `factor_chain` is the two-step instance that is
+all? That is a linear system, and this file gives its solvability criterion, in
+both directions. `dependency_forces` is necessity: every ℚ-linear combination
+of the declarations whose *unit* parts cancel forces the corresponding
+*factors* to multiply to one. `dependency_sufficient` is sufficiency:
+respect every dependency and a satisfying valuation exists, so
+`consistent_iff_dependencies` (and its multiplicative form) characterizes
+consistency outright. `factor_chain` is the two-step instance that is
 literally the yard/foot/metre conflict. `not_satisfiable_of_chain` turns it
 around: get the arithmetic wrong and **no** valuation exists, so the declaration
 set is rejected rather than silently picking a route.
@@ -166,8 +173,9 @@ open Decl
 that cancels in the unit group forces the same combination of log-factors to
 vanish.
 
-Contrapositively: exhibit a dependency whose factors do *not* multiply to one and
-no valuation exists: the declaration set is rejected. Since the coefficients are
+Contrapositively: exhibit a dependency whose factors do *not* multiply to one,
+and no valuation exists; the declaration set is rejected. Since the
+coefficients are
 rational and the factors are rational, that test is exact arithmetic. -/
 theorem dependency_forces {ψ : Scaling B 0} {n : ℕ} {ds : Fin n → Decl B}
     (h : ∀ i, Satisfies ψ (ds i)) (c : Fin n → ℚ)
@@ -217,6 +225,130 @@ theorem dependency_forces_mul {ψ : Scaling B 0} {n : ℕ} {ds : Fin n → Decl 
       = Real.exp (Real.log (∏ i, ((ds i).factor : ℝ) ^ (c i : ℝ))) :=
         (Real.exp_log hprodpos).symm
     _ = 1 := by rw [hlog, Real.exp_zero]
+
+/-! ## Sufficiency
+
+The converse direction. `dependency_forces` says a satisfying valuation makes
+every dependency respect the factors; here we show that respecting the
+dependencies is all it takes, so the criterion decides consistency outright.
+
+The proof needs no real linear algebra. The system asks for a function
+`B → ℝ` in log coordinates, and ℝ is a vector space over ℚ, so the system can
+be solved ℚ-linearly with values in ℝ: send each ratio's exponent vector to its
+log-factor, check the assignment kills every rational dependency (the
+hypothesis), factor it through the span of the exponent vectors, and extend to
+all of `B → ℚ`. The question of whether real dependencies among rational
+vectors exceed the rational ones never arises. -/
+
+/-- **Prescribed values extend to a linear map when dependencies are
+respected.** Given finite families `r` in `M` and `v` in `V` over a field `K`,
+a single linear map sends each `r i` to `v i` exactly when every `K`-linear
+dependency among the `r i` also annihilates the corresponding combination of
+the `v i`. This is the extension step behind `dependency_sufficient`: the value
+assignment factors through the span of the family and then extends to the whole
+space. -/
+theorem exists_linearMap_of_dependencies {K M V : Type*} [Field K]
+    [AddCommGroup M] [Module K M] [AddCommGroup V] [Module K V]
+    {ι : Type*} [Fintype ι] [DecidableEq ι] (r : ι → M) (v : ι → V)
+    (h : ∀ c : ι → K, ∑ i, c i • r i = 0 → ∑ i, c i • v i = 0) :
+    ∃ φ : M →ₗ[K] V, ∀ i, φ (r i) = v i := by
+  -- The hypothesis says the value map kills the kernel of the combination map.
+  have hker : LinearMap.ker (Fintype.linearCombination K r)
+      ≤ LinearMap.ker (Fintype.linearCombination K v) := by
+    intro c hc
+    rw [LinearMap.mem_ker, Fintype.linearCombination_apply] at hc ⊢
+    exact h c hc
+  -- Factor the value map through the range of the combination map, then
+  -- extend from that subspace to all of `M`.
+  obtain ⟨φ, hφ⟩ := LinearMap.exists_extend
+    (((LinearMap.ker (Fintype.linearCombination K r)).liftQ
+        (Fintype.linearCombination K v) hker).comp
+      (Fintype.linearCombination K r).quotKerEquivRange.symm.toLinearMap)
+  refine ⟨φ, fun i => ?_⟩
+  have hri : Fintype.linearCombination K r (Pi.single i 1) = r i := by
+    rw [Fintype.linearCombination_apply_single, one_smul]
+  have hmem : r i ∈ LinearMap.range (Fintype.linearCombination K r) :=
+    ⟨Pi.single i 1, hri⟩
+  have h1 := LinearMap.congr_fun hφ ⟨r i, hmem⟩
+  simp only [LinearMap.comp_apply, Submodule.subtype_apply,
+    LinearEquiv.coe_toLinearMap] at h1
+  have h3 : (⟨r i, hmem⟩ : LinearMap.range (Fintype.linearCombination K r))
+      = ⟨Fintype.linearCombination K r (Pi.single i 1),
+          LinearMap.mem_range_self _ _⟩ :=
+    Subtype.ext hri.symm
+  rw [h1, h3, LinearMap.quotKerEquivRange_symm_apply_image, Submodule.mkQ_apply,
+    Submodule.liftQ_apply, Fintype.linearCombination_apply_single, one_smul]
+
+/-- **The criterion is sufficient.** If every ℚ-linear dependency among the
+declared ratios forces the matching combination of log-factors to vanish, then
+some valuation satisfies every declaration at once.
+
+This is the converse of `dependency_forces` and the sufficiency half of the
+paper's solvability theorem. In log coordinates each declaration is one linear
+equation in the unknown base magnitudes; the hypothesis is exactly that the
+right-hand sides respect the dependencies of the left-hand sides, and
+`exists_linearMap_of_dependencies` turns that into a ℚ-linear map on `B → ℚ`
+with values in ℝ. Reading that map on the standard basis gives the valuation. -/
+theorem dependency_sufficient {n : ℕ} {ds : Fin n → Decl B}
+    (h : ∀ c : Fin n → ℚ, (∀ b : B, ∑ i, c i * (ds i).ratio.base b = 0) →
+      ∑ i, (c i : ℝ) * Real.log ((ds i).factor : ℝ) = 0) :
+    ∃ ψ : Scaling B 0, ∀ i, Satisfies ψ (ds i) := by
+  classical
+  obtain ⟨φ, hφ⟩ := exists_linearMap_of_dependencies (K := ℚ)
+    (fun i => (ds i).ratio.base) (fun i => Real.log ((ds i).factor : ℝ))
+    (fun c hc => by
+      have hc' : ∀ b : B, ∑ i, c i * (ds i).ratio.base b = 0 := fun b => by
+        simpa [Finset.sum_apply, smul_eq_mul] using congrFun hc b
+      simpa [Rat.smul_def] using h c hc')
+  refine ⟨⟨fun b => φ (Pi.single b 1), Fin.elim0⟩, fun i => ?_⟩
+  rw [satisfies_iff_log]
+  have hstep : ∀ b : B, ((ds i).ratio.base b : ℝ) * φ (Pi.single b 1)
+      = φ (Pi.single b ((ds i).ratio.base b)) := by
+    intro b
+    rw [← Rat.smul_def, ← map_smul]
+    congr 1
+    rw [← Pi.single_smul, smul_eq_mul, mul_one]
+  simp only [Scaling.logScale, Finset.univ_eq_empty, Finset.sum_empty, add_zero]
+  rw [Finset.sum_congr rfl fun b _ => hstep b, ← map_sum, Finset.univ_sum_single]
+  exact hφ i
+
+/-- **Consistency, characterized.** A declaration set has a satisfying
+valuation exactly when every ℚ-linear dependency among its ratios forces the
+matching combination of log-factors to vanish. Necessity is
+`dependency_forces`; sufficiency is `dependency_sufficient`. This is the
+solvability criterion in the form the linear algebra produces it. -/
+theorem consistent_iff_dependencies {n : ℕ} {ds : Fin n → Decl B} :
+    (∃ ψ : Scaling B 0, ∀ i, Satisfies ψ (ds i)) ↔
+      ∀ c : Fin n → ℚ, (∀ b : B, ∑ i, c i * (ds i).ratio.base b = 0) →
+        ∑ i, (c i : ℝ) * Real.log ((ds i).factor : ℝ) = 0 := by
+  constructor
+  · rintro ⟨ψ, hψ⟩ c hc
+    exact dependency_forces hψ c hc
+  · exact dependency_sufficient
+
+/-- **Consistency, in the multiplicative form the paper states.** A declaration
+set has a satisfying valuation exactly when every ℚ-linear dependency among its
+ratios forces the corresponding product of declared factors to one. Since the
+coefficients and factors are rational, the right-hand side is an exact
+arithmetic test. -/
+theorem consistent_iff_dependencies_mul {n : ℕ} {ds : Fin n → Decl B} :
+    (∃ ψ : Scaling B 0, ∀ i, Satisfies ψ (ds i)) ↔
+      ∀ c : Fin n → ℚ, (∀ b : B, ∑ i, c i * (ds i).ratio.base b = 0) →
+        ∏ i, ((ds i).factor : ℝ) ^ (c i : ℝ) = 1 := by
+  constructor
+  · rintro ⟨ψ, hψ⟩ c hc
+    exact dependency_forces_mul hψ c hc
+  · intro h
+    refine dependency_sufficient fun c hc => ?_
+    have hpos : ∀ i, (0 : ℝ) < ((ds i).factor : ℝ) := fun i => by
+      exact_mod_cast (ds i).pos
+    have hm := congrArg Real.log (h c hc)
+    rw [Real.log_prod (fun i _ => (Real.rpow_pos_of_pos (hpos i) _).ne'),
+      Real.log_one] at hm
+    calc ∑ i, (c i : ℝ) * Real.log ((ds i).factor : ℝ)
+        = ∑ i, Real.log (((ds i).factor : ℝ) ^ (c i : ℝ)) :=
+          Finset.sum_congr rfl fun i _ => (Real.log_rpow (hpos i) _).symm
+      _ = 0 := hm
 
 /-! ## The conflict, exhibited
 

@@ -3,6 +3,10 @@ import LambdaS.Fundamental
 /-!
 # Conversion ratios as syntax
 
+Concretely, `convert x m ft` contributes the ratio `m/ft`, and the round trip
+`convert (convert x m ft) ft m` accumulates `(m/ft) · (ft/m) = 1`; this file
+gives ratios like these a first-order syntax.
+
 An earlier design, since deleted, carried a term's accumulated conversion ratio
 as a *semantic* object: at arrow type the ratio was a Lean function space. That
 works at first order and stops working at a unit binder, and the reason is worth

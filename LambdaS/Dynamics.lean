@@ -14,8 +14,8 @@ It does not have force for a core calculus, and the reason is worth stating.
 Runtime units alone *would* merely relocate the checking to the runtime. But
 paired with a theorem that **erasure preserves results**, they establish
 something the erased semantics cannot state on its own: that the instrumentation
-is *unnecessary*. That is precisely the content of "units are static", and it is
-the claim this project has been asserting since the design memo without proof.
+is *unnecessary*. That is precisely the content of "units are static", a
+slogan easy to assert and, before these files, unproved.
 
 So there are three things, and they are complementary rather than competing:
 
@@ -23,11 +23,11 @@ So there are three things, and they are complementary rather than competing:
 |---|---|
 | instrumented dynamics + `unit_soundness_total` | the dynamic unit checks **never fire** on well-typed terms |
 | `eeval_erase` (`LambdaS.Erasure`) | dropping units **does not change the numbers** |
-| scaling parametricity (`LambdaS.Fundamental`) | units have **observable meaning** |
+| scaling parametricity, i.e. invariance of results under a change of units (`LambdaS.Fundamental`) | units have **observable meaning** |
 
 Kennedy did the third column. This file defines the instrumented evaluator; its
 soundness lives in `LambdaS.Soundness` and `LambdaS.Normalization`, and erasure
-in `LambdaS.Erasure`: all three at the whole language.
+in `LambdaS.Erasure`; all three are stated at the whole language.
 -/
 
 namespace LambdaS

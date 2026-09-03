@@ -14,7 +14,8 @@ This file answers that. Conversion is not a path at all; it is a **ratio of
 valuations**, and the object that supplies the valuations already exists:
 `Scaling`. A scaling assigns a positive magnitude to every base unit and extends
 to a homomorphism, which is exactly what "reduce every unit to a canonical
-value" means in the Fortress specification.
+value" means in the specification of Fortress, a language whose standard
+library carried units of measure.
 
 Once conversion is a ratio, path independence is not a condition to check but a
 theorem: `convChain_eq` says any chain of intermediate conversions collapses to
@@ -23,7 +24,8 @@ problem does not arise, and there is nothing an implementation could get wrong.
 
 ## The contrast worth recording
 
-There is a real alternative, and it is the one Comp 311's Fall 2016 assignment
+There is a real alternative, and it is the one a unit-conversion programming
+assignment (Rice's Comp 311, Fall 2016)
 adopts: restrict compound units to *at most one named unit per dimension*, so
 that lining up two compounds has a unique pairing. That works, and it kills the
 ambiguity, but it buys uniqueness by shrinking the algebra. Under it

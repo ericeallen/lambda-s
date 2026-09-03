@@ -542,8 +542,8 @@ theorem eval_total (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
 /-- **Unit soundness, unrestricted.** Every well-typed closed term of scalar type
 evaluates to a scalar carrying exactly the unit its type predicted.
 
-Its ancestor in `LambdaS.Dynamics` said this for the first-order arithmetic
-fragment, with the fuel assumed. Normalization removes both restrictions: the
+A since-deleted ancestor in `LambdaS.Dynamics` said this for the first-order
+arithmetic fragment, with the fuel assumed. Normalization removes both restrictions: the
 term may abstract over values, units and dimensions, and the fuel is produced by
 the proof. This is the statement that says the unit discipline has no runtime
 escape hatch. -/

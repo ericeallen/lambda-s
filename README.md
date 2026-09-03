@@ -84,7 +84,8 @@ conversion. `Adequacy` joins the declaration oracle to the evaluator, and
 moving the numbers.
 
 **Conversion.** `Conversion` gives the operator, `Declare` the consistency
-criterion for declaration sets in exact rational arithmetic, `Ratio` the
+criterion for declaration sets, proved in both directions in exact rational
+arithmetic, `Ratio` the
 first-order syntax of accumulated ratios, and `Twist` the drift analysis and
 its decision procedure.
 

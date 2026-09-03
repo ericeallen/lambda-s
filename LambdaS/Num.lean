@@ -3,11 +3,9 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # The numeric carrier
 
-The evaluator in `LambdaS.Dynamics` is generic in its numbers. That is what lets
-one definition serve both masters: instantiated at `ℝ` it is the object the
-soundness and erasure theorems are about (necessarily noncomputable, since
-`Real.exp` is), and instantiated at `Float` it is compiled to C by
-Lean's code generator.
+The evaluator in `LambdaS.Dynamics` is generic in its numbers, and one
+definition serves both masters: the section below spells out the two
+instances.
 
 Everything about units is carrier-independent, which is why the proofs never
 mention `Num` beyond threading it: unit soundness and erasure are statements

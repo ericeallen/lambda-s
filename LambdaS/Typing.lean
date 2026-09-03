@@ -226,11 +226,12 @@ exactly that type, and returning *that very derivation*.
 
 The equation is stated against the given `d` rather than against some derivation
 the checker happens to build, which is stronger than completeness usually is and
-costs nothing: the proof is the same induction. Two things fall out. Together
-with `check` returning its derivation it is the whole correctness statement, so
-soundness needs no theorem: the checker cannot produce a type without producing
-the derivation that justifies it. And since `check Δ Γ e` is one value, any two
-derivations of the same judgement are equal. -/
+costs nothing: the proof is the same induction. Two things fall out. First,
+together with `check` returning its derivation, the equation is the whole
+correctness statement, so soundness needs no theorem: the checker cannot
+produce a type without producing
+the derivation that justifies it. Second, since `check Δ Γ e` is one value,
+any two derivations of the same judgement are equal. -/
 theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k}
     {τ : Ty B D j k} (d : HasTy Δ Γ e τ), check Δ Γ e = some ⟨τ, d⟩ := by
   intro j k Δ Γ e τ d
