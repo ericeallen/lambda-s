@@ -1,3 +1,8 @@
+/*
+Copyright (c) 2026 Eric Allen. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Eric Allen
+*/
 /* Numeric kernels for compiled Λs programs.
 
    The point of this file is what is *absent*. LambdaS.Map proves the units of a
