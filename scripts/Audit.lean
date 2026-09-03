@@ -58,6 +58,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.eeval_den
 
 -- NonDefinability
+#print axioms LambdaS.NonDef.convert_not_definable
 #print axioms LambdaS.NonDef.sqrt_not_definable
 #print axioms LambdaS.NonDef.no_newton_seed
 #print axioms LambdaS.NonDef.arith_of_hasTy

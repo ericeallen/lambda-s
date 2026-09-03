@@ -434,18 +434,17 @@ theorem Twist.invariant_iff_nfOne {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
 derivation, a ratio together with its `Twist` derivation, or `none`.
 
 It fails in exactly two circumstances, and they are different in kind. At `add`
-the two branches' ratios must be *the same term*, and the check is syntactic:
-sound, and incomplete only when the branches compute equal ratios by different
-syntax; the semantic question "are these two ratio terms equal in value" is the
-one `Tw.nfOne` decides for a *closed* interface, and sharpening the check to it
-is possible but not done here. At `root`, `log`, `exp`, `idx`, `mapp`, `comp`
+the two branches' ratios must agree up to the unit algebra (`Tw.scalarEq`):
+unit constants merge into one exponent vector and atoms compare as bags, so
+reordered and reassociated conversions are accepted. The residual
+incompleteness is that atoms are never cancelled across the fraction bar,
+which is argued at `twistOf`. At `root`, `log`, `exp`, `idx`, `mapp`, `comp`
 and `ucon` there is no rule to apply. `root` is *inside* the invariance theory
 (`Tm.Parametric` admits it, and `fundamental` covers it through `relQ_rpow`),
 but its scale factor is a rational power `ψ(u)^(1/n)` and the ratio grammar
 `Tw` has no rational-power former, so declining it here is a limitation of
-this analysis rather than an exclusion of the theory.
-`log` and `exp` are nonlinear, so no
-single ratio describes how they move; `idx`, `mapp` and `comp` would need
+this analysis rather than an exclusion of the theory. `log` and `exp` are
+nonlinear, so no single ratio describes how they move; `idx`, `mapp` and `comp` would need
 ratios at space shapes, which `triv` does not carry. And `ucon` names a unit,
 which no scaling story survives. -/
 

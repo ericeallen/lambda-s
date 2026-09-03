@@ -1042,7 +1042,8 @@ theorem sqrtTm_convertFree {j k : ℕ} (u : UExp B k) :
 /-- **The fundamental theorem covers roots.** The square root term is related
 to itself under every scaling: inputs related at `u·u` give outputs related at
 `(u·u)^(1/2)`, whose scale factor is `ψ(u·u)^(1/2)`. Before `relQ_rpow` lost
-its sign hypothesis this instance was unprovable, because `Tm.Parametric`
+its sign hypothesis this instance was out of reach of `fundamental_free`,
+because `Tm.Parametric`
 rejected the term. -/
 theorem sqrt_scales {j k : ℕ} {Δ : DCtx D j k} (u : UExp B k) (V ψ : Scaling B k) :
     Rel (.arrow (.Q (Term.mul u u))

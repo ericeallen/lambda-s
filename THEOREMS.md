@@ -48,7 +48,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:706`](LambdaS/Fundamental.lean#L706) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:804`](LambdaS/Examples.lean#L804) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:359`](LambdaS/Parametricity.lean#L359) |
-| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1047`](LambdaS/Fundamental.lean#L1047) |
+| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1048`](LambdaS/Fundamental.lean#L1048) |
 | The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:903`](LambdaS/Fundamental.lean#L903) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:447`](LambdaS/Conversion.lean#L447) |
 
@@ -59,10 +59,10 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:174`](LambdaS/Twist.lean#L174) |
 | Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:373`](LambdaS/Twist.lean#L373) |
 | Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:397`](LambdaS/Twist.lean#L397) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:728`](LambdaS/Twist.lean#L728) |
-| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:621`](LambdaS/Twist.lean#L621) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:727`](LambdaS/Twist.lean#L727) |
+| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:620`](LambdaS/Twist.lean#L620) |
 | Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:683`](LambdaS/Examples.lean#L683) |
-| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:778`](LambdaS/Twist.lean#L778) |
+| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:777`](LambdaS/Twist.lean#L777) |
 
 ## Adequacy and erasure
 
@@ -80,6 +80,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
+| Conversion not definable convert-free | `LambdaS.NonDef.convert_not_definable` | [`LambdaS/NonDefinability.lean:336`](LambdaS/NonDefinability.lean#L336) |
 | Square root not definable by arithmetic | `LambdaS.NonDef.sqrt_not_definable` | [`LambdaS/NonDefinability.lean:147`](LambdaS/NonDefinability.lean#L147) |
 | The reflection into the arithmetic grammar | `LambdaS.NonDef.arith_of_hasTy` | [`LambdaS/NonDefinability.lean:200`](LambdaS/NonDefinability.lean#L200) |
 | Square root not definable, at the term grammar | `LambdaS.NonDef.sqrt_not_definable_tm` | [`LambdaS/NonDefinability.lean:245`](LambdaS/NonDefinability.lean#L245) |

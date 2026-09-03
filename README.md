@@ -16,7 +16,7 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is about ten thousand lines and stays that small because of
+The development is about eleven thousand lines and stays that small because of
 one representational decision: units and dimensions are exponent vectors over
 ℚ, so substitution is a linear map, every substitution lemma is a
 reordering of finite sums, and no normalization pass over unit syntax exists
@@ -29,7 +29,7 @@ anywhere in the system.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| theorem and lemma declarations | 391 |
+| theorem and lemma declarations | 406 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
