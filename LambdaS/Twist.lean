@@ -109,6 +109,28 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       {u : UExp B k} {p : ℕ} {Θ : List Shape} {de : HasTy Δ Γ e (.Q u)}
       {s : Tw B k Θ .scalar} :
       Twist p Θ de s → Twist p Θ (.pow (q := q) de) (.qpow s q)
+  /-- `log` of a trivial-ratio argument, with the `add`-style side condition
+  that the argument's ratio is worth `1` under every scaling and environment.
+  A trivial-ratio argument is unmoved by every rescaling: the typing rule pins
+  it at `Q 1`, so the type's factor is `ψ(1) = 1` and the ratio is `1`, hence
+  its logarithm is unmoved too and the result carries the trivial ratio.
+  Beyond drift-`1` arguments the defect leaves the multiplicative group:
+  `log` turns a multiplicative discrepancy into an additive one, which no
+  ratio expresses, and the decline in `twistOf` stands. -/
+  | log {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k} {p : ℕ}
+      {Θ : List Shape} {de : HasTy Δ Γ e (.Q 1)} {s : Tw B k Θ .scalar}
+      (hone : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ s θρ = 1) :
+      Twist p Θ de s → Twist p Θ (.log de) (.unit 1)
+  /-- `exp` of a trivial-ratio argument, under the same side condition and for
+  the same reason: an argument at `Q 1` with ratio `1` is unmoved by every
+  rescaling, so its exponential is unmoved too. Beyond drift-`1` arguments the
+  defect leaves the multiplicative group: how `exp` moves would depend on the
+  argument's value, not merely its unit, and the decline in `twistOf`
+  stands. -/
+  | exp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k} {p : ℕ}
+      {Θ : List Shape} {de : HasTy Δ Γ e (.Q 1)} {s : Tw B k Θ .scalar}
+      (hone : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ s θρ = 1) :
+      Twist p Θ de s → Twist p Θ (.exp de) (.unit 1)
   | ulam {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {d τ e p Θ}
       {db : HasTy (Δ.cons d) Γ.weaken e τ} {t : Tw B (k + 1) Θ (Ty.shape τ)} :
       Twist p Θ db t → Twist p Θ (.ulam db) (.ulam t)
@@ -391,6 +413,28 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
       Real.mul_rpow (le_of_lt (Tw.eval ψ s θρ).2) (le_of_lt (Tw.eval ψ s θρ).2),
       ← Scaling.scale_rpow]
     try ring
+  | log hone hte ih =>
+    rename_i e' p' Θ' de s
+    intro V ψ θρ hOnes ρ ρ' hr
+    have h1 := ih V ψ θρ hOnes hr
+    simp only [TwRel] at h1
+    rw [hone ψ θρ] at h1
+    have harg : den (V.comp ψ) de ρ' = den V de ρ := by simpa using h1
+    show Real.log (den (V.comp ψ) de ρ')
+        = ψ.scale 1 * (ψ.scale 1 * ψ.scale 1) * Real.log (den V de ρ)
+    rw [harg]
+    simp
+  | exp hone hte ih =>
+    rename_i e' p' Θ' de s
+    intro V ψ θρ hOnes ρ ρ' hr
+    have h1 := ih V ψ θρ hOnes hr
+    simp only [TwRel] at h1
+    rw [hone ψ θρ] at h1
+    have harg : den (V.comp ψ) de ρ' = den V de ρ := by simpa using h1
+    show Real.exp (den (V.comp ψ) de ρ')
+        = ψ.scale 1 * (ψ.scale 1 * ψ.scale 1) * Real.exp (den V de ρ)
+    rw [harg]
+    simp
   | @ulam _ _ _ _ _ _ _ _ _ db tb htb ih =>
     intro V ψ θρ hOnes ρ ρ' hr r s
     have h := ih (V.cons r) (ψ.cons s) θρ hOnes (twRelEnv_weaken s hr)
@@ -683,12 +727,17 @@ first-order ratio is atom-free and the check is *exact* there
 (`Tw.scalarEq_iff_eval_eq`): the only first-order declines at `add`, `mapp`
 and `comp` are genuine drift disagreements, such as `(x in ft) + y`. The
 residual incompleteness is that distinct atoms, which arise only under `lam`
-binders, are never identified. At `log`, `exp` and `ucon`
-there is no rule to apply, and the three declines exhaust the grammar. `log`
-and `exp` are nonlinear: no ratio of any form describes how they move, since
-`exp`'s would have to depend on the argument's value, not merely its unit.
-And `ucon` names a unit, which is outside the invariance theory: no scaling
-story survives naming a magnitude.
+binders, are never identified. At `log` and `exp` the same check runs against
+the literal ratio `1`: a trivial-ratio argument at `Q 1` is unmoved by every
+rescaling, so its logarithm or exponential is unmoved too, and the result
+carries the trivial ratio (`log ((x in ft)/(x in ft))` is
+declaration-independent, and is accepted). Beyond drift-`1` arguments the two
+forms are nonlinear and no ratio of any kind describes how they move: `log`
+turns a multiplicative defect into an additive one, and `exp`'s would have to
+depend on the argument's value, not merely its unit, so a nontrivial argument
+ratio declines. The one *unconditional* decline is `ucon`, which names a
+unit, and that is outside the invariance theory: no scaling story survives
+naming a magnitude.
 
 The vector and matrix forms are *accepted*, at the `vec` and `mat` shapes,
 with no side conditions at the introductions: the drift of a vector is a
@@ -1174,8 +1223,10 @@ identify *distinct* atoms, since nothing relates two arguments' ratios; but
 atoms arise only under `lam` binders, so a first-order ratio has none and the
 check is exact there (`Tw.scalarEq_iff_eval_eq`).
 `mapp` and `comp` run the same check per output component, across the summed
-index. Everything downstream of the checks is complete: `Tw.nfOne` decides
-triviality of the *resulting* ratio exactly. -/
+index, and `log` and `exp` run it against the literal ratio `1`, accepting
+exactly the arguments whose ratio is identifiably trivial. Everything
+downstream of the checks is complete: `Tw.nfOne` decides triviality of the
+*resulting* ratio exactly. -/
 def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : Tm B D j k} →
     {τ : Ty B D j k} → (p : ℕ) → (Θ : List Shape) → (hΘ : Θ = Γ.shapes) →
     (d : HasTy Δ Γ e τ) → Option (Σ' t : Tw B k Θ (Ty.shape τ), Twist p Θ d t)
@@ -1265,17 +1316,29 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
   | _, _, _, _, _, _, p, Θ, hΘ, .pow (q := q) de => do
       let ⟨t, ht⟩ ← twistOf p Θ hΘ de
       some ⟨.qpow t q, .pow ht⟩
+  | _, _, _, _, _, _, p, Θ, hΘ, .log de => do
+      let ⟨t, ht⟩ ← twistOf p Θ hΘ de
+      if h1 : Tw.scalarEq t (.unit 1) then
+        some ⟨.unit 1, .log (fun ψ θρ =>
+          (Tw.scalarEq_sound t (.unit 1) h1 ψ θρ).trans
+            (Tw.eval_one ψ .scalar θρ)) ht⟩
+      else none
+  | _, _, _, _, _, _, p, Θ, hΘ, .exp de => do
+      let ⟨t, ht⟩ ← twistOf p Θ hΘ de
+      if h1 : Tw.scalarEq t (.unit 1) then
+        some ⟨.unit 1, .exp (fun ψ θρ =>
+          (Tw.scalarEq_sound t (.unit 1) h1 ψ θρ).trans
+            (Tw.eval_one ψ .scalar θρ)) ht⟩
+      else none
   | _, _, _, _, _, _, _, _, _, .ucon => none
-  | _, _, _, _, _, _, _, _, _, .log _ => none
-  | _, _, _, _, _, _, _, _, _, .exp _ => none
 
 /-! ## The diagnostic, end to end -/
 
 /-- **Unit drift**: the normal form of a program's accumulated conversion
 ratio, computed from its derivation. `some 1` means the conversions cancel;
 `some w` with `w ≠ 1` exhibits the drift; `none` means the analysis does not
-apply (an unhandled form, or an `add` whose branch ratios `Tw.scalarEq`
-cannot identify). -/
+apply (a `ucon`, a `log` or `exp` whose argument ratio is not identifiably
+trivial, or an `add` whose branch ratios `Tw.scalarEq` cannot identify). -/
 def unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {u : UExp B k}
     {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.Q u)) : Option (UExp B k) :=
   (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map

@@ -700,6 +700,48 @@ def addMixedDeriv : HasTy Δ₀ (scalarCtx [m, ft]) addMixed (.Q ft) :=
 /- Declined: the branch drifts disagree. -/
 #guard (unitDrift addMixedDeriv).isNone
 
+/- And the decline is no false alarm: `addMixed`'s *value* depends on the
+declared conversion factor. Two constant conversion oracles, one environment
+(magnitudes `1.0` at `m` and `ft`), two different results. -/
+#guard (match evalC (D := Dim) (fun _ _ => (2.0 : Float)) 10
+              [.scalar ⟨1.0, m⟩, .scalar ⟨1.0, ft⟩] addMixed,
+             evalC (D := Dim) (fun _ _ => (3.0 : Float)) 10
+              [.scalar ⟨1.0, m⟩, .scalar ⟨1.0, ft⟩] addMixed with
+        | some (.scalar x), some (.scalar y) => x.mag != y.mag
+        | _, _ => false)
+
+/-- Division of a unit by itself is the trivial unit: exponent vectors
+subtract to zero. -/
+theorem div_self_unit (u : UExp Base 0) : Term.div u u = 1 :=
+  Term.ext' (funext fun _ => sub_self _) (funext fun _ => sub_self _)
+
+/-- `log ((x in ft)/(x in ft))`: the argument's conversions cancel, so it is
+drift-free, and a drift-free value at `Q 1` is declaration-independent under
+every rescaling. Its logarithm is declaration-independent too, and the
+analysis now accepts it: `log` runs the `add`-style check against the literal
+ratio `1` rather than declining unconditionally. -/
+def logRoundTrip : Term₀ :=
+  .log (.div (.convert (.var 0) m ft) (.convert (.var 0) m ft))
+
+def logRoundTripDeriv : HasTy Δ₀ (scalarCtx [m]) logRoundTrip (.Q 1) :=
+  .log (div_self_unit ft ▸
+    HasTy.div (.convert (.var rfl) sameDim_m_ft) (.convert (.var rfl) sameDim_m_ft))
+
+/- Accepted, with the trivial drift. -/
+#guard (unitDrift logRoundTripDeriv).map (· == (1 : UExp Base 0)) == some true
+
+/-- What `log` still declines: an argument at `Q 1` whose ratio genuinely
+drifts. `(x in ft)/y` for `x : Q m`, `y : Q ft` is dimensionless but carries
+the drift `m/ft`, and no ratio describes how its logarithm moves. -/
+def logDrifting : Term₀ := .log (.div (.convert (.var 0) m ft) (.var 1))
+
+def logDriftingDeriv : HasTy Δ₀ (scalarCtx [m, ft]) logDrifting (.Q 1) :=
+  .log (div_self_unit ft ▸
+    HasTy.div (.convert (.var rfl) sameDim_m_ft) (.var rfl))
+
+/- Declined: the argument's drift is not trivial. -/
+#guard (unitDrift logDriftingDeriv).isNone
+
 /-- β at the ratio level. The left branch wraps `x in ft` in an identity
 application, so its ratio arrives as a β-redex; `twistOf` reduces it on the
 spot (`Tw.appE`), the flat form sees the bare exponent vector `m/ft` rather
