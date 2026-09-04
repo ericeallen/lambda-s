@@ -1335,8 +1335,8 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
   -- once where conversion's is incurred twice, hence the half exponent), but a
   -- unit constant's defect is a covariance failure with no dependence on the
   -- declarations, and tracking it would make a reported drift mean two
-  -- different things. Declined, conversion remains the only analyzed construct
-  -- that reads the valuation.
+  -- different things. With `ucon` declined, conversion remains the only
+  -- analyzed construct that reads the valuation.
   | _, _, _, _, _, _, _, _, _, .ucon => none
 
 /-! ## The diagnostic, end to end -/
