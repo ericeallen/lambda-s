@@ -43,6 +43,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
+| Preservation: a produced value has the predicted type | `LambdaS.eval_sound` | [`LambdaS/Soundness.lean:214`](LambdaS/Soundness.lean#L214) |
 | Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:621`](LambdaS/Normalization.lean#L621) |
 | Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:634`](LambdaS/Normalization.lean#L634) |
 | Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:604`](LambdaS/Normalization.lean#L604) |
