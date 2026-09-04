@@ -131,6 +131,7 @@ inductive TwRelEnv {j k : ℕ} (ψ : Scaling B k) :
       TwRel τ (hs ▸ θρ.1) ψ ρ.1 ρ'.1 → TwRelEnv ψ Γ Θ θρ.2 ρ.2 ρ'.2 →
       TwRelEnv ψ (τ :: Γ) (s :: Θ) θρ ρ ρ'
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- Looking up related environments. -/
 theorem twRelEnv_lookup {j k : ℕ} {ψ : Scaling B k} : ∀ {Γ : Ctx B D j k}
     {Θ : List Shape} {θρ : TwEnv Θ} {ρ ρ' : Env Γ}, TwRelEnv ψ Γ Θ θρ ρ ρ' →
@@ -148,6 +149,7 @@ theorem twRelEnv_lookup {j k : ℕ} {ψ : Scaling B k} : ∀ {Γ : Ctx B D j k}
       exact hw
     | succ n => exact ih n (by simpa using h) (by simpa using h')
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- **Weakening related environments under a unit binder.** The value
 environments are retyped by `Env.weaken`; the ratio environment is untouched,
 because shape is blind to units, which is the entire design working as
@@ -165,6 +167,8 @@ theorem twRelEnv_weaken {j k : ℕ} {ψ : Scaling B k} (s : ℝ) :
     exact (twRel_weaken τ ψ s (w := θρ.1) (eqRec_heq _ _).symm
       (cast_heq _ _).symm (cast_heq _ _).symm).mpr hw
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
+omit [UnitSys B D] in
 /-- The same under a dimension binder, where nothing at all moves. -/
 theorem twRelEnv_weakenDim {j k : ℕ} {ψ : Scaling B k} :
     ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ : TwEnv Θ} {ρ ρ' : Env Γ},
@@ -186,6 +190,7 @@ private theorem div_twist (xu xv xs xt A Bv : ℝ) :
       = xu / xv * (xs / xt * (xs / xt)) * (A / Bv) := by
   rw [mul_div_mul_comm, mul_div_mul_comm, mul_div_mul_comm]
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **The scaling law with a twist.** A term whose conversions accumulate to `t`
 rescales by its type's factor times the *square* of `t`'s value: both readings
 carry the conversion factor, so it appears twice. At trivial ratio this is the
@@ -352,11 +357,13 @@ unrestricted scaling law exactly when that ratio's value is `1` under every
 scaling. The next section makes that condition *syntactic*, and hence decidable.
 -/
 
+omit [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- Scalar contexts and their shape lists. -/
 @[simp] theorem shapes_scalarCtx {j k : ℕ} (us : List (UExp B k)) :
     Ctx.shapes (scalarCtx (D := D) (j := j) us) = us.map fun _ => Shape.scalar := by
   simp [Ctx.shapes, scalarCtx, List.map_map, Function.comp_def, Ty.shape]
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- A scalar environment is related to its own rescaling at trivial ratios. -/
 theorem twRelEnv_scaleEnv {j k : ℕ} (ψ : Scaling B k) :
     ∀ (us : List (UExp B k)) (ρ : Env (scalarCtx (D := D) (j := j) us)),
@@ -368,6 +375,7 @@ theorem twRelEnv_scaleEnv {j k : ℕ} (ψ : Scaling B k) :
       show ψ.scale u * ρ.1 = ψ.scale u * ((1 : ℝ) * 1) * ρ.1
       ring
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **Invariance under all scalings forces the ratio's value to `1`.**
 
 The general converse for any term of scalar type over a context of scalars,
@@ -408,6 +416,7 @@ theorem Twist.eq_one_of_invariant {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
   have hpos : 0 < c := Tw.eval_pos ψ t (oneTwEnv _) hone
   nlinarith [hsq, hpos]
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **Cancelling conversions are invisible.** A term whose ratio is worth `1`
 under every scaling obeys the unrestricted scaling law, exactly as a
 convert-free term does, even though it may convert repeatedly along the way. -/
@@ -424,6 +433,7 @@ theorem Twist.invariant_of_eq_one {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
   rw [hone ψ] at htw
   simpa using htw
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **The characterization.** For a term of scalar type over a context of
 scalars with nonzero denotation, invariance under every scaling holds exactly
 when its accumulated ratio is worth `1` under every scaling.
@@ -457,7 +467,7 @@ scaling exactly when its normal form is the unit of the group: an equality in a
 free ℚ-vector space, decided coordinatewise.
 
 This is the theorem that turns the characterization into an algorithm. -/
-theorem Tw.nfOne_eq_one_iff [DecidableEq B] {k : ℕ} {Θ : List Shape}
+theorem Tw.nfOne_eq_one_iff {k : ℕ} {Θ : List Shape}
     (t : Tw B k Θ .scalar) :
     Tw.nfOne t = 1 ↔ ∀ ψ : Scaling B k, Tw.eval ψ t (oneTwEnv Θ) = 1 := by
   have hval : ∀ ψ : Scaling B k, Tw.eval ψ t (oneTwEnv Θ) = ψ.scale (Tw.nfOne t) := by
@@ -473,6 +483,7 @@ theorem Tw.nfOne_eq_one_iff [DecidableEq B] {k : ℕ} {Θ : List Shape}
       intro ψ; rw [← hval ψ, hall ψ, Scaling.scale_one]
     exact scale_eq_iff.mp this
 
+omit [Fintype D] [DecidableEq D] in
 /-- **The decidable characterization.** For a first-order program with nonzero
 denotation, unrestricted scale invariance holds exactly when the normal form of
 its accumulated ratio is the unit of the group: one equality of exponent
@@ -652,6 +663,7 @@ def Tw.flat : {k : ℕ} → {Θ : List Shape} → Tw B k Θ .scalar →
       (Term.div a.flat.1 b.flat.1, a.flat.2.1 ++ b.flat.2.2, a.flat.2.2 ++ b.flat.2.1)
   | _, _, t => (1, [t], [])
 
+omit [DecidableEq B] in
 /-- Flattening preserves the value: a scalar ratio evaluates to its
 unit-constant part's scale times the product of its numerator atoms over the
 product of its denominator atoms. All divisions are `ℝ`'s total division; the
@@ -801,6 +813,7 @@ def unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {u : UExp B k
   (twistOf (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
     fun p => Tw.nfOne p.1
 
+omit [Fintype D] [DecidableEq D] in
 /-- **The diagnostic is exact.** When `unitDrift` answers, invariance under
 every rescaling holds precisely when the answer is `1`.
 
@@ -827,6 +840,7 @@ across every consistent extension of the declaration set. This is the
 ratio-level analogue of `evalC_convert_declared`: `Twist` joined to `Declare`
 the way `eval_adeq` joined `Dynamics` to `Declare`. -/
 
+omit [Fintype B] [DecidableEq B] in
 /-- Any scaling is reachable from any other by composition: log-space is a
 group. -/
 theorem Scaling.comp_sub {k : ℕ} (V V' : Scaling B k) :
@@ -835,6 +849,7 @@ theorem Scaling.comp_sub {k : ℕ} (V V' : Scaling B k) :
   simp only [Scaling.comp, Scaling.mk.injEq]
   exact ⟨funext fun x => by ring, funext fun x => by ring⟩
 
+omit [Fintype D] [DecidableEq D] in
 /-- **Drift-free programs are declaration-independent.** A closed dimensionless
 program with cancelling conversions denotes the same number under every
 valuation, however the units it converts between are declared. -/

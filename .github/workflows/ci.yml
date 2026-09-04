@@ -37,8 +37,9 @@ jobs:
 
       - name: Run the compiled binary and assert its numeric checks
         run: |
-          out=$(.lake/build/bin/lambdas)
+          out=$(.lake/build/bin/lambdas) || { echo "::error::binary exited nonzero: run-time validation failed"; exit 1; }
           echo "$out"
           echo "$out" | grep -Eq "all numeric checks pass +=[[:space:]]*true" || { echo "::error::binary numeric self-checks failed"; exit 1; }
+          echo "$out" | grep -Eq "literals through dgemv +=[[:space:]]*pass" || { echo "::error::literal-program validation missing or failed"; exit 1; }
           echo "$out" | grep -q "300.000000 ft" || { echo "::error::yard-to-feet line missing from the binary output"; exit 1; }
           echo "$out" | grep -Eq "via ft.*91\.440000 m" || { echo "::error::path-independence line missing from the binary output"; exit 1; }

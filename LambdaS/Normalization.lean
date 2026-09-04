@@ -165,7 +165,7 @@ theorem eval_mono (cf : UExp B 0 → UExp B 0 → R) :
       · rename_i x ha
         rw [eval_mono cf n a m η δ ρ _ hnm ha]; exact h
       · exact absurd h (by simp)
-termination_by n j k e m η δ ρ v hnm h => (n, sizeOf e)
+termination_by n j k e m η δ ρ v _hnm _h => (n, sizeOf e)
 
 /-! ## Reducibility
 
@@ -195,7 +195,7 @@ def Red (cf : UExp B 0 → UExp B 0 → R) : Ty B D 0 0 → Val R B D → Prop
       ∀ d : DExp D 0, ∃ n v', eval cf n (j + 1) k η' (Fin.cons d δ') ρ' b = some v' ∧
         Red cf (Ty.substDim τ d) v'
 termination_by τ _ => Ty.skel τ
-decreasing_by all_goals simp only [Ty.skel, Ty.skel_subst, Ty.skel_substDim] <;> omega
+decreasing_by all_goals simp only [Ty.skel, Ty.skel_subst, Ty.skel_substDim]; omega
 
 /-- Reducible values are well-shaped, which is all the evaluator's matches
 need. -/
@@ -573,6 +573,7 @@ The fundamental lemma at the closed scope. `Ty.ground` disappears because both
 environments are empty, so reducibility is stated at the type the checker wrote.
 -/
 
+omit [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- At the closed scope the environments ground nothing. -/
 @[simp] theorem Ty.ground_nil (τ : Ty B D 0 0) :
     Ty.ground (nilU B) (nilU D) τ = τ := by

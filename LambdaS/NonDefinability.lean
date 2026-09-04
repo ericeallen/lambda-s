@@ -297,7 +297,7 @@ theorem scale_ofBase (ψ : Scaling B k) (b : B) :
 /-- A scaling that fixes one generator and doubles another. Two base units of the
 same dimension are separated by such a scaling, which is exactly the freedom
 `Scaling.Coherent` forbids, and the freedom that makes conversion observable. -/
-noncomputable def separate (b c : B) : Scaling B k :=
+noncomputable def separate (_b c : B) : Scaling B k :=
   ⟨fun b' => if b' = c then Real.log 2 else 0, fun _ => 0⟩
 
 theorem separate_fixes {b c : B} (h : b ≠ c) : (separate (k := k) b c).scale (Term.ofBase b) = 1 := by
@@ -306,6 +306,7 @@ theorem separate_fixes {b c : B} (h : b ≠ c) : (separate (k := k) b c).scale (
 theorem separate_moves (b c : B) : (separate (k := k) b c).scale (Term.ofBase c) = 2 := by
   rw [scale_ofBase]; simp [separate, Real.exp_log]
 
+omit [DecidableEq B] [Fintype D] in
 /-- **Conversion cannot be simulated.** A convert-free function from `Q u` to
 `Q v` is the zero function, as soon as one scaling fixes `u` and moves `v`.
 
@@ -326,6 +327,7 @@ theorem convertFree_eq_zero {u v : UExp B k} {e : Tm B D j k}
   · exact absurd (by linarith [h] : ψ.scale v = 1) h2
   · exact h
 
+omit [Fintype D] in
 /-- **So `convert` is primitive.** No convert-free term denotes conversion
 between two distinct base units, because conversion is multiplication by a
 positive factor and the only convert-free candidate is zero.

@@ -270,6 +270,7 @@ theorem solves_reduceAll_iff {σ : Term.Assign B V} {sys : System B V}
     simp only [reduceAll, List.map_cons, solves_cons] at *
     rw [Term.solves_reduce_iff ht, ih]
 
+omit [Fintype V] in
 /-- After reduction the pivot variable is gone from every equation. -/
 theorem reduceAll_pivot_zero {sys : System B V} {t : Term B V} {v₀ : V}
     (h : t.vars v₀ ≠ 0) : ∀ u ∈ sys.reduceAll t v₀, u.vars v₀ = 0 := by
@@ -284,6 +285,7 @@ Repeatedly pivot on the head equation, reducing the tail against it. Recursion i
 on a list whose length strictly decreases, so **termination is structural**: no
 measure to invent, no well-founded argument to discharge. -/
 
+omit [Fintype V] in
 /-- Reduction preserves the number of equations: it is a row operation, not an
 elimination of rows. This is what makes `triangulate` structurally decreasing. -/
 @[simp] theorem length_reduceAll (sys : System B V) (t : Term B V) (v₀ : V) :

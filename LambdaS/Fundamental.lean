@@ -405,6 +405,7 @@ def RelEnvCo : (Γ : Ctx B D j k) → DCtx D j k → Scaling D j → Scaling B k
   | [], _, _, _, _, _ => True
   | τ :: Γ, Δ, Φ, ψ, ρ, ρ' => RelCo Δ Φ τ ψ ρ.1 ρ'.1 ∧ RelEnvCo Γ Δ Φ ψ ρ.2 ρ'.2
 
+omit [UnitSys B D] in
 theorem relCo_lookup : ∀ {Γ : Ctx B D j k} {τ : Ty B D j k} (n : ℕ) (h : Γ[n]? = some τ)
     {Δ : DCtx D j k} {Φ : Scaling D j} {ψ : Scaling B k} {ρ ρ' : Env Γ},
     RelEnvCo Γ Δ Φ ψ ρ ρ' → RelCo Δ Φ τ ψ (Env.lookup n h ρ) (Env.lookup n h ρ')
@@ -509,6 +510,7 @@ def Tm.ConvertFree : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .convert _ _ _ => False
 
 
+omit [Fintype D] [UnitSys B D] in
 /-- Variable lookup respects the relation. -/
 theorem rel_lookup : ∀ {Γ : Ctx B D j k} {τ : Ty B D j k} (n : ℕ) (h : Γ[n]? = some τ)
     {ψ : Scaling B k} {ρ ρ' : Env Γ}, RelEnv Γ ψ ρ ρ' →
@@ -519,6 +521,7 @@ theorem rel_lookup : ∀ {Γ : Ctx B D j k} {τ : Ty B D j k} (n : ℕ) (h : Γ[
       exact hr.1
   | _ :: _, _, n + 1, _, _, _, _, hr => rel_lookup n _ hr.2
 
+omit [Fintype D] [UnitSys B D] in
 /-- **Weakening an environment preserves relatedness**, at whatever factor the
 fresh unit variable is given. This is what lets the body of a `Λu` appeal to the
 induction hypothesis. -/
@@ -529,6 +532,7 @@ theorem relEnv_weaken : ∀ (Γ : Ctx B D j k) (ψ : Scaling B k) (s : ℝ) (ρ 
       ⟨(rel_weaken τ ψ s (cast_heq _ _).symm (cast_heq _ _).symm).mpr h.1,
        relEnv_weaken Γ ψ s ρ.2 ρ'.2 h.2⟩
 
+omit [Fintype D] [UnitSys B D] in
 /-- The same under a dimension binder, where nothing moves at all. -/
 theorem relEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ψ : Scaling B k) (ρ ρ' : Env Γ),
     RelEnv Γ ψ ρ ρ' → RelEnv Γ.weakenDim ψ (Env.weakenDim ρ) (Env.weakenDim ρ')
@@ -567,6 +571,7 @@ theorem eq_iff_of_heq {α β : Sort _} {x y : α} {x' y' : β}
   have hαβ : α = β := type_eq_of_heq hx
   subst hαβ; cases hx; cases hy; rfl
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 /-- **Independence transports along grounding.** Simpler than `rel_ground`,
 because `Indep` does not mention units at all. -/
 theorem indep_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
@@ -610,12 +615,14 @@ def IndepEnv : (Γ : Ctx B D j k) → Env Γ → Env Γ → Prop
   | [], _, _ => True
   | τ :: Γ, ρ, ρ' => Indep τ ρ.1 ρ'.1 ∧ IndepEnv Γ ρ.2 ρ'.2
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 theorem indep_lookup : ∀ {Γ : Ctx B D j k} {τ : Ty B D j k} (n : ℕ) (h : Γ[n]? = some τ)
     {ρ ρ' : Env Γ}, IndepEnv Γ ρ ρ' → Indep τ (Env.lookup n h ρ) (Env.lookup n h ρ')
   | [], _, _, h, _, _, _ => absurd h (by simp)
   | _ :: _, _, 0, h, _, _, hr => by obtain rfl := Option.some.inj h; exact hr.1
   | _ :: _, _, n + 1, _, _, _, hr => indep_lookup n _ hr.2
 
+omit [Fintype D] [UnitSys B D] [Fintype B] in
 theorem indepEnv_weaken : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv Γ ρ ρ' →
     IndepEnv Γ.weaken (Env.weaken ρ) (Env.weaken ρ')
   | [], _, _, _ => trivial
@@ -623,6 +630,7 @@ theorem indepEnv_weaken : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv Γ 
       ⟨(indep_ground τ _ _ (cast_heq _ _).symm (cast_heq _ _).symm).mpr h.1,
        indepEnv_weaken Γ ρ.2 ρ'.2 h.2⟩
 
+omit [Fintype D] [UnitSys B D] [Fintype B] in
 theorem indepEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv Γ ρ ρ' →
     IndepEnv Γ.weakenDim (Env.weakenDim ρ) (Env.weakenDim ρ')
   | [], _, _, _ => trivial
@@ -630,6 +638,7 @@ theorem indepEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv 
       ⟨(indep_ground τ _ _ (cast_heq _ _).symm (cast_heq _ _).symm).mpr h.1,
        indepEnv_weakenDim Γ ρ.2 ρ'.2 h.2⟩
 
+omit [Fintype D] in
 /-- **A convert-free term cannot read the valuation.**
 
 Note that `ucon` is *not* excluded: naming a unit breaks parametricity, but it
@@ -706,6 +715,7 @@ theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
       (ihf hf V V' hr)
   | convert a hsd ih => intro hf _ _ _ _ _; exact absurd hf not_false
 
+omit [Fintype D] in
 /-- **The valuation is invisible to closed convert-free terms.** A program that
 does not convert cannot tell you how big a metre is.
 
@@ -849,6 +859,7 @@ theorem fundamental : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
         conv_invariant_of_coherent V hΦ.coherent hsd, hΦ.coherent _ _ hsd]
     ring
 
+omit [Fintype D] in
 /-- **The fundamental theorem, unconditionally, for convert-free terms.**
 
 Every parametric, convert-free term is related to itself at its type, under
@@ -996,6 +1007,7 @@ def cvtTm {j k : ℕ} (u v : UExp B k) : Tm B D j k := .convert (.var 0) u v
 def cvtDeriv {j k : ℕ} {Δ : DCtx D j k} {u v : UExp B k} (h : SameDim Δ u v) :
     HasTy Δ [Ty.Q u] (cvtTm u v) (.Q v) := .convert (.var rfl) h
 
+omit [Fintype D] in
 /-- **Coherence at a pair is exactly what one conversion requires.**
 
 Left to right is the converse of `fundamental`, restricted to this term: if the
@@ -1029,6 +1041,7 @@ theorem cvt_rel_iff_coherent {j k : ℕ} {Δ : DCtx D j k} {u v : UExp B k}
     have := ne_of_gt hpv
     field_simp
 
+omit [Fintype D] in
 /-- **Scaling invariance for closed terms.** A closed convert-free term of scalar
 type denotes a number invariant under *every* rescaling of the units, which
 forces it to be zero unless its unit is trivial.
@@ -1057,6 +1070,7 @@ noncomputable def scaleEnv (ψ : Scaling B k) :
   | [], ρ => ρ
   | u :: us, ρ => (ψ.scale u * ρ.1, scaleEnv ψ us ρ.2)
 
+omit [Fintype D] [UnitSys B D] in
 /-- An environment is related to its own rescaling. -/
 theorem relEnv_scaleEnv (ψ : Scaling B k) :
     ∀ (us : List (UExp B k)) (ρ : Env (scalarCtx (D := D) (j := j) us)),
@@ -1064,6 +1078,7 @@ theorem relEnv_scaleEnv (ψ : Scaling B k) :
   | [], _ => trivial
   | _ :: us, ρ => ⟨rfl, relEnv_scaleEnv ψ us ρ.2⟩
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 /-- An environment of scalars is trivially independent of the valuation: at
 scalar type the relation is equality, and the environment is compared with
 itself. -/
@@ -1072,6 +1087,7 @@ theorem indepEnv_scalarCtx : ∀ (us : List (UExp B k))
   | [], _ => trivial
   | _ :: us, ρ => ⟨rfl, indepEnv_scalarCtx us ρ.2⟩
 
+omit [Fintype D] in
 /-- **The scaling law of a first-order term**, derived from the fundamental
 theorem.
 
@@ -1100,12 +1116,15 @@ def velocityDeriv {j k : ℕ} {Δ : DCtx D j k} (u v : UExp B k) :
     HasTy Δ (scalarCtx [u, v]) velocityTm (.Q (Term.div u v)) :=
   .div (.var rfl) (.var rfl)
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 theorem velocityTm_parametric {j k : ℕ} :
     (velocityTm : Tm B D j k).Parametric := ⟨trivial, trivial⟩
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 theorem velocityTm_convertFree {j k : ℕ} :
     (velocityTm : Tm B D j k).ConvertFree := ⟨trivial, trivial⟩
 
+omit [Fintype D] in
 /-- **A program that mentions units is scale-invariant once its constants scale
 with it.**
 
@@ -1138,12 +1157,15 @@ def sqrtDeriv {j k : ℕ} {Δ : DCtx D j k} (u : UExp B k) :
               (.Q (Term.rpow (Term.mul u u) (1 / ((2 : ℕ) : ℚ))))) :=
   .lam (.root (by decide) (.var rfl))
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 theorem sqrtTm_parametric {j k : ℕ} (u : UExp B k) :
     (sqrtTm u : Tm B D j k).Parametric := trivial
 
+omit [Fintype B] [Fintype D] [UnitSys B D] in
 theorem sqrtTm_convertFree {j k : ℕ} (u : UExp B k) :
     (sqrtTm u : Tm B D j k).ConvertFree := trivial
 
+omit [Fintype D] in
 /-- **The fundamental theorem covers roots.** The square root term is related
 to itself under every scaling: inputs related at `u·u` give outputs related at
 `(u·u)^(1/2)`, whose scale factor is `ψ(u·u)^(1/2)`. Before `relQ_rpow` lost

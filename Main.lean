@@ -20,7 +20,8 @@ def main : IO UInt32 := do
   IO.println LambdaS.Algorithms.report
   IO.println LambdaS.Algorithms.reportDecl
   IO.println LambdaS.QM.twoStateReport
-  if LambdaS.QM.twoStateChecks then
+  IO.println LambdaS.QM.checksReport
+  if LambdaS.QM.allChecks then
     return 0
   else
     IO.eprintln "numeric checks FAILED"

@@ -82,6 +82,7 @@ noncomputable def Scaling.coordVar (i : Fin k) : Scaling B k :=
   congr 1
   rw [Finset.sum_eq_single b] <;> simp_all
 
+omit [DecidableEq B] in
 @[simp] theorem Scaling.scale_coordVar (i : Fin k) (u : UExp B k) :
     (Scaling.coordVar (B := B) i).scale u = Real.exp (u.vars i) := by
   simp only [scale, logScale, coordVar]
@@ -139,6 +140,7 @@ def Tm.Inert : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .dapp f _ => f.Inert
   | _, _, .convert a u v => u = v ∧ a.Inert
 
+omit [Fintype B] [DecidableEq B] [Fintype D] [UnitSys B D] in
 /-- Convert-free terms are inert, vacuously. -/
 theorem Tm.inert_of_convertFree : ∀ {j k : ℕ} (e : Tm B D j k), e.ConvertFree → e.Inert
   | _, _, .var _, _ => trivial
@@ -165,6 +167,7 @@ theorem Tm.inert_of_convertFree : ∀ {j k : ℕ} (e : Tm B D j k), e.ConvertFre
   | _, _, .dapp f _, h => Tm.inert_of_convertFree f h
   | _, _, .convert _ _ _, h => absurd h not_false
 
+omit [DecidableEq B] [Fintype D] in
 /-- **Inert conversions are removable.** A term whose conversions are all inert
 denotes exactly what some convert-free term denotes: at the same type, in every
 environment, under every valuation.
@@ -300,6 +303,8 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
     show den V da ρ = den V a ρ * conv V _ _
     rw [hd, conv_self, mul_one]
 
+omit [DecidableEq B] in
+omit [DecidableEq B] [Fintype D] in
 /-- **Inert terms are invariant under every scaling**, not merely the coherent
 ones, because they are convert-free in all but name. -/
 theorem fundamental_of_inert {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
@@ -323,6 +328,8 @@ omit [DecidableEq B] in
 under a *given* `ψ` is equivalent to `ψ` identifying the two units. Quantifying
 over every `ψ` and applying `scale_eq_iff` collapses that to `u = v`. -/
 
+omit [Fintype D] in
+omit [Fintype D] in
 /-- **All-scalings invariance is exactly inertness**, for the canonical
 conversion applied to a nonzero argument.
 
@@ -339,6 +346,7 @@ theorem cvt_invariant_iff_eq {u v : UExp B k} (h : SameDim Δ u v)
   rw [← scale_eq_iff]
   exact forall_congr' fun ψ => cvt_rel_iff_coherent h V ψ hx
 
+omit [Fintype D] in
 /-- Restated as the design claim: a conversion that actually converts is
 **detectable**. Some rescaling of the unit system changes what the program
 computes, which is the precise sense in which `convert` reads the units. -/
@@ -359,6 +367,7 @@ hypothesis is the pendulum condition: a base unit the result mentions and no
 argument does. -/
 
 omit [DecidableEq B] [UnitSys B D] in
+omit [Fintype D] in
 /-- Rescaling by a scaling that fixes every argument unit changes nothing. -/
 theorem scaleEnv_eq_self (ψ : Scaling B k) :
     ∀ (us : List (UExp B k)), (∀ u ∈ us, ψ.scale u = 1) →
@@ -371,6 +380,8 @@ theorem scaleEnv_eq_self (ψ : Scaling B k) :
       rw [h1, one_mul, hrest]
       rfl
 
+omit [Fintype D] [UnitSys B D] in
+omit [Fintype D] in
 /-- **Invariance forces zero when the result escapes the arguments.**
 
 If some base unit occurs in the result unit but in no argument unit, then a
@@ -400,6 +411,7 @@ theorem scaleLaw_forces_zero {us : List (UExp B k)} {u₀ : UExp B k}
   · exact absurd (by linarith [hc] : (Scaling.coord (k := k) b).scale u₀ = 1) hmove
   · exact hc
 
+omit [Fintype D] in
 /-- The dichotomy for actual terms: a first-order term whose result unit escapes
 its arguments denotes zero, if it is invariant under every scaling. Otherwise it
 is not invariant, so by the contrapositive of `fundamental_free` it is not
@@ -415,14 +427,17 @@ theorem forced_zero {us : List (UExp B k)} {u₀ : UExp B k} {e : Tm B D j k}
 /-! ### Trivial ratios -/
 
 omit [DecidableEq B] in
+omit [Fintype B] in
 @[simp] theorem Term.one_mul' {V : Type} (t : Term B V) : Term.mul 1 t = t := by
   refine Term.ext' (funext fun b => ?_) (funext fun i => ?_) <;> simp
 
 omit [DecidableEq B] in
+omit [Fintype B] in
 @[simp] theorem Term.mul_one' {V : Type} (t : Term B V) : Term.mul t 1 = t := by
   refine Term.ext' (funext fun b => ?_) (funext fun i => ?_) <;> simp
 
 omit [DecidableEq B] in
+omit [Fintype B] in
 @[simp] theorem Term.div_one' {V : Type} (t : Term B V) : Term.div t 1 = t := by
   refine Term.ext' (funext fun b => ?_) (funext fun i => ?_) <;> simp
 

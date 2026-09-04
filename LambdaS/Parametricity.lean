@@ -109,6 +109,7 @@ transparency, so without it `HMul ℝ (Ty.Q u).den` fails to resolve. -/
   | _, _, .all _ τ => ℝ → Ty.den τ
   | _, _, .allDim τ => Ty.den τ
 
+omit [Fintype B] in
 /-- **Units carry no data.** Grounding a type through unit and dimension
 environments leaves its denotation unchanged.
 
@@ -134,18 +135,22 @@ theorem Ty.den_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
   | all d τ ih => intro _ _ η δ; simp only [Ty.ground, Ty.den, ih]
   | allDim τ ih => intro _ _ η δ; simp only [Ty.ground, Ty.den, ih]
 
+omit [Fintype B] in
 /-- Instantiating a unit variable does not change the denotation. -/
 theorem Ty.den_subst {j k : ℕ} (τ : Ty B D j (k + 1)) (μ : UExp B k) :
     Ty.den (τ.subst μ) = Ty.den τ := Ty.den_ground _ _ _
 
+omit [Fintype B] in
 /-- Nor does instantiating a dimension variable. -/
 theorem Ty.den_substDim {j k : ℕ} (τ : Ty B D (j + 1) k) (d : DExp D j) :
     Ty.den (τ.substDim d) = Ty.den τ := Ty.den_ground _ _ _
 
+omit [Fintype B] in
 /-- Nor does weakening. -/
 theorem Ty.den_weaken {j k : ℕ} (τ : Ty B D j k) :
     Ty.den (Ty.weaken τ) = Ty.den τ := Ty.den_ground _ _ _
 
+omit [Fintype B] in
 /-- Nor does dimension weakening. -/
 theorem Ty.den_weakenDim {j k : ℕ} (τ : Ty B D j k) :
     Ty.den (Ty.weakenDim τ) = Ty.den τ := Ty.den_ground _ _ _

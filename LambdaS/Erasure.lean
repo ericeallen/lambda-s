@@ -182,6 +182,7 @@ def Val.eraseList : List (Val R B D) → List (EVal R B D)
 
 end
 
+omit [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] [Num R] in
 /-- Erasure commutes with lookup. -/
 theorem eraseList_getElem? : ∀ (ρ : List (Val R B D)) (n : ℕ),
     (Val.eraseList ρ)[n]? = (ρ[n]?).map Val.erase
@@ -368,7 +369,7 @@ theorem eeval_erase (cf : UExp B 0 → UExp B 0 → R) :
         · rename_i hcheck
           obtain rfl := Option.some.inj h.symm
           have := eeval_erase cf fu a η δ ρ _ ha
-          simp only [eeval, this, Val.erase, hcheck.1]
+          simp only [eeval, this, Val.erase]
         · exact absurd h (by simp)
       · exact absurd h (by simp)
 termination_by n j k e => (n, sizeOf e)

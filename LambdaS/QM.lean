@@ -364,6 +364,44 @@ def twoStateChecks : Bool :=
     && (runFuel 0 [hamiltonian, statePlus] applied).isNone
     && (runFuel 0 [hamiltonian, statePlus] expectH).isSome
 
+/-! ### Validation in the compiled binary
+
+The box results are `#guard`ed at build time in Lean's interpreter; the
+binary re-runs them on the compiled evaluator, so the C code path is
+validated against the same numbers. The literal check is new coverage: the
+expectation applied to the Hamiltonian and state *written as terms*, so the
+evaluator's `vcons`/`mcons` cases and the extern `dgemv` are all on the
+path of one closed program. -/
+
+/-- The particle-in-a-box claims, re-checked by the compiled evaluator. -/
+def boxChecks : Bool :=
+  (run groundEnergy).any (fun x => decide (0.375 * eV ≤ x) && decide (x ≤ 0.377 * eV))
+    && (run uncertainty).any (fun x => decide (0.5 ≤ x))
+    && (run density).any (fun x => decide (1.999e9 ≤ x) && decide (x ≤ 2.001e9))
+
+/-- `⟨ψ|H|ψ⟩` as one closed term: curried expectation, literal operator,
+literal state. -/
+def expectFromLiterals : Term₀ := ⟪ expectation ◃ hamiltonianTm ◃ statePlusTm ⟫
+
+#guard typeOf expectFromLiterals == some (.Q joule)
+
+/-- The literal program computes the symmetric eigenvalue `−A` through
+`dgemv`. -/
+def literalChecks : Bool :=
+  (runIn [] expectFromLiterals).any (fun x => decide (Float.abs (x - (-splitJ)) < 1e-28))
+
+/-- Every run-time numeric check the binary performs; `main` exits nonzero
+unless this holds. -/
+def allChecks : Bool := boxChecks && twoStateChecks && literalChecks
+
+/-- The validation summary the binary prints. -/
+def checksReport : String :=
+  let verdict : Bool → String := fun b => if b then "pass" else "FAIL"
+  "compiled-evaluator validation\n"
+    ++ "  particle in a box         = " ++ verdict boxChecks ++ "\n"
+    ++ "  two-state system          = " ++ verdict twoStateChecks ++ "\n"
+    ++ "  literals through dgemv    = " ++ verdict literalChecks ++ "\n"
+
 /-! ### The native kernel on the evaluation path
 
 `Num.matVec` is what `eval` reaches when it applies a linear map, and the `Float`

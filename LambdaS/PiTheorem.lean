@@ -356,6 +356,7 @@ theorem scale_scalingOfFactors (e : Fin m ≃ B) (κ : Fin m → ℝ)
   exact Finset.prod_congr rfl fun v _ => by
     rw [Real.rpow_def_of_pos (hκ v), mul_comm (Real.log (κ v)) ((u.base (e v) : ℚ) : ℝ)]
 
+omit [Fintype D] in
 /-- **The term-level multiplicative scale law.** The denotation of a
 first-order parametric convert-free term, as a function of its argument
 magnitudes, satisfies `MulScaleLaw` for the matrix of its arguments' base

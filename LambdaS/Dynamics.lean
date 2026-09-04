@@ -93,10 +93,10 @@ inductive Val (R B D : Type) where
 
 Forwards to `Num.dot`, which the `Float` carrier overrides with the native
 kernel, so this is the point where a compiled Λs program crosses into C. -/
-def dotp [Num R] (a b : List R) : R := Num.dot a b
+def dotp (a b : List R) : R := Num.dot a b
 
 /-- Column `i` of a matrix, padded with zero. -/
-def colOf [Num R] (N : List (List R)) (i : ℕ) : List R :=
+def colOf (N : List (List R)) (i : ℕ) : List R :=
   N.map fun r => r[i]?.getD (Num.ofRat 0)
 
 

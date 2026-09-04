@@ -19,6 +19,10 @@ Authors: Eric Allen
 #include <lean/lean.h>
 
 #ifdef __APPLE__
+/* Opt in to the non-deprecated CBLAS interface (macOS 13.3+). Without
+   ACCELERATE_LAPACK_ILP64 the integer arguments stay 32-bit, matching the
+   (int) casts below. */
+#define ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
 #define LAMBDAS_HAVE_BLAS 1
 #endif

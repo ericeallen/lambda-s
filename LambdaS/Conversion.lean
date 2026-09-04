@@ -13,7 +13,7 @@ import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 # Conversion, and why paths cannot disagree
 
 Λs has a conversion operator (`convert`, a core term constructor), and
-conversion is the right place to be
+`design/open-questions.md` records why conversion is the right place to be
 careful: with units nameable and definable in terms of combinations of other
 units, a system that defines conversion by *walking a declared structure* can
 offer more than one route between two units, with no guarantee the routes
@@ -125,6 +125,7 @@ theorem conv_preserves (ψ : Scaling B k) (u v : UExp B k) (m : ℝ) :
 def Scaling.comp (V ψ : Scaling B k) : Scaling B k :=
   ⟨fun b => V.base b + ψ.base b, fun i => V.vars i + ψ.vars i⟩
 
+omit [Fintype B] in
 /-- Composing scalings commutes with extending them: a new variable's factors
 add, like everything else. -/
 @[simp] theorem Scaling.comp_cons (V ψ : Scaling B k) (r s : ℝ) :
@@ -334,6 +335,7 @@ theorem Scaling.Factors.coherent [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k
   simp only [Scaling.scale, h.logScale u, h.logScale v]
   rw [show dimOf (D := D) Δ u = dimOf (D := D) Δ v from huv]
 
+omit [Fintype B] in
 /-- **Factoring survives a unit binder**, at the factor the bound dimension
 dictates. There is no choice to make, which is the whole point. -/
 theorem Scaling.Factors.cons [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k}
@@ -345,6 +347,7 @@ theorem Scaling.Factors.cons [Fintype D] {ψ : Scaling B k} {Δ : DCtx D j k}
     · simp [Scaling.cons, DCtx.cons]
     · simpa [Scaling.cons, DCtx.cons] using h.vars i
 
+omit [Fintype B] in
 /-- **Factoring survives a dimension binder**, at whatever the new dimension is
 worth: dimension abstraction is unconstrained, which is what makes `∀δ. ∀u:δ`
 genuinely unbounded. -/

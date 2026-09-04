@@ -130,7 +130,7 @@ def weaken (t : UExp B k) : UExp B (k + 1) :=
 /-- Substituting into a weakened expression changes nothing: the fresh
 variable was unused. -/
 @[simp] theorem subst_weaken (t : UExp B k) (σ : UExp B k) : subst (weaken t) σ = t := by
-  ext b i <;> simp [subst, weaken]
+  ext b <;> simp [subst, weaken]
 
 end UExp
 
@@ -174,7 +174,7 @@ def liftU {k k₀ : ℕ} (η : Fin k → UExp B k₀) : Fin (k + 1) → UExp B (
 
 @[simp] theorem substU_id {k : ℕ} (u : UExp B k) : substU (idU B k) u = u := by
   refine Term.ext' (funext fun b => ?_) (funext fun v => ?_) <;>
-    simp [idU, Term.ofVar, Finset.sum_ite_eq']
+    simp [idU, Term.ofVar]
 
 theorem weaken_ofVar {k : ℕ} (i : Fin k) :
     UExp.weaken (Term.ofVar i : UExp B k) = Term.ofVar i.succ := by
@@ -216,13 +216,13 @@ theorem substU_mul {k k₀ : ℕ} (η : Fin k → UExp B k₀) (u w : UExp B k) 
     substU η (Term.mul u w) = Term.mul (substU η u) (substU η w) := by
   refine Term.ext' (funext fun b => ?_) (funext fun v => ?_) <;>
     simp only [substU_base, substU_vars, Term.mul_base, Term.mul_vars, add_mul,
-      Finset.sum_add_distrib] <;> ring
+      Finset.sum_add_distrib]; ring
 
 theorem substU_div {k k₀ : ℕ} (η : Fin k → UExp B k₀) (u w : UExp B k) :
     substU η (Term.div u w) = Term.div (substU η u) (substU η w) := by
   refine Term.ext' (funext fun b => ?_) (funext fun v => ?_) <;>
     simp only [substU_base, substU_vars, Term.div_base, Term.div_vars, sub_mul,
-      Finset.sum_sub_distrib] <;> ring
+      Finset.sum_sub_distrib]; ring
 
 theorem substU_rpow {k k₀ : ℕ} (η : Fin k → UExp B k₀) (u : UExp B k) (q : ℚ) :
     substU η (Term.rpow u q) = Term.rpow (substU η u) q := by
@@ -259,11 +259,11 @@ theorem substU_weaken {k k₀ : ℕ} (η : Fin k → UExp B k₀) (u : UExp B k)
     | zero =>
       simp only [substU_vars, UExp.weaken, liftU, Fin.sum_univ_succ, Fin.cases_zero,
         Fin.cases_succ]
-      simp [Term.ofVar, UExp.weaken]
+      simp [Term.ofVar]
     | succ w =>
       simp only [substU_vars, UExp.weaken, liftU, Fin.sum_univ_succ, Fin.cases_zero,
         Fin.cases_succ]
-      simp [Term.ofVar, UExp.weaken]
+      simp [Term.ofVar]
 
 /-- Substituting into a weakened expression ignores whatever was put at index
 zero: the weakened expression does not mention it. -/
@@ -399,8 +399,7 @@ def dimOf [Fintype B] [UnitSys B D] {j k} (Δ : DCtx D j k) (u : UExp B k) : DEx
 @[simp] theorem dimOf_ofVar [Fintype B] [UnitSys B D] {j k} (Δ : DCtx D j k) (i : Fin k) :
     dimOf (D := D) Δ (Term.ofVar i : UExp B k) = Δ i := by
   refine Term.ext' (funext fun d => ?_) (funext fun v => ?_) <;>
-    simp only [dimOf, Term.ofVar, Rat.cast_zero, zero_mul, Finset.sum_const_zero,
-      zero_add, apply_ite (fun q : ℚ => (q : ℝ))] <;>
+    simp only [dimOf, Term.ofVar, zero_mul, Finset.sum_const_zero, zero_add] <;>
     · rw [Finset.sum_eq_single i] <;> simp_all
 
 /-- Weakening the dimension context weakens the dimension. -/
@@ -527,7 +526,7 @@ theorem ground_comp : ∀ {j k j₁ k₁ j₂ k₂ : ℕ} (η₂ : Fin k₁ → 
   | vec V => simp [ground, List.map_map, Function.comp_def, substU_comp]
   | lin V W => simp [ground, List.map_map, Function.comp_def, substU_comp]
   | all d τ ih => simp [ground, substU_comp, ih, liftU_comp]
-  | allDim τ ih => simp [ground, substU_comp, ih, liftU_comp]
+  | allDim τ ih => simp [ground, ih, liftU_comp]
 
 /-- Decidable equality, by structural recursion. Written by hand rather than
 derived: the deriving handler cannot carry the `[Fintype B]` constraint that
@@ -597,7 +596,7 @@ theorem ground_liftU_subst {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
     cases i using Fin.cases with
     | zero => simp [liftU]
     | succ m => simp [liftU, substU_weaken_cons]
-  · funext i; simp [idU]
+  · funext i; simp
 
 /-- The dimension analogue of `ground_weaken`. -/
 theorem ground_weakenDim {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
@@ -614,7 +613,7 @@ theorem ground_liftD_substDim {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
     substDim (ground η (liftU δ) τ) w = ground η (Fin.cons w δ) τ := by
   rw [substDim, ground_comp]
   congr 1
-  · funext i; simp [idU]
+  · funext i; simp
   · funext i
     cases i using Fin.cases with
     | zero => simp [liftU]

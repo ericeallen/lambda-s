@@ -60,6 +60,7 @@ maintains it. -/
 def EnvOkD {j k : ℕ} (Δ : DCtx D j k) (η : UEnv B k) (δ : DEnv D j) : Prop :=
   ∀ i, dimOf (D := D) (DCtx.nil D) (η i) = substU δ (Δ i)
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **Grounding commutes with taking dimensions.**
 
 The one dimensional lemma in the development. It holds because `dimOf` and
@@ -87,10 +88,11 @@ theorem dimOf_substU {j k : ℕ} {Δ : DCtx D j k} {η : UEnv B k} {δ : DEnv D 
       rw [Finset.sum_comm]
       exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
     simp only [dimOf, substU_base, substU_vars, add_mul, Finset.sum_add_distrib,
-      fub, hη, fub2, mul_add, Finset.sum_empty, add_zero]
+      fub, hη, fub2, mul_add]
     ring
   · exact w.elim0
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- Extending both the dimension context and the unit environment preserves the
 condition, provided the new unit has the declared dimension. -/
 theorem EnvOkD.cons {j k : ℕ} {Δ : DCtx D j k} {η : UEnv B k} {δ : DEnv D j}
@@ -102,6 +104,7 @@ theorem EnvOkD.cons {j k : ℕ} {Δ : DCtx D j k} {η : UEnv B k} {δ : DEnv D j
   | zero => simpa [DCtx.cons] using hw
   | succ m => simpa [DCtx.cons] using h m
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- The dimension analogue, for a dimension abstraction. -/
 theorem EnvOkD.consDim {j k : ℕ} {Δ : DCtx D j k} {η : UEnv B k} {δ : DEnv D j}
     (h : EnvOkD Δ η δ) (w : DExp D 0) :
@@ -150,6 +153,7 @@ inductive EnvTy : List (Val R B D) → Ctx B D 0 0 → Prop where
 
 end
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [Num R] in
 /-- Looking up a well-typed environment gives a well-typed value. -/
 theorem EnvTy.lookup : ∀ {ρ : List (Val R B D)} {Γ : Ctx B D 0 0} {n : ℕ} {τ},
     EnvTy ρ Γ → Γ[n]? = some τ → ∃ v, ρ[n]? = some v ∧ ValTy v τ := by
@@ -173,6 +177,7 @@ theorem EnvTy.lookup : ∀ {ρ : List (Val R B D)} {Γ : Ctx B D 0 0} {n : ℕ} 
 A value's shape is determined by its type, which is what discharges the
 evaluator's `| _ => none` branches. -/
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [Num R] in
 theorem ValTy.scalar_inv {v : Val R B D} {u : UExp B 0} (h : ValTy v (.Q u)) :
     ∃ m, v = .scalar ⟨m, u⟩ := by
   cases h with
@@ -181,6 +186,7 @@ theorem ValTy.scalar_inv {v : Val R B D} {u : UExp B 0} (h : ValTy v (.Q u)) :
   | uclos _ _ _ heq => simp [Ty.ground] at heq
   | dclos _ _ _ heq => simp [Ty.ground] at heq
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [Num R] in
 theorem ValTy.vector_inv {v : Val R B D} {V : Sp B 0} (h : ValTy v (.vec V)) :
     ∃ xs, v = .vector xs V ∧ xs.length = V.length := by
   cases h with
@@ -189,6 +195,7 @@ theorem ValTy.vector_inv {v : Val R B D} {V : Sp B 0} (h : ValTy v (.vec V)) :
   | uclos _ _ _ heq => simp [Ty.ground] at heq
   | dclos _ _ _ heq => simp [Ty.ground] at heq
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [Num R] in
 theorem ValTy.matrix_inv {v : Val R B D} {V W : Sp B 0} (h : ValTy v (.lin V W)) :
     ∃ M, v = .matrix M V W ∧ M.length = W.length ∧ ∀ r ∈ M, r.length = V.length := by
   cases h with

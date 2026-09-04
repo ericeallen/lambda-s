@@ -38,24 +38,24 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:623`](LambdaS/Normalization.lean#L623) |
-| Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:636`](LambdaS/Normalization.lean#L636) |
-| Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:606`](LambdaS/Normalization.lean#L606) |
+| Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:624`](LambdaS/Normalization.lean#L624) |
+| Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:637`](LambdaS/Normalization.lean#L637) |
+| Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:607`](LambdaS/Normalization.lean#L607) |
 | Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:355`](LambdaS/QM.lean#L355) |
 
 ## Denotational semantics and abstraction
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:716`](LambdaS/Fundamental.lean#L716) |
-| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:639`](LambdaS/Fundamental.lean#L639) |
-| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:867`](LambdaS/Fundamental.lean#L867) |
-| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:735`](LambdaS/Fundamental.lean#L735) |
+| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:726`](LambdaS/Fundamental.lean#L726) |
+| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:648`](LambdaS/Fundamental.lean#L648) |
+| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:878`](LambdaS/Fundamental.lean#L878) |
+| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:745`](LambdaS/Fundamental.lean#L745) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:804`](LambdaS/Examples.lean#L804) |
-| The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:359`](LambdaS/Parametricity.lean#L359) |
-| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1153`](LambdaS/Fundamental.lean#L1153) |
-| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1008`](LambdaS/Fundamental.lean#L1008) |
-| Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:447`](LambdaS/Conversion.lean#L447) |
+| The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:364`](LambdaS/Parametricity.lean#L364) |
+| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1175`](LambdaS/Fundamental.lean#L1175) |
+| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1020`](LambdaS/Fundamental.lean#L1020) |
+| Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:450`](LambdaS/Conversion.lean#L450) |
 
 ## Accumulated ratios and the drift diagnostic
 
@@ -65,13 +65,13 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Ratio expressions (Figure 5) | `LambdaS.Tw` | [`LambdaS/Ratio.lean:132`](LambdaS/Ratio.lean#L132) |
 | Semantic ratios (Figure 5) | `LambdaS.SemTw` | [`LambdaS/Ratio.lean:166`](LambdaS/Ratio.lean#L166) |
 | Ratio evaluation (Figure 5) | `LambdaS.Tw.eval` | [`LambdaS/Ratio.lean:189`](LambdaS/Ratio.lean#L189) |
-| The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:196`](LambdaS/Twist.lean#L196) |
-| Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:436`](LambdaS/Twist.lean#L436) |
-| Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:460`](LambdaS/Twist.lean#L460) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:811`](LambdaS/Twist.lean#L811) |
-| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:691`](LambdaS/Twist.lean#L691) |
+| The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:201`](LambdaS/Twist.lean#L201) |
+| Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:446`](LambdaS/Twist.lean#L446) |
+| Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:470`](LambdaS/Twist.lean#L470) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:824`](LambdaS/Twist.lean#L824) |
+| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:703`](LambdaS/Twist.lean#L703) |
 | Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:683`](LambdaS/Examples.lean#L683) |
-| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:861`](LambdaS/Twist.lean#L861) |
+| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:876`](LambdaS/Twist.lean#L876) |
 
 | The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:924`](LambdaS/Examples.lean#L924) |
 
@@ -81,9 +81,9 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 |---|---|---|
 | Adequacy at the declared factors | `LambdaS.eval_adeq` | [`LambdaS/Adequacy.lean:338`](LambdaS/Adequacy.lean#L338) |
 | Declared factors reach the compiled evaluator (Theorem 7.1) | `LambdaS.evalC_convert_declared` | [`LambdaS/Adequacy.lean:784`](LambdaS/Adequacy.lean#L784) |
-| Erasure simulation, no typing hypothesis (Theorem 7.2) | `LambdaS.eeval_erase` | [`LambdaS/Erasure.lean:197`](LambdaS/Erasure.lean#L197) |
-| Erasure correctness | `LambdaS.erasure_correct` | [`LambdaS/Erasure.lean:388`](LambdaS/Erasure.lean#L388) |
-| The erased evaluator computes the denotation | `LambdaS.eeval_den` | [`LambdaS/Erasure.lean:400`](LambdaS/Erasure.lean#L400) |
+| Erasure simulation, no typing hypothesis (Theorem 7.2) | `LambdaS.eeval_erase` | [`LambdaS/Erasure.lean:198`](LambdaS/Erasure.lean#L198) |
+| Erasure correctness | `LambdaS.erasure_correct` | [`LambdaS/Erasure.lean:389`](LambdaS/Erasure.lean#L389) |
+| The erased evaluator computes the denotation | `LambdaS.eeval_den` | [`LambdaS/Erasure.lean:401`](LambdaS/Erasure.lean#L401) |
 | One yard is three feet, at the evaluator | `LambdaS.Examples.one_yard_is_three_feet` | [`LambdaS/Examples.lean:533`](LambdaS/Examples.lean#L533) |
 | One yard is 0.9144 meters, both routes | `LambdaS.Examples.one_yard_in_metres` | [`LambdaS/Examples.lean:544`](LambdaS/Examples.lean#L544) |
 
@@ -91,14 +91,14 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Conversion not definable convert-free | `LambdaS.NonDef.convert_not_definable` | [`LambdaS/NonDefinability.lean:336`](LambdaS/NonDefinability.lean#L336) |
+| Conversion not definable convert-free | `LambdaS.NonDef.convert_not_definable` | [`LambdaS/NonDefinability.lean:338`](LambdaS/NonDefinability.lean#L338) |
 | Square root not definable by arithmetic | `LambdaS.NonDef.sqrt_not_definable` | [`LambdaS/NonDefinability.lean:147`](LambdaS/NonDefinability.lean#L147) |
 | The reflection into the arithmetic grammar | `LambdaS.NonDef.arith_of_hasTy` | [`LambdaS/NonDefinability.lean:200`](LambdaS/NonDefinability.lean#L200) |
 | Square root not definable, at the term grammar | `LambdaS.NonDef.sqrt_not_definable_tm` | [`LambdaS/NonDefinability.lean:245`](LambdaS/NonDefinability.lean#L245) |
 | No seed for Newton's method | `LambdaS.NonDef.no_newton_seed` | [`LambdaS/NonDefinability.lean:155`](LambdaS/NonDefinability.lean#L155) |
 | No seed, at the term grammar | `LambdaS.NonDef.no_newton_seed_tm` | [`LambdaS/NonDefinability.lean:256`](LambdaS/NonDefinability.lean#L256) |
 | The multiplicative scale law (definition) | `LambdaS.Pi.MulScaleLaw` | [`LambdaS/PiTheorem.lean:220`](LambdaS/PiTheorem.lean#L220) |
-| Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:374`](LambdaS/PiTheorem.lean#L374) |
+| Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:375`](LambdaS/PiTheorem.lean#L375) |
 | Log transport, positivity hypothesis | `LambdaS.Pi.scaleLaw_of_mulScaleLaw` | [`LambdaS/PiTheorem.lean:249`](LambdaS/PiTheorem.lean#L249) |
 | Pi (Theorem 8.1) | `LambdaS.Pi.pi_theorem` | [`LambdaS/PiTheorem.lean:92`](LambdaS/PiTheorem.lean#L92) |
 | Pi, multiplicative coordinates | `LambdaS.Pi.mulScaleLaw_factorization` | [`LambdaS/PiTheorem.lean:273`](LambdaS/PiTheorem.lean#L273) |
@@ -107,7 +107,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:182`](LambdaS/PiTheorem.lean#L182) |
 | The pendulum signature | `LambdaS.Pi.pendulum` | [`LambdaS/Pi.lean:133`](LambdaS/Pi.lean#L133) |
 | The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:161`](LambdaS/Pi.lean#L161) |
-| The pendulum ignores its mass | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:398`](LambdaS/PiTheorem.lean#L398) |
+| The pendulum ignores its mass | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:399`](LambdaS/PiTheorem.lean#L399) |
 | A once-appearing base unit forces zero in every invariant | `LambdaS.Pi.eq_zero_of_appears_once` | [`LambdaS/Pi.lean:101`](LambdaS/Pi.lean#L101) |
 | A once-appearing base unit forces a zero exponent | `LambdaS.Pi.solution_eq_zero_of_appears_once` | [`LambdaS/Pi.lean:118`](LambdaS/Pi.lean#L118) |
 

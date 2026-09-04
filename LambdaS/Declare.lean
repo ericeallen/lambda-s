@@ -145,7 +145,7 @@ instance [Fintype D] [DecidableEq D] (d : Decl B) : Decidable (Sound (D := D) d)
 theorem dimOf_ofBase (b : B) :
     dimOf (D := D) (DCtx.nil D) (Term.ofBase b) = UnitSys.dim (D := D) b := by
   refine Term.ext' (funext fun d => ?_) (funext fun w => ?_)
-  · simp only [dimOf, Term.ofBase, add_zero, Finset.sum_const_zero]
+  · simp only [dimOf, Term.ofBase]
     rw [Finset.sum_eq_single b] <;> simp_all
   · exact w.elim0
 

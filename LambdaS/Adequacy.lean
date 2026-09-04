@@ -444,7 +444,7 @@ theorem eval_adeq (V : Scaling B 0) :
       simp only [eval] at hv
       obtain rfl := (Option.some.inj hv).symm
       show _ = _
-      simp only [Adeq, substU_one]
+      simp only [substU_one]
       rfl
   | ucon u =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
@@ -453,7 +453,7 @@ theorem eval_adeq (V : Scaling B 0) :
       simp only [eval] at hv
       obtain rfl := (Option.some.inj hv).symm
       show _ = _
-      simp only [Adeq, Val.scalar.injEq, Meas.mk.injEq, and_true]
+      simp only [Val.scalar.injEq, Meas.mk.injEq, and_true]
       show ((1 : ℚ) : ℝ) = (1 : ℝ)
       norm_num
   | mul a b iha ihb =>
@@ -475,7 +475,7 @@ theorem eval_adeq (V : Scaling B 0) :
           simp only at hv
           obtain rfl := (Option.some.inj hv).symm
           show _ = _
-          simp only [Adeq, substU_mul, Val.scalar.injEq, Meas.mk.injEq, and_true]
+          simp only [substU_mul, Val.scalar.injEq, Meas.mk.injEq, and_true]
           rfl
   | div a b iha ihb =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
@@ -496,7 +496,7 @@ theorem eval_adeq (V : Scaling B 0) :
           simp only at hv
           obtain rfl := (Option.some.inj hv).symm
           show _ = _
-          simp only [Adeq, substU_div, Val.scalar.injEq, Meas.mk.injEq, and_true]
+          simp only [substU_div, Val.scalar.injEq, Meas.mk.injEq, and_true]
           rfl
   | add a b iha ihb =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
@@ -514,10 +514,10 @@ theorem eval_adeq (V : Scaling B 0) :
           have h2 := ihb η δ ρ Δ Γ _ ρd db hρ hΔ _ _ hB
           simp only [Adeq] at h1 h2
           subst h1; subst h2
-          simp only [if_pos rfl] at hv
+          simp only at hv
           obtain rfl := (Option.some.inj hv).symm
           show _ = _
-          simp only [Adeq, Val.scalar.injEq, Meas.mk.injEq, and_true]
+          simp only [Val.scalar.injEq, Meas.mk.injEq, and_true]
           rfl
   | root m a iha =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
@@ -534,7 +534,7 @@ theorem eval_adeq (V : Scaling B 0) :
         simp only at hv
         obtain rfl := (Option.some.inj hv).symm
         show _ = _
-        simp only [Adeq, substU_rpow, Val.scalar.injEq, Meas.mk.injEq, and_true]
+        simp only [substU_rpow, Val.scalar.injEq, Meas.mk.injEq, and_true]
         show _ ^ _ = _ ^ _
         push_cast
         ring_nf
@@ -550,10 +550,10 @@ theorem eval_adeq (V : Scaling B 0) :
         have h1 := iha η δ ρ Δ Γ _ ρd da hρ hΔ _ _ hA
         simp only [Adeq] at h1
         subst h1
-        simp only [substU_one, if_pos rfl] at hv
+        simp only [substU_one] at hv
         obtain rfl := (Option.some.inj hv).symm
         show _ = _
-        simp only [Adeq, substU_one, Val.scalar.injEq, Meas.mk.injEq, and_true]
+        simp only [substU_one, Val.scalar.injEq, Meas.mk.injEq, and_true]
         rfl
   | exp a iha =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
@@ -567,10 +567,10 @@ theorem eval_adeq (V : Scaling B 0) :
         have h1 := iha η δ ρ Δ Γ _ ρd da hρ hΔ _ _ hA
         simp only [Adeq] at h1
         subst h1
-        simp only [substU_one, if_pos rfl] at hv
+        simp only [substU_one] at hv
         obtain rfl := (Option.some.inj hv).symm
         show _ = _
-        simp only [Adeq, substU_one, Val.scalar.injEq, Meas.mk.injEq, and_true]
+        simp only [substU_one, Val.scalar.injEq, Meas.mk.injEq, and_true]
         rfl
   | convert a u w iha =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
@@ -591,7 +591,7 @@ theorem eval_adeq (V : Scaling B 0) :
         rw [if_pos (And.intro True.intro hsd')] at hv
         obtain rfl := (Option.some.inj hv).symm
         show _ = _
-        simp only [Adeq, Val.scalar.injEq, Meas.mk.injEq, and_true]
+        simp only [Val.scalar.injEq, Meas.mk.injEq, and_true]
         show _ * _ = _ * _
         rw [conv, conv, Scaling.scale_pull, Scaling.scale_pull]
   | idx a i iha =>
@@ -609,7 +609,7 @@ theorem eval_adeq (V : Scaling B 0) :
         have hlt := (List.getElem?_eq_some_iff.mp hu).1
         have hval : (List.ofFn (den (V.pull η) da ρd))[i]?
             = some (den (V.pull η) da ρd ⟨i, hlt⟩) := by
-          simp [List.getElem?_ofFn, hlt]
+          simp [hlt]
         have hunit : (List.map (substU η) Vs)[i]? = some (substU η u) := by
           simp [List.getElem?_map, hu]
         simp only at hv
@@ -632,10 +632,10 @@ theorem eval_adeq (V : Scaling B 0) :
           have h2 := ihx η δ ρ Δ Γ _ ρd dx hρ hΔ _ _ hX
           simp only [Adeq] at h1 h2
           subst h1; subst h2
-          simp only [if_pos rfl] at hv
+          simp only at hv
           obtain rfl := (Option.some.inj hv).symm
           show _ = _
-          simp only [Adeq, Val.vector.injEq, and_true]
+          simp only [Val.vector.injEq, and_true]
           show Num.matVec _ _ = _
           simp only [Num.matVec, List.map_ofFn, Function.comp_def, foldl_zipWith_ofFn]
           rfl
@@ -655,10 +655,10 @@ theorem eval_adeq (V : Scaling B 0) :
           have h2 := ihg η δ ρ Δ Γ _ ρd dg hρ hΔ _ _ hG
           simp only [Adeq] at h1 h2
           subst h1; subst h2
-          simp only [if_pos rfl] at hv
+          simp only at hv
           obtain rfl := (Option.some.inj hv).symm
           show _ = _
-          simp only [Adeq, Val.matrix.injEq, and_true, true_and]
+          simp only [Val.matrix.injEq, and_true]
           simp only [List.map_ofFn, Function.comp_def, List.length_map,
             map_range_eq_ofFn, colOf_ofFn, dotp, dot_ofFn]
           rfl

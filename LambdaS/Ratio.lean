@@ -254,6 +254,7 @@ theorem isOneSem_oneSem : ∀ s : Shape, IsOneSem s (oneSem s)
   | .triv => trivial
   | .bind s => fun _ => isOneSem_oneSem s
 
+omit [UnitSys B D] in
 /-- **At the trivial ratio and at scalar type, `TwRel` is `Rel`.** So Kennedy's
 theorem is the `s = 1` case of the twisted one rather than a separate result.
 
@@ -304,7 +305,7 @@ theorem posSem_oneSem : ∀ s : Shape, PosSem s (oneSem s)
 scaling. -/
 theorem Tw.eval_pos : ∀ {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} {s : Shape}
     (t : Tw B k Θ s) (θρ : TwEnv Θ), PosEnv Θ θρ → PosSem s (Tw.eval ψ t θρ)
-  | _, ψ, _, _, .var n h, θρ, hp => PosEnv.lookup n h hp
+  | _, _ψ, _, _, .var n h, _θρ, hp => PosEnv.lookup n h hp
   | _, ψ, _, _, .unit u, _, _ => ψ.scale_pos u
   | _, ψ, _, _, .mul a b, θρ, hp =>
       mul_pos (Tw.eval_pos ψ a θρ hp) (Tw.eval_pos ψ b θρ hp)
@@ -323,6 +324,7 @@ The same shape as `rel_ground` and `relCo_ground`, now carrying the ratio as
 well. The ratio's transport is along an equality of *shapes*, which is why it
 costs nothing: `Ty.shape_ground` says grounding leaves the shape alone. -/
 
+omit [UnitSys B D] in
 /-- **`TwRel` transports along grounding.** -/
 theorem twRel_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
     (η : Fin k → UExp B k₀) (δ : Fin j → DExp D j₀) (ψ : Scaling B k₀)
@@ -426,6 +428,8 @@ theorem twRel_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
     intro _ _ η δ ψ w w' x y x' y' hw hx hy
     exact ih η (liftU δ) ψ hw hx hy
 
+omit [UnitSys B D] in
+omit [UnitSys B D] in
 /-- Instantiating a unit variable, for `TwRel`. -/
 theorem twRel_subst {j k : ℕ} (τ : Ty B D j (k + 1)) (σ : UExp B k) (ψ : Scaling B k)
     {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (τ.subst σ))}
@@ -435,6 +439,8 @@ theorem twRel_subst {j k : ℕ} (τ : Ty B D j (k + 1)) (σ : UExp B k) (ψ : Sc
   have h := twRel_ground τ (Fin.cons σ (idU B k)) (idU D j) ψ hw hx hy
   rwa [Scaling.pull_subst] at h
 
+omit [UnitSys B D] in
+omit [UnitSys B D] in
 /-- Instantiating a dimension variable, for `TwRel`. -/
 theorem twRel_substDim {j k : ℕ} (τ : Ty B D (j + 1) k) (d : DExp D j) (ψ : Scaling B k)
     {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (τ.substDim d))}
@@ -444,6 +450,8 @@ theorem twRel_substDim {j k : ℕ} (τ : Ty B D (j + 1) k) (d : DExp D j) (ψ : 
   have h := twRel_ground τ (idU B k) (Fin.cons d (idU D j)) ψ hw hx hy
   rwa [Scaling.pull_id] at h
 
+omit [UnitSys B D] in
+omit [UnitSys B D] in
 /-- Weakening under a unit binder, for `TwRel`. -/
 theorem twRel_weaken {j k : ℕ} (τ : Ty B D j k) (ψ : Scaling B k) (s : ℝ)
     {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (Ty.weaken τ))}
