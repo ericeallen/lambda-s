@@ -12,12 +12,12 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 |---|---|---|
 | Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:88`](LambdaS/Typing.lean#L88) |
 | Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:276`](LambdaS/Typing.lean#L276) |
-| The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:826`](LambdaS/Examples.lean#L826) |
+| The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:872`](LambdaS/Examples.lean#L872) |
 | The velocity idiom | `LambdaS.Examples.velocity` | [`LambdaS/Examples.lean:96`](LambdaS/Examples.lean#L96) |
 | Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:106`](LambdaS/Notation.lean#L106) |
 | Elaboration succeeds iff scalar of the target's dimension | `LambdaS.elabConvert_isSome` | [`LambdaS/Notation.lean:119`](LambdaS/Notation.lean#L119) |
-| The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:989`](LambdaS/Examples.lean#L989) |
-| A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:1011`](LambdaS/Examples.lean#L1011) |
+| The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:1035`](LambdaS/Examples.lean#L1035) |
+| A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:1057`](LambdaS/Examples.lean#L1057) |
 
 ## Unit declarations
 
@@ -31,6 +31,8 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Redundant factor forced | `LambdaS.factor_chain_consistent` | [`LambdaS/Declare.lean:364`](LambdaS/Declare.lean#L364) |
 | One-dimension well-formedness | `LambdaS.Decl.Sound` | [`LambdaS/Declare.lean:138`](LambdaS/Declare.lean#L138) |
 | The yard set is satisfiable | `LambdaS.Examples.yard_satisfiable` | [`LambdaS/Examples.lean:526`](LambdaS/Examples.lean#L526) |
+| A benign declaration cycle is satisfiable | `LambdaS.Examples.cycle_satisfiable` | [`LambdaS/Examples.lean:556`](LambdaS/Examples.lean#L556) |
+| A vicious declaration cycle is rejected | `LambdaS.Examples.cycle_conflict` | [`LambdaS/Examples.lean:562`](LambdaS/Examples.lean#L562) |
 | The mistyped yard set is refuted | `LambdaS.Examples.yard_conflict` | [`LambdaS/Examples.lean:480`](LambdaS/Examples.lean#L480) |
 | The redundant factor is forced | `LambdaS.Examples.yard_forced` | [`LambdaS/Examples.lean:468`](LambdaS/Examples.lean#L468) |
 
@@ -51,7 +53,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:649`](LambdaS/Fundamental.lean#L649) |
 | Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:879`](LambdaS/Fundamental.lean#L879) |
 | Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:746`](LambdaS/Fundamental.lean#L746) |
-| Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:967`](LambdaS/Examples.lean#L967) |
+| Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:1013`](LambdaS/Examples.lean#L1013) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:364`](LambdaS/Parametricity.lean#L364) |
 | The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1176`](LambdaS/Fundamental.lean#L1176) |
 | The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1021`](LambdaS/Fundamental.lean#L1021) |
@@ -68,22 +70,22 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:315`](LambdaS/Twist.lean#L315) |
 | Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:652`](LambdaS/Twist.lean#L652) |
 | Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:676`](LambdaS/Twist.lean#L676) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:1355`](LambdaS/Twist.lean#L1355) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:1362`](LambdaS/Twist.lean#L1362) |
 | Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:1038`](LambdaS/Twist.lean#L1038) |
-| Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:783`](LambdaS/Examples.lean#L783) |
-| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:1427`](LambdaS/Twist.lean#L1427) |
+| Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:829`](LambdaS/Examples.lean#L829) |
+| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:1434`](LambdaS/Twist.lean#L1434) |
 
-| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1199`](LambdaS/Examples.lean#L1199) |
+| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1245`](LambdaS/Examples.lean#L1245) |
 
-| Sum of two converted inputs, accepted at m/ft | `LambdaS.Examples.addTwoVars` | [`LambdaS/Examples.lean:681`](LambdaS/Examples.lean#L681) |
-| Genuinely drifting sum, declined | `LambdaS.Examples.addMixed` | [`LambdaS/Examples.lean:695`](LambdaS/Examples.lean#L695) |
-| A visible application analyzes as its redex | `LambdaS.Examples.betaShared` | [`LambdaS/Examples.lean:750`](LambdaS/Examples.lean#L750) |
-| Polymorphic round trip, drift-free uninstantiated | `LambdaS.Examples.casterRound` | [`LambdaS/Examples.lean:892`](LambdaS/Examples.lean#L892) |
-| Leading lambda binders analyzed as inputs | `LambdaS.unitDriftLam` | [`LambdaS/Twist.lean:1378`](LambdaS/Twist.lean#L1378) |
+| Sum of two converted inputs, accepted at m/ft | `LambdaS.Examples.addTwoVars` | [`LambdaS/Examples.lean:727`](LambdaS/Examples.lean#L727) |
+| Genuinely drifting sum, declined | `LambdaS.Examples.addMixed` | [`LambdaS/Examples.lean:741`](LambdaS/Examples.lean#L741) |
+| A visible application analyzes as its redex | `LambdaS.Examples.betaShared` | [`LambdaS/Examples.lean:796`](LambdaS/Examples.lean#L796) |
+| Polymorphic round trip, drift-free uninstantiated | `LambdaS.Examples.casterRound` | [`LambdaS/Examples.lean:938`](LambdaS/Examples.lean#L938) |
+| Leading lambda binders analyzed as inputs | `LambdaS.unitDriftLam` | [`LambdaS/Twist.lean:1385`](LambdaS/Twist.lean#L1385) |
 | Comparison exact for atom-free ratios (iff) | `LambdaS.Tw.scalarEq_iff_eval_eq` | [`LambdaS/Twist.lean:1154`](LambdaS/Twist.lean#L1154) |
 
-| log of a round-trip ratio, accepted at drift 1 | `LambdaS.Examples.logRoundTrip` | [`LambdaS/Examples.lean:723`](LambdaS/Examples.lean#L723) |
-| log of a drifting argument, declined | `LambdaS.Examples.logDrifting` | [`LambdaS/Examples.lean:736`](LambdaS/Examples.lean#L736) |
+| log of a round-trip ratio, accepted at drift 1 | `LambdaS.Examples.logRoundTrip` | [`LambdaS/Examples.lean:769`](LambdaS/Examples.lean#L769) |
+| log of a drifting argument, declined | `LambdaS.Examples.logDrifting` | [`LambdaS/Examples.lean:782`](LambdaS/Examples.lean#L782) |
 
 ## Adequacy and erasure
 
@@ -94,8 +96,8 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Erasure simulation, no typing hypothesis (Theorem 7.2) | `LambdaS.eeval_erase` | [`LambdaS/Erasure.lean:198`](LambdaS/Erasure.lean#L198) |
 | Erasure correctness | `LambdaS.erasure_correct` | [`LambdaS/Erasure.lean:387`](LambdaS/Erasure.lean#L387) |
 | The erased evaluator computes the denotation | `LambdaS.eeval_den` | [`LambdaS/Erasure.lean:399`](LambdaS/Erasure.lean#L399) |
-| One yard is three feet, at the evaluator | `LambdaS.Examples.one_yard_is_three_feet` | [`LambdaS/Examples.lean:534`](LambdaS/Examples.lean#L534) |
-| One yard is 0.9144 meters, both routes | `LambdaS.Examples.one_yard_in_metres` | [`LambdaS/Examples.lean:545`](LambdaS/Examples.lean#L545) |
+| One yard is three feet, at the evaluator | `LambdaS.Examples.one_yard_is_three_feet` | [`LambdaS/Examples.lean:580`](LambdaS/Examples.lean#L580) |
+| One yard is 0.9144 meters, both routes | `LambdaS.Examples.one_yard_in_metres` | [`LambdaS/Examples.lean:591`](LambdaS/Examples.lean#L591) |
 
 ## Dimensional analysis
 

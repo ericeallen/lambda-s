@@ -528,6 +528,52 @@ theorem yard_satisfiable :
       ∧ Decl.Satisfies ψ dYardMetre :=
   ⟨ψyd, ψyd_yardFoot, ψyd_footMetre, ψyd_yardMetre⟩
 
+/-! ### Cycles are constraints, not definitions
+
+Declarations carry no order and no acyclicity condition, and need none: each
+is an equation, the set is a simultaneous system, and a cycle is just a
+dependency the criterion decides. Nothing can reference an undeclared
+generator either, since the base units are the parameter `B`. The benign
+cycle below is satisfiable, by the same valuation as the straight set; the
+vicious one forces `3 = 1` and no valuation exists. -/
+
+/-- `unit foot = 1/3 yard`, the converse of `dYardFoot`: a benign cycle. -/
+def dFootYard : Decl Base := ⟨.foot, 1 / 3, by norm_num, yd⟩
+
+/-- `unit foot = yard`, closing the cycle wrongly. -/
+def dFootYardBad : Decl Base := ⟨.foot, 1, by norm_num, yd⟩
+
+theorem ψyd_footYard : Decl.Satisfies ψyd dFootYard := by
+  show ψyd.scale (Term.div (Term.ofBase Base.foot) yd) = ((1 / 3 : ℚ) : ℝ)
+  rw [Scaling.scale_div, NonDef.scale_ofBase, NonDef.scale_ofBase]
+  show Real.exp (Real.log (3048 / 10000)) / Real.exp (Real.log (9144 / 10000)) = _
+  rw [Real.exp_log (by norm_num), Real.exp_log (by norm_num)]
+  norm_num
+
+/-- **A benign cycle is satisfiable**: `yard = 3 foot` and `foot = 1/3 yard`
+say the same thing, and the criterion sees a passing dependency, not a
+loop. -/
+theorem cycle_satisfiable :
+    ∃ ψ : Scaling Base 0, Decl.Satisfies ψ dYardFoot ∧ Decl.Satisfies ψ dFootYard :=
+  ⟨ψyd, ψyd_yardFoot, ψyd_footYard⟩
+
+/-- **A vicious cycle is rejected**: `yard = 3 foot` and `foot = yard` force
+`3 = 1`, so no valuation exists. -/
+theorem cycle_conflict :
+    ¬ ∃ ψ : Scaling Base 0,
+        Decl.Satisfies ψ dYardFoot ∧ Decl.Satisfies ψ dFootYardBad := by
+  rintro ⟨ψ, h1, h2⟩
+  rw [Decl.satisfies_iff] at h1 h2
+  simp only [dYardFoot, dFootYardBad] at h1 h2
+  have hy := ψ.scale_pos (Term.ofBase Base.yard)
+  rw [show (yd : UExp Base 0) = Term.ofBase Base.yard from rfl] at h2
+  rw [show (ft : UExp Base 0) = Term.ofBase Base.foot from rfl] at h1
+  rw [h2] at h1
+  have h3 : ψ.scale (Term.ofBase Base.yard)
+      = 3 * (1 * ψ.scale (Term.ofBase Base.yard)) := by exact_mod_cast h1
+  linarith
+
+
 /-- **One yard is three feet, on the compiled evaluator.** Evaluating `(1 yd) in ft` with
 the conversion oracle the declarations determine multiplies by exactly the
 declared `3` and lands at `ft`: `evalC_convert_declared`, instantiated. -/
