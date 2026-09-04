@@ -92,6 +92,28 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       {df : HasTy Δ Γ f (.allDim τ)} {t : Tw B k Θ (Ty.shape τ)} :
       Twist Θ df t →
       Twist Θ (.dapp df) (Tw.castShape (Ty.shape_substDim τ d).symm t)
+  /-- The empty vector has nothing to track. -/
+  | vnil {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {Θ} :
+      Twist (Δ := Δ) (Γ := Γ) Θ .vnil .triv
+  /-- Consing a scalar onto a vector. The side condition is the `add`-style
+  agreement check: the relation at vector types has no ratio slot, so the
+  consed scalar's accumulated ratio must be worth `1` under every scaling. -/
+  | vcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e v u V Θ}
+      {de : HasTy Δ Γ e (.Q u)} {dv : HasTy Δ Γ v (.vec V)}
+      {s : Tw B k Θ .scalar} {t : Tw B k Θ (Ty.shape (Ty.vec V))}
+      (hone : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ s θρ = 1) :
+      Twist Θ de s → Twist Θ dv t → Twist Θ (.vcons de dv) .triv
+  /-- The zero-row matrix has nothing to track. -/
+  | mnil {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V Θ} :
+      Twist (Δ := Δ) (Γ := Γ) Θ (.mnil (V := V)) .triv
+  /-- Consing a row onto a matrix. No side condition: the row is already at a
+  vector type, so any drift in its components was caught at their `vcons`. -/
+  | mcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w r M V W Θ}
+      {dr : HasTy Δ Γ r (.vec (V.map fun u => Term.div w u))}
+      {dM : HasTy Δ Γ M (.lin V W)}
+      {tr : Tw B k Θ (Ty.shape (Ty.vec (V.map fun u => Term.div w u)))}
+      {tM : Tw B k Θ (Ty.shape (Ty.lin V W))} :
+      Twist Θ dr tr → Twist Θ dM tM → Twist Θ (.mcons dr dM) .triv
 
 /-! ## The scaling law with a twist -/
 
@@ -279,6 +301,47 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     rw [Tw.eval_castShape]
     refine (twRel_substDim τ dm ψ (w := Tw.eval ψ tf θρ)
       (eqRec_heq _ _).symm (cast_heq _ _).symm (cast_heq _ _).symm).mpr h
+  | vnil =>
+    intro V ψ θρ ρ ρ' hr i
+    exact i.elim0
+  | vcons hone hte htv ihe ihv =>
+    rename_i u Vs Θ' de dv s tv
+    intro V ψ θρ ρ ρ' hr
+    have h1 := ihe V ψ θρ hr
+    have h2 := ihv V ψ θρ hr
+    simp only [TwRel] at h1 h2
+    rw [hone ψ θρ] at h1
+    intro i
+    show Fin.cons (α := fun _ => ℝ) (den (V.comp ψ) de ρ') (den (V.comp ψ) dv ρ') i
+        = ψ.scale ((u :: Vs).get i)
+          * Fin.cons (α := fun _ => ℝ) (den V de ρ) (den V dv ρ) i
+    cases i using Fin.cases with
+    | zero => simpa using h1
+    | succ i => simpa using h2 i
+  | mnil =>
+    intro V ψ θρ ρ ρ' hr a
+    exact a.elim0
+  | mcons htr htM ihr ihM =>
+    rename_i w r' M' Vs Ws Θ' dr dM tr tM
+    intro V ψ θρ ρ ρ' hr
+    have h1 := ihr V ψ θρ hr
+    have h2 := ihM V ψ θρ hr
+    simp only [TwRel] at h1 h2
+    intro a i
+    show Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den (V.comp ψ) dr ρ' (Fin.cast (by simp) i))
+          (den (V.comp ψ) dM ρ') a i
+        = (ψ.scale ((w :: Ws).get a) / ψ.scale (Vs.get i))
+          * Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+            (fun i => den V dr ρ (Fin.cast (by simp) i)) (den V dM ρ) a i
+    cases a using Fin.cases with
+    | zero =>
+      have h := h1 (Fin.cast (by simp) i)
+      simp only [Fin.cons_zero, List.get_eq_getElem, List.getElem_map, Fin.val_cast,
+        Fin.val_zero, List.getElem_cons_zero] at h ⊢
+      rw [h, Scaling.scale_div]
+    | succ a =>
+      simpa using h2 a i
 
 /-! ## The characterization at first order
 
@@ -446,7 +509,15 @@ but its scale factor is a rational power `ψ(u)^(1/n)` and the ratio grammar
 this analysis rather than an exclusion of the theory. `log` and `exp` are
 nonlinear, so no single ratio describes how they move; `idx`, `mapp` and `comp` would need
 ratios at space shapes, which `triv` does not carry. And `ucon` names a unit,
-which no scaling story survives. -/
+which no scaling story survives.
+
+The vector and matrix introduction forms are *accepted*, at the `triv` shape.
+`vnil`, `mnil` and `mcons` carry no condition. `vcons` carries the `add`-style
+one: the relation at vector types demands exact componentwise scaling with no
+ratio slot, so the consed scalar's ratio must be provably worth `1`, checked by
+`Tw.scalarEq` against `Tw.unit 1`. A literal whose component drifts is declined
+at that `vcons`, exactly as a sum with disagreeing branch ratios is declined at
+its `add`. -/
 
 /-- Decidable equality of ratio terms at matching indices. Proof fields are
 propositions, so `var` compares only its index. -/
@@ -697,6 +768,19 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
   | _, _, _, _, _, _, Θ, hΘ, .dapp (τ := τ) (d := dm) df => do
       let ⟨tf, htf⟩ ← twistOf Θ hΘ df
       some ⟨Tw.castShape (Ty.shape_substDim τ dm).symm tf, .dapp htf⟩
+  | _, _, _, _, _, _, Θ, _, .vnil => some ⟨.triv, .vnil⟩
+  | _, _, _, _, _, _, Θ, hΘ, .vcons de dv => do
+      let ⟨te, hte⟩ ← twistOf Θ hΘ de
+      let ⟨_, htv⟩ ← twistOf Θ hΘ dv
+      if hb : Tw.scalarEq te (.unit 1) then
+        some ⟨.triv, .vcons (fun ψ θρ => by
+          simpa [Tw.eval] using Tw.scalarEq_sound te (.unit 1) hb ψ θρ) hte htv⟩
+      else none
+  | _, _, _, _, _, _, Θ, _, .mnil => some ⟨.triv, .mnil⟩
+  | _, _, _, _, _, _, Θ, hΘ, .mcons dr dM => do
+      let ⟨_, htr⟩ ← twistOf Θ hΘ dr
+      let ⟨_, htM⟩ ← twistOf Θ hΘ dM
+      some ⟨.triv, .mcons htr htM⟩
   | _, _, _, _, _, _, _, _, .ucon => none
   | _, _, _, _, _, _, _, _, .root _ _ => none
   | _, _, _, _, _, _, _, _, .idx _ _ => none

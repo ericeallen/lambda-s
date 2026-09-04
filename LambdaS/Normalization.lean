@@ -143,6 +143,22 @@ theorem eval_mono (cf : UExp B 0 → UExp B 0 → R) :
         rw [eval_mono cf n f m η δ ρ _ hnm hf, eval_mono cf n g m η δ ρ _ hnm hg]
         exact h
       · exact absurd h (by simp)
+  | n, _, _, .vnil, m, η, δ, ρ, v, hnm, h => by simpa [eval] using h
+  | n, _, _, .vcons a b, m, η, δ, ρ, v, hnm, h => by
+      simp only [eval] at h ⊢
+      split at h
+      · rename_i x xs V ha hb
+        rw [eval_mono cf n a m η δ ρ _ hnm ha, eval_mono cf n b m η δ ρ _ hnm hb]
+        exact h
+      · exact absurd h (by simp)
+  | n, _, _, .mnil V, m, η, δ, ρ, v, hnm, h => by simpa [eval] using h
+  | n, _, _, .mcons w r M, m, η, δ, ρ, v, hnm, h => by
+      simp only [eval] at h ⊢
+      split at h
+      · rename_i xs Vr N V W hr hM
+        rw [eval_mono cf n r m η δ ρ _ hnm hr, eval_mono cf n M m η δ ρ _ hnm hM]
+        exact h
+      · exact absurd h (by simp)
   | n, _, _, .convert a u w, m, η, δ, ρ, v, hnm, h => by
       simp only [eval] at h ⊢
       split at h
@@ -479,6 +495,58 @@ theorem red_eval (cf : UExp B 0 → UExp B 0 → R) :
         simp only [List.mem_map] at hr
         obtain ⟨_, _, rfl⟩ := hr
         simp
+  | vnil =>
+    intro η δ ρ Δ Γ τ hρ hΔ ht
+    cases ht
+    refine ⟨0, Val.vector [] [], by simp [eval], ?_⟩
+    simp only [Ty.ground, Red]
+    exact ⟨[], rfl, rfl⟩
+  | vcons e vt ihe ihv =>
+    intro η δ ρ Δ Γ τ hρ hΔ ht
+    cases ht with
+    | vcons hte htv =>
+      obtain ⟨n₁, va, ha, hra⟩ := ihe η δ ρ Δ Γ _ hρ hΔ hte
+      simp only [Ty.ground, Red] at hra
+      obtain ⟨mx, rfl⟩ := hra
+      obtain ⟨n₂, vb, hb, hrb⟩ := ihv η δ ρ Δ Γ _ hρ hΔ htv
+      simp only [Ty.ground, Red] at hrb
+      obtain ⟨xs, rfl, hlen⟩ := hrb
+      refine ⟨max n₁ n₂, ?v_vcons, ?e_vcons, ?r_vcons⟩
+      case e_vcons =>
+        simp only [eval]
+        rw [eval_mono cf n₁ e _ η δ ρ _ (by omega) ha,
+            eval_mono cf n₂ vt _ η δ ρ _ (by omega) hb]
+      case r_vcons =>
+        simp only [Ty.ground, Red]
+        exact ⟨_, rfl, by simpa using hlen⟩
+  | mnil V =>
+    intro η δ ρ Δ Γ τ hρ hΔ ht
+    cases ht
+    refine ⟨0, Val.matrix [] (V.map (substU η)) [], by simp [eval], ?_⟩
+    simp only [Ty.ground, Red]
+    exact ⟨[], rfl, rfl, by simp⟩
+  | mcons w r M ihr ihM =>
+    intro η δ ρ Δ Γ τ hρ hΔ ht
+    cases ht with
+    | mcons htr htM =>
+      obtain ⟨n₁, vr, hr, hrr⟩ := ihr η δ ρ Δ Γ _ hρ hΔ htr
+      simp only [Ty.ground, Red] at hrr
+      obtain ⟨xs, rfl, hxlen⟩ := hrr
+      obtain ⟨n₂, vM, hM, hrM⟩ := ihM η δ ρ Δ Γ _ hρ hΔ htM
+      simp only [Ty.ground, Red] at hrM
+      obtain ⟨N, rfl, hNlen, hNrow⟩ := hrM
+      refine ⟨max n₁ n₂, ?v_mcons, ?e_mcons, ?r_mcons⟩
+      case e_mcons =>
+        simp only [eval]
+        rw [eval_mono cf n₁ r _ η δ ρ _ (by omega) hr,
+            eval_mono cf n₂ M _ η δ ρ _ (by omega) hM]
+      case r_mcons =>
+        simp only [Ty.ground, Red]
+        refine ⟨_, rfl, by simpa using hNlen, ?_⟩
+        intro row hrow
+        rcases List.mem_cons.mp hrow with rfl | hmem
+        · simpa using hxlen
+        · exact hNrow row hmem
   | convert a u w iha =>
     intro η δ ρ Δ Γ τ hρ hΔ ht
     cases ht with

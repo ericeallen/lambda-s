@@ -87,9 +87,11 @@ through the environment (as free variables), never by naming a unit.
 ## Scope
 
 Every form of Λs except `ucon`: variables, abstraction, application, literals,
-the arithmetic, roots, spaces and linear maps, conversion, and unit and
-dimension abstraction and application. The one exclusion is `Tm.Parametric`'s,
-argued in the previous section.
+the arithmetic, roots, spaces and linear maps, the vector and matrix
+introduction forms, conversion, and unit and dimension abstraction and
+application. The one exclusion is `Tm.Parametric`'s, argued in the previous
+section; a vector or matrix literal is parametric exactly when its component
+scalars are, and the ones that name units via `ucon` are not.
 
 Roots are parametric. `relQ_rpow` holds with no sign hypothesis on the value,
 because the scale factor is positive by construction and a positive factor
@@ -178,6 +180,11 @@ noncomputable def den : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k}
       fun a => ∑ i, den V f ρ a i * den V x ρ i
   | _, _, _, _, .comp _ _, _, V, .comp f g, ρ =>
       fun a i => ∑ b, den V f ρ a b * den V g ρ b i
+  | _, _, _, _, .vnil, _, _, .vnil, _ => fun i => i.elim0
+  | _, _, _, _, .vcons _ _, _, V, .vcons e v, ρ => Fin.cons (den V e ρ) (den V v ρ)
+  | _, _, _, _, .mnil _, _, _, .mnil, _ => fun a => a.elim0
+  | _, _, _, _, .mcons _ _ _, _, V, .mcons r M, ρ =>
+      Fin.cons (fun i => den V r ρ (Fin.cast (by simp) i)) (den V M ρ)
   | _, _, _, _, .log _, _, V, .log a, ρ => Real.log (den V a ρ)
   | _, _, _, _, .exp _, _, V, .exp a, ρ => Real.exp (den V a ρ)
   | _, _, _, Γ, .ulam _ _, _, V, .ulam b, ρ =>
@@ -459,6 +466,10 @@ def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .idx a _ => a.Parametric
   | _, _, .mapp f x => f.Parametric ∧ x.Parametric
   | _, _, .comp f g => f.Parametric ∧ g.Parametric
+  | _, _, .vnil => True
+  | _, _, .vcons e v => e.Parametric ∧ v.Parametric
+  | _, _, .mnil _ => True
+  | _, _, .mcons _ r M => r.Parametric ∧ M.Parametric
   | _, _, .log a => a.Parametric
   | _, _, .exp a => a.Parametric
   | _, _, .ulam _ b => b.Parametric
@@ -485,6 +496,10 @@ def Tm.ConvertFree : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .idx a _ => a.ConvertFree
   | _, _, .mapp f x => f.ConvertFree ∧ x.ConvertFree
   | _, _, .comp f g => f.ConvertFree ∧ g.ConvertFree
+  | _, _, .vnil => True
+  | _, _, .vcons e v => e.ConvertFree ∧ v.ConvertFree
+  | _, _, .mnil _ => True
+  | _, _, .mcons _ r M => r.ConvertFree ∧ M.ConvertFree
   | _, _, .log a => a.ConvertFree
   | _, _, .exp a => a.ConvertFree
   | _, _, .ulam _ b => b.ConvertFree
@@ -658,6 +673,20 @@ theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     show (fun a i => ∑ b, den V f ρ a b * den V g ρ b i)
         = fun a i => ∑ b, den V' f ρ' a b * den V' g ρ' b i
     rw [ihf hf.1 V V' hr, ihg hf.2 V V' hr]
+  | vnil => intro _ _ _ _ _ _; rfl
+  | @vcons _ _ _ _ _ _ u Vs e v ihe ihv =>
+    intro hf V V' ρ ρ' hr
+    show Fin.cons (α := fun _ => ℝ) (den V e ρ) (den V v ρ)
+        = Fin.cons (α := fun _ => ℝ) (den V' e ρ') (den V' v ρ')
+    rw [ihe hf.1 V V' hr, ihv hf.2 V V' hr]
+  | mnil => intro _ _ _ _ _ _; rfl
+  | @mcons _ _ _ _ w _ _ Vs Ws r M ihr ihM =>
+    intro hf V V' ρ ρ' hr
+    show Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den V r ρ (Fin.cast (by simp) i)) (den V M ρ)
+        = Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den V' r ρ' (Fin.cast (by simp) i)) (den V' M ρ')
+    rw [ihr hf.1 V V' hr, ihM hf.2 V V' hr]
   | log a ih =>
     intro hf V V' ρ ρ' hr; show Real.log _ = Real.log _; rw [ih hf V V' hr]
   | exp a ih =>
@@ -755,6 +784,44 @@ theorem fundamental : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     rw [hF a b, hG b i]
     have h1 := ne_of_gt (ψ.scale_pos ((_ : Sp B _).get b))
     field_simp
+  | vnil =>
+    intro hp V ψ Φ hΦ ρ ρ' hr i
+    exact i.elim0
+  | @vcons _ _ _ _ _ _ u Vs de dv ihe ihv =>
+    intro hp V ψ Φ hΦ ρ ρ' hr
+    have h1 := ihe hp.1 V ψ Φ hΦ hr
+    have h2 := ihv hp.2 V ψ Φ hΦ hr
+    simp only [RelCo] at h1 h2
+    intro i
+    show Fin.cons (α := fun _ => ℝ) (den (V.comp ψ) de ρ') (den (V.comp ψ) dv ρ') i
+        = ψ.scale ((u :: Vs).get i)
+          * Fin.cons (α := fun _ => ℝ) (den V de ρ) (den V dv ρ) i
+    cases i using Fin.cases with
+    | zero => simpa using h1
+    | succ i => simpa using h2 i
+  | mnil =>
+    intro hp V ψ Φ hΦ ρ ρ' hr a
+    exact a.elim0
+  | @mcons _ _ _ _ w _ _ Vs Ws dr dM ihr ihM =>
+    intro hp V ψ Φ hΦ ρ ρ' hr
+    have h1 := ihr hp.1 V ψ Φ hΦ hr
+    have h2 := ihM hp.2 V ψ Φ hΦ hr
+    simp only [RelCo] at h1 h2
+    intro a i
+    show Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den (V.comp ψ) dr ρ' (Fin.cast (by simp) i))
+          (den (V.comp ψ) dM ρ') a i
+        = (ψ.scale ((w :: Ws).get a) / ψ.scale (Vs.get i))
+          * Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+            (fun i => den V dr ρ (Fin.cast (by simp) i)) (den V dM ρ) a i
+    cases a using Fin.cases with
+    | zero =>
+      have h := h1 (Fin.cast (by simp) i)
+      simp only [Fin.cons_zero, List.get_eq_getElem, List.getElem_map, Fin.val_cast,
+        Fin.val_zero, List.getElem_cons_zero] at h ⊢
+      rw [h, Scaling.scale_div]
+    | succ a =>
+      simpa using h2 a i
   | log a ih => intro hp V ψ Φ hΦ ρ ρ' hr; exact relQ_log (ih hp V ψ Φ hΦ hr)
   | exp a ih => intro hp V ψ Φ hΦ ρ ρ' hr; exact relQ_exp (ih hp V ψ Φ hΦ hr)
   | ulam b ih =>
@@ -851,6 +918,44 @@ theorem fundamental_free : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     rw [hF a b, hG b i]
     have h1 := ne_of_gt (ψ.scale_pos ((_ : Sp B _).get b))
     field_simp
+  | vnil =>
+    intro hp hf V ψ ρ ρ' hr i
+    exact i.elim0
+  | @vcons _ _ _ _ _ _ u Vs de dv ihe ihv =>
+    intro hp hf V ψ ρ ρ' hr
+    have h1 := ihe hp.1 hf.1 V ψ hr
+    have h2 := ihv hp.2 hf.2 V ψ hr
+    simp only [Rel] at h1 h2
+    intro i
+    show Fin.cons (α := fun _ => ℝ) (den (V.comp ψ) de ρ') (den (V.comp ψ) dv ρ') i
+        = ψ.scale ((u :: Vs).get i)
+          * Fin.cons (α := fun _ => ℝ) (den V de ρ) (den V dv ρ) i
+    cases i using Fin.cases with
+    | zero => simpa using h1
+    | succ i => simpa using h2 i
+  | mnil =>
+    intro hp hf V ψ ρ ρ' hr a
+    exact a.elim0
+  | @mcons _ _ _ _ w _ _ Vs Ws dr dM ihr ihM =>
+    intro hp hf V ψ ρ ρ' hr
+    have h1 := ihr hp.1 hf.1 V ψ hr
+    have h2 := ihM hp.2 hf.2 V ψ hr
+    simp only [Rel] at h1 h2
+    intro a i
+    show Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den (V.comp ψ) dr ρ' (Fin.cast (by simp) i))
+          (den (V.comp ψ) dM ρ') a i
+        = (ψ.scale ((w :: Ws).get a) / ψ.scale (Vs.get i))
+          * Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+            (fun i => den V dr ρ (Fin.cast (by simp) i)) (den V dM ρ) a i
+    cases a using Fin.cases with
+    | zero =>
+      have h := h1 (Fin.cast (by simp) i)
+      simp only [Fin.cons_zero, List.get_eq_getElem, List.getElem_map, Fin.val_cast,
+        Fin.val_zero, List.getElem_cons_zero] at h ⊢
+      rw [h, Scaling.scale_div]
+    | succ a =>
+      simpa using h2 a i
   | log a ih => intro hp hf V ψ ρ ρ' hr; exact relQ_log (ih hp hf V ψ hr)
   | exp a ih => intro hp hf V ψ ρ ρ' hr; exact relQ_exp (ih hp hf V ψ hr)
   | ulam b ih =>

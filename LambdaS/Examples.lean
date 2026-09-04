@@ -808,4 +808,244 @@ theorem fundamental_at_moving_rescale (V : Scaling Base 0) :
 
 end MovingRescale
 
+/-! ## Vector and matrix literals
+
+Until the introduction forms existed, vectors and matrices entered only as free
+variables: the calculus could consume its data but not construct it. These
+guards exercise the forms that close the gap: a `State` vector built one
+component at a time, matrices built one row at a time, the rejections the rules
+impose, and the zero-row width story that `mnil`'s annotation exists to tell. -/
+
+section Literals
+
+/-- The momentum unit of `State`, `kg·m/s`. -/
+abbrev pmom : UExp Base 0 := Term.div (Term.mul kg m) sec
+
+/-- The `State` vector as a literal: position `1.3 m` consed onto momentum
+`21 kg·m/s`. -/
+def stateVec : Term₀ :=
+  .vcons (.mul (.lit 1.3) (.ucon m))
+    (.vcons (.mul (.lit 21) (.ucon pmom)) .vnil)
+
+/- The literal lands at exactly the space the elimination forms consume. -/
+#guard typeOf stateVec == some (.vec State)
+
+/- The empty vector lives at the empty space. -/
+#guard typeOf (.vnil : Term₀) == some (.vec [])
+
+/- Consing a duration where the momentum slot expects `kg·m/s` builds a vector
+over a *different* space, and the eliminations reject it: a `State`-consuming
+map applies to the literal above and not to this one. -/
+def wrongVec : Term₀ :=
+  .vcons (.mul (.lit 1.3) (.ucon m)) (.vcons duration .vnil)
+
+#guard typeOfIn [.lin State W] (.mapp (.var 0) stateVec) == some (.vec W)
+#guard (typeOfIn [.lin State W] (.mapp (.var 0) wrongVec)).isNone
+
+/-- A map from `State` to `W = [sec]` as a literal: one row whose entry `i`
+carries `sec / δ_State(i)`, which is the rank-one condition the `mcons` rule
+checks. -/
+def toTime : Term₀ :=
+  .mcons sec
+    (.vcons (.mul (.lit 2) (.ucon (Term.div sec m)))
+      (.vcons (.mul (.lit 3) (.ucon (Term.div sec pmom))) .vnil))
+    (.mnil State)
+
+#guard typeOf toTime == some (.lin State W)
+
+/-- A two-row map the other way, one row per component of `State`. -/
+def fromTime : Term₀ :=
+  .mcons m (.vcons (.mul (.lit 4) (.ucon (Term.div m sec))) .vnil)
+    (.mcons pmom (.vcons (.mul (.lit 5) (.ucon (Term.div pmom sec))) .vnil)
+      (.mnil W))
+
+#guard typeOf fromTime == some (.lin W State)
+
+/- A row at the wrong space is rejected by the introduction rule itself: a
+`toTime` row must carry `sec/m` in its first slot, not `sec`. -/
+#guard (typeOf (.mcons sec
+    (.vcons (.mul (.lit 2) (.ucon sec))
+      (.vcons (.mul (.lit 3) (.ucon (Term.div sec pmom))) .vnil))
+    (.mnil State))).isNone
+
+/- **The zero-row width story.** `mnil State : Lin State []` composes on the
+left of any map into `State`, and the composite still has a well-defined
+column count: the width survives because `mnil` carries its space. -/
+#guard typeOf (.comp (.mnil State) fromTime) == some (.lin W [])
+#guard typeOfIn [.lin W State] (.comp (.mnil State) (.var 0)) == some (.lin W [])
+
+/- The evaluator round trip: indexing the literal vector returns exactly the
+value of its consed component, magnitude and unit both. -/
+#guard (match evalC (D := Dim) (fun _ _ => (1.0 : Float)) 10 [] (.idx stateVec 0),
+              evalC (D := Dim) (fun _ _ => (1.0 : Float)) 10 [] length with
+        | some (.scalar x), some (.scalar y) => x.mag == y.mag && x.unit == y.unit
+        | _, _ => false)
+
+end Literals
+
+/-! ## Case study: a mixed-unit ballistics kernel
+
+The drift diagnostic has so far run on one-line programs. This section runs it
+on a small straight-line kernel with the shape real conversion bugs have:
+field data arrives in imperial units, the physics is metric, and the report
+goes back out in imperial units.
+
+Inputs: a distance in feet (variable 0) and a time in seconds (variable 1).
+The shared pipeline converts the distance to meters, forms the velocity in
+`m/s`, and computes the kinetic energy per unit mass `v²/2` in `m²/s²`. Four
+reporting variants, four verdicts, all decided at build time:
+
+* `kernelConsistent` converts the metric energy back to `ft²/s²` for the
+  report. The input conversion cancels against the output conversion through
+  the arithmetic, and `unitDrift` certifies the whole multi-step routine
+  drift-free: by `den_indep_of_driftFree`, the reported number does not
+  depend on the declared unit magnitudes.
+* `kernelOneWay` reports in metric, so the input conversion is never undone.
+  The diagnostic names the exact ratio, `ft²/m²`: the drift `ft/m` of one
+  foot-to-meter conversion, squared through `v²`.
+* `kernelMixedPaths` computes `v²` twice in one sum: once by converting the
+  input and squaring the metric velocity, once by squaring the imperial
+  velocity and converting the square at `ft²/s²`. The branch ratios differ
+  syntactically (`Tw.beq` rejects the pair), but `Tw.scalarEq` flattens both
+  to the exponent vector `ft²/m²` over the atom bags `{x, x}/{t, t}`, so the
+  sum is accepted and carries the branches' shared drift.
+* `kernelDeclined` takes the speed back out of the energy with a square
+  root, and there the analysis declines: `twistOf` has no rule at `root`.
+  The invariance *theory* covers roots (`Tm.Parametric` admits them, and
+  `fundamental` handles them through `relQ_rpow`), but the root's scale
+  factor is a rational power `ψ(u)^(1/n)` and the ratio grammar `Tw` has no
+  rational-power former, so declining is a limitation of the analysis, not
+  an exclusion by the theory. `unitDrift` answers `none` rather than
+  guessing.
+
+Every routine typechecks by a `#guard` on the inferred type, and every drift
+claim is a `#guard` on `unitDrift`, so a wrong claim fails the build. -/
+
+namespace Ballistics
+
+/-- The kernel's input context: a distance in feet and a time in seconds. -/
+abbrev Γb : Ctx Base Dim 0 0 := scalarCtx [ft, sec]
+
+/-- Metric velocity, `m/s`. -/
+abbrev mps : UExp Base 0 := Term.div m sec
+/-- Imperial velocity, `ft/s`. -/
+abbrev fps : UExp Base 0 := Term.div ft sec
+/-- Metric energy per unit mass, `m²/s²`. -/
+abbrev mps2 : UExp Base 0 := Term.mul mps mps
+/-- Imperial energy per unit mass, `ft²/s²`. -/
+abbrev fps2 : UExp Base 0 := Term.mul fps fps
+
+/-- Meter and foot share a dimension, so velocity squared does too: the side
+condition the energy conversions below discharge, proved by the homomorphism
+laws for `dimOf` rather than by `decide`. -/
+theorem sameDim_mps2_fps2 : SameDim Δ₀ mps2 fps2 := by
+  have h := sameDim_m_ft
+  unfold SameDim at h ⊢
+  rw [dimOf_mul, dimOf_mul, dimOf_div, dimOf_div, h]
+
+theorem sameDim_fps2_mps2 : SameDim Δ₀ fps2 mps2 := sameDim_mps2_fps2.symm
+
+/-! ### The shared pipeline
+
+Real code shares subterms, so the variants do too: one converted distance,
+one metric velocity, one imperial velocity, each with its derivation. -/
+
+/-- The distance input, converted to meters: `x in m`. -/
+def distM : Term₀ := .convert (.var 0) ft m
+
+/-- Metric velocity: the converted distance over the raw time input. -/
+def velM : Term₀ := .div distM (.var 1)
+
+/-- Imperial velocity: the raw inputs, no conversion. -/
+def velF : Term₀ := .div (.var 0) (.var 1)
+
+def distMDeriv : HasTy Δ₀ Γb distM (.Q m) := .convert (.var rfl) sameDim_ft_m
+
+def velMDeriv : HasTy Δ₀ Γb velM (.Q mps) := .div distMDeriv (.var rfl)
+
+def velFDeriv : HasTy Δ₀ Γb velF (.Q fps) := .div (.var rfl) (.var rfl)
+
+#guard typeOfIn Γb distM == some (.Q m)
+#guard typeOfIn Γb velM == some (.Q mps)
+#guard typeOfIn Γb velF == some (.Q fps)
+
+/-- The one-way drift both drifted variants share: one foot-to-meter
+conversion, squared through `v²`. -/
+abbrev driftSq : UExp Base 0 := Term.div (Term.mul ft ft) (Term.mul m m)
+
+/-! ### Variant 1: convert in, compute, convert out -/
+
+/-- `(1/2) · ((velM · velM) in ft²/s²)`: metric energy, reported imperial.
+The `ft → m` conversion inside `velM` enters the ratio twice through the
+square; the output conversion contributes `m²/ft²` and cancels it exactly. -/
+def kernelConsistent : Term₀ :=
+  .mul (.lit (1/2)) (.convert (.mul velM velM) mps2 fps2)
+
+def kernelConsistentDeriv : HasTy Δ₀ Γb kernelConsistent (.Q (Term.mul 1 fps2)) :=
+  .mul .lit (.convert (.mul velMDeriv velMDeriv) sameDim_mps2_fps2)
+
+#guard typeOfIn Γb kernelConsistent == some (.Q fps2)
+
+/- Certified drift-free: a genuinely multi-step mixed-unit routine whose
+result is independent of the declared unit magnitudes. -/
+#guard (unitDrift kernelConsistentDeriv).map (· == (1 : UExp Base 0)) == some true
+
+/-! ### Variant 2: convert in, report metric -/
+
+/-- `(1/2) · (velM · velM)`: the same computation, left in `m²/s²`. -/
+def kernelOneWay : Term₀ := .mul (.lit (1/2)) (.mul velM velM)
+
+def kernelOneWayDeriv : HasTy Δ₀ Γb kernelOneWay (.Q (Term.mul 1 mps2)) :=
+  .mul .lit (.mul velMDeriv velMDeriv)
+
+#guard typeOfIn Γb kernelOneWay == some (.Q mps2)
+
+/- The drift is exactly `ft²/m²`, named by the diagnostic: the input
+conversion's `ft/m`, squared, undone by nothing. -/
+#guard (unitDrift kernelOneWayDeriv).map (· == driftSq) == some true
+
+/-! ### Variant 3: the same quantity, two ways, in one sum -/
+
+/-- `(1/2) · (velM·velM + ((velF·velF) in m²/s²))`: the left branch converts
+the input then squares, the right squares the raw imperial velocity then
+converts once at `ft²/s²`. Averaging the two would divide by a further
+literal; adding them keeps the branch comparison the interesting step. -/
+def kernelMixedPaths : Term₀ :=
+  .mul (.lit (1/2))
+    (.add (.mul velM velM)
+          (.convert (.mul velF velF) fps2 mps2))
+
+def kernelMixedPathsDeriv : HasTy Δ₀ Γb kernelMixedPaths (.Q (Term.mul 1 mps2)) :=
+  .mul .lit
+    (.add (.mul velMDeriv velMDeriv)
+          (.convert (.mul velFDeriv velFDeriv) sameDim_fps2_mps2))
+
+#guard typeOfIn Γb kernelMixedPaths == some (.Q mps2)
+
+/- Differently placed conversions across the sum are accepted, and the shared
+drift is the same `ft²/m²` the one-way variant carries. -/
+#guard (unitDrift kernelMixedPathsDeriv).map (· == driftSq) == some true
+
+/-! ### Variant 4: the rooted variant, declined -/
+
+/-- `√(2 · kernelOneWay)`: the speed recovered from the energy. Well-typed at
+`m/s` (roots are total over ℚ exponents), but outside the analysis: `Tw` has
+no rational-power former, so `twistOf` has no rule at `root`. -/
+def kernelDeclined : Term₀ := .root 2 (.mul (.lit 2) kernelOneWay)
+
+def kernelDeclinedDeriv :
+    HasTy Δ₀ Γb kernelDeclined
+      (.Q (Term.rpow (Term.mul 1 (Term.mul 1 mps2)) (1 / ((2 : ℕ) : ℚ)))) :=
+  .root (by decide) (.mul .lit kernelOneWayDeriv)
+
+/- The exponent vectors identify `1·(1·v²)` with `v²`, so the root lands at
+`m/s`, the unit a speed should have. -/
+#guard typeOfIn Γb kernelDeclined == some (.Q (Term.rpow mps2 (1/2)))
+
+/- The analysis declines rather than answers: theory covers the root, the
+ratio grammar does not. -/
+#guard (unitDrift kernelDeclinedDeriv).isNone
+
+end Ballistics
+
 end LambdaS.Examples

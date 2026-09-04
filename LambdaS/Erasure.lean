@@ -28,7 +28,10 @@ Two things deliberately survive erasure, and neither is a unit.
 
 **Shape** survives: a vector is still a list, and a matrix keeps its column
 count, without which the composite of a zero-row matrix has no width. That is
-array-dimension information, and no compiler erases it.
+array-dimension information, and no compiler erases it. The syntax makes the
+same commitment at the introduction form: `mnil` carries its column space, so
+the width of a zero-row matrix is written in the term and the erased value
+keeps exactly the length of that space.
 
 **The unit environments** survive: `convert` under a unit binder takes its
 factor from the unit the caller supplies at runtime, so the evaluator keeps `η`
@@ -142,6 +145,16 @@ def eeval (cf : UExp B 0 → UExp B 0 → R) :
       | some (.matrix M _), some (.matrix N c) =>
           some (.matrix (M.map fun row =>
             (List.range c).map fun i => dotp row (colOf N i)) c)
+      | _, _ => none
+  | _, _, _, _, _, _, .vnil => some (.vector [])
+  | fu, j, k, η, δ, ρ, .vcons e v =>
+      match eeval cf fu j k η δ ρ e, eeval cf fu j k η δ ρ v with
+      | some (.scalar x), some (.vector xs) => some (.vector (x :: xs))
+      | _, _ => none
+  | _, _, _, _, _, _, .mnil V => some (.matrix [] V.length)
+  | fu, j, k, η, δ, ρ, .mcons _ r M =>
+      match eeval cf fu j k η δ ρ r, eeval cf fu j k η δ ρ M with
+      | some (.vector xs), some (.matrix N c) => some (.matrix (xs :: N) c)
       | _, _ => none
   | fu, j, k, η, δ, ρ, .convert a u v =>
       match eeval cf fu j k η δ ρ a with
@@ -322,6 +335,30 @@ theorem eeval_erase (cf : UExp B 0 → UExp B 0 → R) :
           simp only [eeval, eeval_erase cf fu f η δ ρ _ hf,
             eeval_erase cf fu g η δ ρ _ hg, Val.erase]
         · exact absurd h (by simp)
+      · exact absurd h (by simp)
+  | _, _, _, .vnil, η, δ, ρ, v, h => by
+      simp only [eval] at h
+      obtain rfl := Option.some.inj h
+      simp [eeval, Val.erase]
+  | fu, _, _, .vcons e ev, η, δ, ρ, v, h => by
+      simp only [eval] at h
+      split at h
+      · rename_i x xs V he hv
+        obtain rfl := Option.some.inj h.symm
+        simp only [eeval, eeval_erase cf fu e η δ ρ _ he,
+          eeval_erase cf fu ev η δ ρ _ hv, Val.erase]
+      · exact absurd h (by simp)
+  | _, _, _, .mnil V, η, δ, ρ, v, h => by
+      simp only [eval] at h
+      obtain rfl := Option.some.inj h
+      simp [eeval, Val.erase]
+  | fu, _, _, .mcons w r M, η, δ, ρ, v, h => by
+      simp only [eval] at h
+      split at h
+      · rename_i xs Vr N V W hr hM
+        obtain rfl := Option.some.inj h.symm
+        simp only [eeval, eeval_erase cf fu r η δ ρ _ hr,
+          eeval_erase cf fu M η δ ρ _ hM, Val.erase]
       · exact absurd h (by simp)
   | fu, _, _, .convert a u w, η, δ, ρ, v, h => by
       simp only [eval] at h

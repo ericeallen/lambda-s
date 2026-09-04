@@ -127,6 +127,10 @@ def Tm.Inert : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .idx a _ => a.Inert
   | _, _, .mapp f x => f.Inert ∧ x.Inert
   | _, _, .comp f g => f.Inert ∧ g.Inert
+  | _, _, .vnil => True
+  | _, _, .vcons e v => e.Inert ∧ v.Inert
+  | _, _, .mnil _ => True
+  | _, _, .mcons _ r M => r.Inert ∧ M.Inert
   | _, _, .log a => a.Inert
   | _, _, .exp a => a.Inert
   | _, _, .ulam _ b => b.Inert
@@ -149,6 +153,10 @@ theorem Tm.inert_of_convertFree : ∀ {j k : ℕ} (e : Tm B D j k), e.ConvertFre
   | _, _, .idx a _, h => Tm.inert_of_convertFree a h
   | _, _, .mapp f x, h => ⟨Tm.inert_of_convertFree f h.1, Tm.inert_of_convertFree x h.2⟩
   | _, _, .comp f g, h => ⟨Tm.inert_of_convertFree f h.1, Tm.inert_of_convertFree g h.2⟩
+  | _, _, .vnil, _ => trivial
+  | _, _, .vcons e v, h => ⟨Tm.inert_of_convertFree e h.1, Tm.inert_of_convertFree v h.2⟩
+  | _, _, .mnil _, _ => trivial
+  | _, _, .mcons _ r M, h => ⟨Tm.inert_of_convertFree r h.1, Tm.inert_of_convertFree M h.2⟩
   | _, _, .log a, h => Tm.inert_of_convertFree a h
   | _, _, .exp a, h => Tm.inert_of_convertFree a h
   | _, _, .ulam _ b, h => Tm.inert_of_convertFree b h
@@ -236,6 +244,26 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
     refine ⟨_, .comp df dg, ⟨hf1, hf2⟩, fun h => ⟨hp1 h.1, hp2 h.2⟩, fun V ρ => ?_⟩
     show (fun a i => ∑ b, den V df ρ a b * den V dg ρ b i)
         = fun a i => ∑ b, den V f ρ a b * den V g ρ b i
+    rw [hd1, hd2]
+  | vnil => intro _; exact ⟨_, .vnil, trivial, id, fun _ _ => rfl⟩
+  | @vcons _ _ _ _ _ _ u Vs e v ihe ihv =>
+    intro hi
+    obtain ⟨e', de, hf1, hp1, hd1⟩ := ihe hi.1
+    obtain ⟨v', dv, hf2, hp2, hd2⟩ := ihv hi.2
+    refine ⟨_, .vcons de dv, ⟨hf1, hf2⟩, fun h => ⟨hp1 h.1, hp2 h.2⟩, fun V ρ => ?_⟩
+    show Fin.cons (α := fun _ => ℝ) (den V de ρ) (den V dv ρ)
+        = Fin.cons (α := fun _ => ℝ) (den V e ρ) (den V v ρ)
+    rw [hd1, hd2]
+  | mnil => intro _; exact ⟨_, .mnil, trivial, id, fun _ _ => rfl⟩
+  | @mcons _ _ _ _ w _ _ Vs Ws r M ihr ihM =>
+    intro hi
+    obtain ⟨r', dr, hf1, hp1, hd1⟩ := ihr hi.1
+    obtain ⟨M', dM, hf2, hp2, hd2⟩ := ihM hi.2
+    refine ⟨_, .mcons dr dM, ⟨hf1, hf2⟩, fun h => ⟨hp1 h.1, hp2 h.2⟩, fun V ρ => ?_⟩
+    show Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den V dr ρ (Fin.cast (by simp) i)) (den V dM ρ)
+        = Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+          (fun i => den V r ρ (Fin.cast (by simp) i)) (den V M ρ)
     rw [hd1, hd2]
   | log a ih =>
     intro hi

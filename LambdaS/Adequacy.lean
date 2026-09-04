@@ -662,6 +662,84 @@ theorem eval_adeq (V : Scaling B 0) :
           simp only [List.map_ofFn, Function.comp_def, List.length_map,
             map_range_eq_ofFn, colOf_ofFn, dotp, dot_ofFn]
           rfl
+  | vnil =>
+    intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
+    cases d with
+    | vnil =>
+      simp only [eval] at hv
+      obtain rfl := (Option.some.inj hv).symm
+      rfl
+  | vcons e vt ihe ihv =>
+    intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
+    cases d with
+    | vcons de dv =>
+      rename_i u Vs
+      simp only [eval] at hv
+      cases hE : eval (conv V) n _ _ η δ ρ e with
+      | none => rw [hE] at hv; simp at hv
+      | some ve =>
+        cases hT : eval (conv V) n _ _ η δ ρ vt with
+        | none => rw [hE, hT] at hv; cases ve <;> simp at hv
+        | some vv =>
+          rw [hE, hT] at hv
+          have h1 := ihe η δ ρ Δ Γ _ ρd de hρ hΔ _ _ hE
+          have h2 := ihv η δ ρ Δ Γ _ ρd dv hρ hΔ _ _ hT
+          simp only [Adeq] at h1 h2
+          subst h1; subst h2
+          simp only at hv
+          obtain rfl := (Option.some.inj hv).symm
+          show Val.vector (den (V.pull η) de ρd :: List.ofFn (den (V.pull η) dv ρd))
+                (substU η u :: List.map (substU η) Vs)
+            = Val.vector
+                (List.ofFn (Fin.cons (α := fun _ => ℝ) (den (V.pull η) de ρd)
+                  (den (V.pull η) dv ρd)))
+                (List.map (substU η) (u :: Vs))
+          simp [List.ofFn_succ, Fin.cons_zero, Fin.cons_succ]
+  | mnil Vs =>
+    intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
+    cases d with
+    | mnil =>
+      simp only [eval] at hv
+      obtain rfl := (Option.some.inj hv).symm
+      rfl
+  | mcons w r M ihr ihM =>
+    intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
+    cases d with
+    | mcons dr dM =>
+      rename_i Vs Ws
+      simp only [eval] at hv
+      cases hR : eval (conv V) n _ _ η δ ρ r with
+      | none => rw [hR] at hv; simp at hv
+      | some vr =>
+        cases hM : eval (conv V) n _ _ η δ ρ M with
+        | none => rw [hR, hM] at hv; cases vr <;> simp at hv
+        | some vM =>
+          rw [hR, hM] at hv
+          have h1 := ihr η δ ρ Δ Γ _ ρd dr hρ hΔ _ _ hR
+          have h2 := ihM η δ ρ Δ Γ _ ρd dM hρ hΔ _ _ hM
+          simp only [Adeq] at h1 h2
+          subst h1; subst h2
+          simp only at hv
+          obtain rfl := (Option.some.inj hv).symm
+          have hrow : List.ofFn (den (V.pull η) dr ρd)
+              = List.ofFn (fun i : Fin Vs.length =>
+                  den (V.pull η) dr ρd (Fin.cast (by simp) i)) := by
+            refine ofFn_heq (by simp) ?_
+            rw [Fin.heq_fun_iff (by simp)]
+            intro i
+            rfl
+          show Val.matrix
+                (List.ofFn (den (V.pull η) dr ρd)
+                  :: List.ofFn fun a => List.ofFn fun i => den (V.pull η) dM ρd a i)
+                (List.map (substU η) Vs) (substU η w :: List.map (substU η) Ws)
+            = Val.matrix
+                (List.ofFn fun a => List.ofFn fun i =>
+                  Fin.cons (α := fun _ => Fin Vs.length → ℝ)
+                    (fun i => den (V.pull η) dr ρd (Fin.cast (by simp) i))
+                    (den (V.pull η) dM ρd) a i)
+                (List.map (substU η) Vs) (List.map (substU η) (w :: Ws))
+          rw [hrow]
+          simp [List.ofFn_succ, Fin.cons_zero, Fin.cons_succ]
 
 /-! ## What the declarations buy
 

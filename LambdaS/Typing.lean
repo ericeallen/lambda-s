@@ -49,6 +49,12 @@ design:
   normalization pass.
 * `convert` requires the two units to have the same dimension. Decidable, so the
   trusted core checks it rather than delegating to an elaborator.
+* `mcons` requires each row of a matrix literal to carry exactly `w / δ_V(i)`:
+  the rank-one law of `LambdaS.Map`, checked at the introduction rather than
+  merely preserved by the eliminations. The annotations on `mnil` (its column
+  space) and `mcons` (its output unit) are what keep the rules syntax-directed:
+  a zero-row matrix determines no width, and a row over the empty space
+  determines no output unit.
 
 ## Two contexts
 
@@ -106,6 +112,22 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
       HasTy Δ Γ f (.lin V W) → HasTy Δ Γ x (.vec V) → HasTy Δ Γ (.mapp f x) (.vec W)
   | comp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f g U V W} :
       HasTy Δ Γ f (.lin V W) → HasTy Δ Γ g (.lin U V) → HasTy Δ Γ (.comp f g) (.lin U W)
+  /-- The empty vector lives at the empty space. -/
+  | vnil {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} : HasTy Δ Γ .vnil (.vec [])
+  /-- Consing a scalar onto a vector extends the space by the scalar's unit:
+  the introduction rule dual to `idx`. -/
+  | vcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e v u V} :
+      HasTy Δ Γ e (.Q u) → HasTy Δ Γ v (.vec V) →
+      HasTy Δ Γ (.vcons e v) (.vec (u :: V))
+  /-- The zero-row matrix at the annotated column space. The annotation is what
+  gives a rowless matrix a well-defined width. -/
+  | mnil {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V} : HasTy Δ Γ (.mnil V) (.lin V [])
+  /-- Consing a row onto a matrix. The row is a vector whose component `i`
+  carries `w / δ_V(i)`, which is Hart's rank-one condition enforced at the
+  introduction rather than merely preserved by the eliminations. -/
+  | mcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w r M V W} :
+      HasTy Δ Γ r (.vec (V.map fun u => Term.div w u)) → HasTy Δ Γ M (.lin V W) →
+      HasTy Δ Γ (.mcons w r M) (.lin V (w :: W))
   /-- `log` demands a dimensionless argument. This is the rule that makes the
   base-measure problem static: a probability density over a space with measure
   `μ` carries `μ⁻¹`, so `log p` is rejected, while `log (p/q)` for two densities
@@ -195,6 +217,18 @@ def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm
       | some ⟨.lin V _, df⟩, some ⟨.lin _ V', dg⟩ =>
           if h : V' = V then some ⟨_, .comp df (h ▸ dg)⟩ else none
       | _, _ => none
+  | _, _, _, _, .vnil => some ⟨_, .vnil⟩
+  | _, _, Δ, Γ, .vcons e v =>
+      match check Δ Γ e, check Δ Γ v with
+      | some ⟨.Q _, de⟩, some ⟨.vec _, dv⟩ => some ⟨_, .vcons de dv⟩
+      | _, _ => none
+  | _, _, _, _, .mnil _ => some ⟨_, .mnil⟩
+  | _, _, Δ, Γ, .mcons w r M =>
+      match check Δ Γ r, check Δ Γ M with
+      | some ⟨.vec Vr, dr⟩, some ⟨.lin V _, dM⟩ =>
+          if h : Vr = V.map (fun u => Term.div w u) then some ⟨_, .mcons (h ▸ dr) dM⟩
+          else none
+      | _, _ => none
   | _, _, Δ, Γ, .log e =>
       match check Δ Γ e with
       | some ⟨.Q u, d⟩ => if h : u = 1 then some ⟨_, .log (h ▸ d)⟩ else none
@@ -261,6 +295,10 @@ theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm 
     · next h => exact absurd (h.symm.trans hu) (by simp)
   | mapp _ _ ihf ihx => simp [check, ihf, ihx]
   | comp _ _ ihf ihg => simp [check, ihf, ihg]
+  | vnil => rfl
+  | vcons _ _ ihe ihv => simp [check, ihe, ihv]
+  | mnil => rfl
+  | mcons _ _ ihr ihM => simp [check, ihr, ihM]
   | log _ ih => simp [check, ih]
   | exp _ ih => simp [check, ih]
   | ulam _ ih => simp [check, ih]

@@ -728,6 +728,21 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   | idx {j k} : Tm B D j k → ℕ → Tm B D j k
   | mapp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   | comp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
+  /-- The empty vector, at the empty space. -/
+  | vnil {j k} : Tm B D j k
+  /-- A scalar consed onto a vector: the vector introduction step. The unit of
+  the new component is read off the scalar's type, so the constructor carries
+  no annotation. -/
+  | vcons {j k} : Tm B D j k → Tm B D j k → Tm B D j k
+  /-- The zero-row matrix, carrying its column space. The annotation is the
+  design point: a matrix with no rows still has a width, and nothing else
+  could supply it. -/
+  | mnil {j k} : Sp B k → Tm B D j k
+  /-- A row consed onto a matrix: output unit `w`, a row (a vector term whose
+  components carry `w / δ_V(i)`), and the rest of the matrix. The annotation
+  `w` is needed because a row over an empty column space determines no output
+  unit. -/
+  | mcons {j k} : UExp B k → Tm B D j k → Tm B D j k → Tm B D j k
   /-- Logarithm. Requires a **dimensionless** argument, which is what makes the
   base-measure problem a type error: a probability density is not dimensionless,
   so `log p` does not typecheck. -/

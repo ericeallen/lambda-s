@@ -251,6 +251,44 @@ def statePlus : Val Float Base Dim :=
 def stateMinus : Val Float Base Dim :=
   .vector [0.7071067811865476, -0.7071067811865476] St
 
+/-! ### Literals, and where parametricity draws its line
+
+The introduction forms of `LambdaS.Syntax` let the eigenstate be written down
+rather than supplied: its amplitudes are dimensionless literals, so the state
+literal is parametric. A Hamiltonian literal is not: its entries are energies,
+so each is a multiple of `1_J`, and writing the operator down names the joule,
+which is precisely the unit constant the parametric fragment excludes
+(`LambdaS.Fundamental`). That is why this file supplies `H` and `ψ` through
+the environment above. -/
+
+/-- `1/√2`, to sixteen places. -/
+abbrev invSqrt2 : ℚ := 7071067811865476 / 10 ^ 16
+
+/-- The symmetric eigenstate `(|1⟩ + |2⟩)/√2` as a vector literal. -/
+def statePlusTm : Term₀ := .vcons (.lit invSqrt2) (.vcons (.lit invSqrt2) .vnil)
+
+#guard typeOf statePlusTm == some (.vec St)
+
+/- The state literal is parametric: it names no unit. -/
+example : statePlusTm.Parametric := ⟨trivial, trivial, trivial⟩
+
+/-- `H = [[0, −A], [−A, 0]]` as a matrix literal, entry by entry a multiple of
+`1_J`. -/
+def hamiltonianTm : Term₀ :=
+  .mcons joule
+    (.vcons (.mul (.lit 0) (.ucon joule))
+      (.vcons (.mul (.lit (-(1602176634 / 10 ^ 32 : ℚ))) (.ucon joule)) .vnil))
+    (.mcons joule
+      (.vcons (.mul (.lit (-(1602176634 / 10 ^ 32 : ℚ))) (.ucon joule))
+        (.vcons (.mul (.lit 0) (.ucon joule)) .vnil))
+      (.mnil St))
+
+#guard typeOf hamiltonianTm == some (.lin St En)
+
+/- The Hamiltonian literal is not parametric: the `1_J` in its first row's
+second entry already refutes it. -/
+example : ¬ hamiltonianTm.Parametric := fun h => h.1.2.1.2
+
 /-- Evaluate a scalar term in an environment. -/
 def runIn (ρ : List (Val Float Base Dim)) (e : Term₀) : Option Float :=
   match evalC (D := Dim) (fun _ _ => (1.0 : Float)) 1000 ρ e with

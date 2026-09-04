@@ -446,6 +446,50 @@ theorem eval_sound (cf : UExp B 0 → UExp B 0 → R) :
           simp
         · exact absurd hv (by simp)
       · exact absurd hv (by simp)
+  | vnil =>
+    intro η δ ρ Δ Γ τ v hρ hΔ ht hv
+    cases ht
+    simp only [eval] at hv
+    injection hv with hv; subst hv
+    exact ValTy.vector rfl
+  | vcons e vt ihe ihv =>
+    intro η δ ρ Δ Γ τ v hρ hΔ ht hv
+    cases ht with
+    | vcons hte htv =>
+      simp only [eval] at hv
+      split at hv
+      · rename_i x xs V he hvt
+        obtain ⟨mx, hmx⟩ := (ihe η δ ρ Δ Γ _ _ hρ hΔ hte he).scalar_inv
+        obtain ⟨xs', hxs, hlen⟩ := (ihv η δ ρ Δ Γ _ _ hρ hΔ htv hvt).vector_inv
+        injection hmx with hmx; subst hmx
+        injection hxs with hxs hV; subst hxs; subst hV
+        injection hv with hv; subst hv
+        exact ValTy.vector (by simpa using hlen)
+      · exact absurd hv (by simp)
+  | mnil V =>
+    intro η δ ρ Δ Γ τ v hρ hΔ ht hv
+    cases ht
+    simp only [eval] at hv
+    injection hv with hv; subst hv
+    exact ValTy.matrix rfl (by simp)
+  | mcons w r M ihr ihM =>
+    intro η δ ρ Δ Γ τ v hρ hΔ ht hv
+    cases ht with
+    | mcons htr htM =>
+      simp only [eval] at hv
+      split at hv
+      · rename_i xs Vr N V W hr hM
+        obtain ⟨xs', hxs, hxlen⟩ := (ihr η δ ρ Δ Γ _ _ hρ hΔ htr hr).vector_inv
+        obtain ⟨N', hN, hNlen, hNrow⟩ := (ihM η δ ρ Δ Γ _ _ hρ hΔ htM hM).matrix_inv
+        injection hxs with hxs hVr; subst hxs; subst hVr
+        injection hN with hN hV hW; subst hN; subst hV; subst hW
+        injection hv with hv; subst hv
+        refine ValTy.matrix (by simpa using hNlen) ?_
+        intro row hrow
+        rcases List.mem_cons.mp hrow with rfl | hmem
+        · simpa using hxlen
+        · exact hNrow row hmem
+      · exact absurd hv (by simp)
   | convert a u w iha =>
     intro η δ ρ Δ Γ τ v hρ hΔ ht hv
     cases ht with

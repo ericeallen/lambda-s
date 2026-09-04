@@ -112,10 +112,15 @@ Fuel is consumed only where a closure body is entered, which is the only place
 the recursion leaves the term. Nothing else spends it, so first-order arithmetic
 evaluates at every bound including zero.
 
-Data arrives through the environment rather than through literals, for exactly
-the reason `LambdaS.Fundamental` gives about unit constants: a program that could
-*name* its data would not be scale-invariant. A numeric program takes its
-matrices and vectors as input. -/
+Data may arrive through the environment or be built by the introduction forms:
+`vnil`/`vcons` assemble a vector value one scalar at a time, and `mnil`/`mcons`
+assemble a matrix one row at a time, with `mnil` grounding its annotated column
+space so even a rowless matrix value knows its width. Like the other
+introduction forms (`mul` building a product unit, `lam` building a closure),
+they check nothing: the dynamic unit checks live at the eliminations, where a
+mismatch would corrupt the arithmetic. A literal whose scalars name units via
+`ucon` sits outside the invariance theory for exactly the reason
+`LambdaS.Fundamental` gives about unit constants. -/
 def eval (cf : UExp B 0 → UExp B 0 → R) :
     ℕ → (j k : ℕ) → UEnv B k → DEnv D j → List (Val R B D) → Tm B D j k →
       Option (Val R B D)
@@ -193,6 +198,18 @@ def eval (cf : UExp B 0 → UExp B 0 → R) :
             some (.matrix (M.map fun row =>
               (List.range U.length).map fun i => dotp row (colOf N i)) U W)
           else none
+      | _, _ => none
+  | _, _, _, _, _, _, .vnil => some (.vector [] [])
+  | fu, j, k, η, δ, ρ, .vcons e v =>
+      match eval cf fu j k η δ ρ e, eval cf fu j k η δ ρ v with
+      | some (.scalar x), some (.vector xs V) =>
+          some (.vector (x.mag :: xs) (x.unit :: V))
+      | _, _ => none
+  | _, _, _, η, _, _, .mnil V => some (.matrix [] (V.map (substU η)) [])
+  | fu, j, k, η, δ, ρ, .mcons w r M =>
+      match eval cf fu j k η δ ρ r, eval cf fu j k η δ ρ M with
+      | some (.vector xs _), some (.matrix N V W) =>
+          some (.matrix (xs :: N) V (substU η w :: W))
       | _, _ => none
   | fu, j, k, η, δ, ρ, .convert a u v =>
       match eval cf fu j k η δ ρ a with
