@@ -367,4 +367,48 @@ theorem factor_chain_consistent {ψ : Scaling B 0} {a b c : Decl B}
     a.factor * b.factor = c.factor := by
   exact_mod_cast factor_chain ha hb hc h1 h2 h3
 
+
+/-! ## Dimension abbreviations
+
+Unit declarations constrain; dimension declarations abbreviate. A
+dimension declaration introduces a fresh name for a vector over the base
+dimensions, so the only check it needs is scoping: the name must be new,
+and the right-hand side may mention only base dimensions and earlier
+abbreviations. Under that discipline a cyclic pair such as
+`Speed = Length/Time; Length = Speed/Time` is rejected at its second
+line, for rebinding a generator, before any question of consistency can
+arise; a forward reference is rejected because an undefined name does not
+denote. Cycles are not detected but unrepresentable. -/
+
+namespace DimAbbrev
+
+variable {D : Type} [Fintype D] [DecidableEq D]
+
+/-- One right-hand-side factor: a base dimension or an earlier
+abbreviation, at a rational exponent. -/
+abbrev Ref (D : Type) := (D ⊕ String) × ℚ
+
+/-- Elaborate one abbreviation against the environment built so far.
+Rejects a name that collides with a base dimension or an earlier
+abbreviation, and a reference to a name not yet defined. -/
+def elabOne (baseName : String → Option D)
+    (env : List (String × DExp D 0)) (n : String) (rhs : List (Ref D)) :
+    Option (List (String × DExp D 0)) :=
+  if (baseName n).isSome || (env.lookup n).isSome then none else do
+    let v ← rhs.foldlM (init := (1 : DExp D 0)) fun acc (r, q) => do
+      let d ← match r with
+        | .inl b => some (Term.ofBase b)
+        | .inr s => env.lookup s
+      pure (Term.mul acc (Term.rpow d q))
+    some ((n, v) :: env)
+
+/-- Elaborate a sequence of dimension abbreviations, in order. Every
+name that survives maps to an exponent vector over the base dimensions;
+nothing else survives. -/
+def elabDimDefs (baseName : String → Option D) :
+    List (String × List (Ref D)) → Option (List (String × DExp D 0)) :=
+  List.foldlM (fun env (d : String × List (Ref D)) => elabOne baseName env d.1 d.2) []
+
+end DimAbbrev
+
 end LambdaS

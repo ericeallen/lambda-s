@@ -482,6 +482,41 @@ theorem yard_conflict :
         ∧ Decl.Satisfies ψ dYardMetreBad :=
   not_satisfiable_of_chain rfl rfl rfl (by norm_num [dYardFoot, dFootMetre, dYardMetreBad])
 
+/-! ### Dimension abbreviations, elaborated
+
+Unit declarations constrain; dimension declarations abbreviate, and the
+only check they need is scoping (`LambdaS.DimAbbrev`). The chain below
+elaborates, with `Accel` landing at the vector `length·time⁻²`. The
+cyclic pair `Speed = Length/Time; Length = Speed/Time` is rejected at its
+second line for rebinding the generator `Length`, and a forward
+reference is rejected because an undefined name does not denote. -/
+
+/-- The base dimensions' surface names. -/
+def dimName : String → Option Dim
+  | "Length" => some .length
+  | "Mass" => some .mass
+  | "Time" => some .time
+  | _ => none
+
+def speedDef : String × List (DimAbbrev.Ref Dim) :=
+  ("Speed", [(.inl .length, 1), (.inl .time, -1)])
+
+/-- `Speed = Length/Time; Accel = Speed/Time`. -/
+def dimChain : List (String × List (DimAbbrev.Ref Dim)) :=
+  [speedDef, ("Accel", [(.inr "Speed", 1), (.inl .time, -1)])]
+
+/-- `Speed = Length/Time; Length = Speed/Time`: rebinds a generator. -/
+def dimCycle : List (String × List (DimAbbrev.Ref Dim)) :=
+  [speedDef, ("Length", [(.inr "Speed", 1), (.inl .time, -1)])]
+
+#guard (DimAbbrev.elabDimDefs dimName dimChain).isSome
+#guard ((DimAbbrev.elabDimDefs dimName dimChain).bind (·.lookup "Accel"))
+    == some (Term.div (Term.ofBase Dim.length)
+        (Term.mul (Term.ofBase Dim.time) (Term.ofBase Dim.time)))
+#guard (DimAbbrev.elabDimDefs dimName dimCycle).isNone
+#guard (DimAbbrev.elabDimDefs dimName
+    [("Accel", [(.inr "Speed", 1), (.inl .time, -1)])]).isNone
+
 /-! ### The valuation the declarations determine, and the compiled evaluator using it
 
 `yard_conflict` says the bad set has no valuation; this is the other half,
