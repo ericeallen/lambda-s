@@ -36,7 +36,9 @@ rule. Keeping it free puts the correspondence in the `var` rule, where it is one
 hypothesis.
 
 `Tw.castShape` appears at `uapp` and `dapp` for the same reason in the other
-index: the result type is `τ.subst σ`, and `Ty.shape_subst` is a theorem.
+index: the result type is `τ.subst σ`, and `Ty.shape_subst` is a theorem. It
+appears once more at `mcons`, where a row's space is a `map` over the column
+space and `List.length_map` is likewise a theorem.
 -/
 
 namespace LambdaS
@@ -77,6 +79,10 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
   | convert {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {u v a Θ}
       {da : HasTy Δ Γ a (.Q u)} {s : Tw B k Θ .scalar} (h : SameDim Δ u v) :
       Twist Θ da s → Twist Θ (.convert da h) (.mul s (.div (.unit u) (.unit v)))
+  | pow {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {q : ℚ} {e : Tm B D j k}
+      {u : UExp B k} {Θ : List Shape} {de : HasTy Δ Γ e (.Q u)}
+      {s : Tw B k Θ .scalar} :
+      Twist Θ de s → Twist Θ (.pow (q := q) de) (.qpow s q)
   | ulam {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {d τ e Θ}
       {db : HasTy (Δ.cons d) Γ.weaken e τ} {t : Tw B (k + 1) Θ (Ty.shape τ)} :
       Twist Θ db t → Twist Θ (.ulam db) (.ulam t)
@@ -92,28 +98,69 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       {df : HasTy Δ Γ f (.allDim τ)} {t : Tw B k Θ (Ty.shape τ)} :
       Twist Θ df t →
       Twist Θ (.dapp df) (Tw.castShape (Ty.shape_substDim τ d).symm t)
-  /-- The empty vector has nothing to track. -/
+  /-- The empty vector: the empty drift vector. -/
   | vnil {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {Θ} :
-      Twist (Δ := Δ) (Γ := Γ) Θ .vnil .triv
-  /-- Consing a scalar onto a vector. The side condition is the `add`-style
-  agreement check: the relation at vector types has no ratio slot, so the
-  consed scalar's accumulated ratio must be worth `1` under every scaling. -/
-  | vcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e v u V Θ}
+      Twist (Δ := Δ) (Γ := Γ) Θ .vnil .vecnil
+  /-- Consing a scalar onto a vector conses its drift onto the drift vector.
+  No side condition: the relation at vector shapes carries one ratio per
+  component, so a drifting component is reported rather than declined. -/
+  | vcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e v : Tm B D j k}
+      {u : UExp B k} {V : Sp B k} {Θ : List Shape}
       {de : HasTy Δ Γ e (.Q u)} {dv : HasTy Δ Γ v (.vec V)}
-      {s : Tw B k Θ .scalar} {t : Tw B k Θ (Ty.shape (Ty.vec V))}
-      (hone : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ s θρ = 1) :
-      Twist Θ de s → Twist Θ dv t → Twist Θ (.vcons de dv) .triv
-  /-- The zero-row matrix has nothing to track. -/
+      {s : Tw B k Θ .scalar} {t : Tw B k Θ (.vec V.length)} :
+      Twist Θ de s → Twist (τ := .vec V) Θ dv t →
+      Twist (τ := .vec (u :: V)) Θ (.vcons de dv) (.veccons s t)
+  /-- The zero-row matrix: the zero-row drift matrix. -/
   | mnil {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V Θ} :
-      Twist (Δ := Δ) (Γ := Γ) Θ (.mnil (V := V)) .triv
-  /-- Consing a row onto a matrix. No side condition: the row is already at a
-  vector type, so any drift in its components was caught at their `vcons`. -/
-  | mcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w r M V W Θ}
+      Twist (Δ := Δ) (Γ := Γ) Θ (.mnil (V := V)) .matnil
+  /-- Consing a row onto a matrix conses the row's drift vector onto the drift
+  matrix. The row lives at the mapped space, whose length equals the column
+  space's by `List.length_map`, so its drift vector is retyped along that
+  equality. -/
+  | mcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w : UExp B k}
+      {r M : Tm B D j k} {V W : Sp B k} {Θ : List Shape}
       {dr : HasTy Δ Γ r (.vec (V.map fun u => Term.div w u))}
       {dM : HasTy Δ Γ M (.lin V W)}
-      {tr : Tw B k Θ (Ty.shape (Ty.vec (V.map fun u => Term.div w u)))}
-      {tM : Tw B k Θ (Ty.shape (Ty.lin V W))} :
-      Twist Θ dr tr → Twist Θ dM tM → Twist Θ (.mcons dr dM) .triv
+      {tr : Tw B k Θ (.vec (V.map fun u => Term.div w u).length)}
+      {tM : Tw B k Θ (.mat V.length W.length)} :
+      Twist (τ := .vec (V.map fun u => Term.div w u)) Θ dr tr →
+      Twist (τ := .lin V W) Θ dM tM →
+      Twist (τ := .lin V (w :: W)) Θ (.mcons dr dM) (.matcons (Tw.castShape
+        (show Shape.vec (V.map fun u => Term.div w u).length = Shape.vec V.length
+          by simp) tr) tM)
+  /-- Indexing projects the component's drift out of the drift vector. -/
+  | idx {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k}
+      {V : Sp B k} {i : ℕ} {u : UExp B k} {Θ : List Shape}
+      {de : HasTy Δ Γ e (.vec V)} {t : Tw B k Θ (.vec V.length)}
+      (hu : V[i]? = some u) :
+      Twist (τ := .vec V) Θ de t →
+      Twist Θ (.idx de hu) (.proj t ⟨i, (List.getElem?_eq_some_iff.mp hu).1⟩)
+  /-- Matrix application. The `add`-style agreement condition, per output row
+  `a`: the product of the entry drift at `(a, i)` with the argument drift at
+  `i` must be worth the output drift at `a`, for every column `i`, in every
+  scaling and environment. Over the empty domain the condition is vacuous and
+  any output drift is sound, since the output is the zero vector. -/
+  | mapp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f x : Tm B D j k}
+      {V W : Sp B k} {Θ : List Shape}
+      {df : HasTy Δ Γ f (.lin V W)} {dx : HasTy Δ Γ x (.vec V)}
+      {tf : Tw B k Θ (.mat V.length W.length)} {tx : Tw B k Θ (.vec V.length)}
+      {tw : Tw B k Θ (.vec W.length)}
+      (heq : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ) (a : Fin W.length) (i : Fin V.length),
+          Tw.eval ψ tf θρ a i * Tw.eval ψ tx θρ i = Tw.eval ψ tw θρ a) :
+      Twist (τ := .lin V W) Θ df tf → Twist (τ := .vec V) Θ dx tx →
+      Twist (τ := .vec W) Θ (.mapp df dx) tw
+  /-- Composition. The analogous agreement condition per entry `(a, i)`,
+  across the middle index `b`. -/
+  | comp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f g : Tm B D j k}
+      {U V W : Sp B k} {Θ : List Shape}
+      {df : HasTy Δ Γ f (.lin V W)} {dg : HasTy Δ Γ g (.lin U V)}
+      {tf : Tw B k Θ (.mat V.length W.length)} {tg : Tw B k Θ (.mat U.length V.length)}
+      {tw : Tw B k Θ (.mat U.length W.length)}
+      (heq : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ) (a : Fin W.length) (i : Fin U.length)
+          (b : Fin V.length),
+          Tw.eval ψ tf θρ a b * Tw.eval ψ tg θρ b i = Tw.eval ψ tw θρ a i) :
+      Twist (τ := .lin V W) Θ df tf → Twist (τ := .lin U V) Θ dg tg →
+      Twist (τ := .lin U W) Θ (.comp df dg) tw
 
 /-! ## The scaling law with a twist -/
 
@@ -232,8 +279,8 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     show den (V.comp ψ) da ρ' * den (V.comp ψ) db ρ'
         = _ * _ * (den V da ρ * den V db ρ)
     rw [h1, h2, Scaling.scale_mul]
-    show _ = _ * (Tw.eval ψ st θρ * Tw.eval ψ tt θρ
-        * (Tw.eval ψ st θρ * Tw.eval ψ tt θρ)) * _
+    show _ = _ * ((Tw.eval ψ st θρ : ℝ) * (Tw.eval ψ tt θρ : ℝ)
+        * ((Tw.eval ψ st θρ : ℝ) * (Tw.eval ψ tt θρ : ℝ))) * _
     ring
   | @div _ _ _ _ _ _ _ _ _ da db st tt hta htb iha ihb =>
     intro V ψ θρ ρ ρ' hr
@@ -247,8 +294,8 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     show den (V.comp ψ) da ρ' / den (V.comp ψ) db ρ'
         = _ * _ * (den V da ρ / den V db ρ)
     rw [h1, h2, Scaling.scale_div]
-    show _ = _ * (Tw.eval ψ st θρ / Tw.eval ψ tt θρ
-        * (Tw.eval ψ st θρ / Tw.eval ψ tt θρ)) * _
+    show _ = _ * ((Tw.eval ψ st θρ : ℝ) / (Tw.eval ψ tt θρ : ℝ)
+        * ((Tw.eval ψ st θρ : ℝ) / (Tw.eval ψ tt θρ : ℝ))) * _
     exact div_twist _ _ _ _ _ _
   | @add _ _ _ _ _ _ _ _ da db st tt heq hta htb iha ihb =>
     intro V ψ θρ ρ ρ' hr
@@ -278,6 +325,22 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     have hv : ∀ w : UExp B _, ψ.scale w ≠ 0 := fun w => ne_of_gt (ψ.scale_pos w)
     rw [conv]
     field_simp
+    try ring
+  | pow hte ih =>
+    rename_i q e' u' Θ' de s
+    intro V ψ θρ ρ ρ' hr
+    have h := ih V ψ θρ hr
+    simp only [TwRel] at h ⊢
+    show (den (V.comp ψ) de ρ') ^ ((q : ℚ) : ℝ)
+        = ψ.scale (Term.rpow u' q)
+          * ((Tw.eval ψ s θρ : ℝ) ^ (q : ℝ) * (Tw.eval ψ s θρ : ℝ) ^ (q : ℝ))
+          * (den V de ρ) ^ ((q : ℚ) : ℝ)
+    rw [h, mul_rpow_of_pos_left
+        (mul_pos (ψ.scale_pos u') (mul_pos (Tw.eval ψ s θρ).2 (Tw.eval ψ s θρ).2)),
+      Real.mul_rpow (le_of_lt (ψ.scale_pos u'))
+        (le_of_lt (mul_pos (Tw.eval ψ s θρ).2 (Tw.eval ψ s θρ).2)),
+      Real.mul_rpow (le_of_lt (Tw.eval ψ s θρ).2) (le_of_lt (Tw.eval ψ s θρ).2),
+      ← Scaling.scale_rpow]
     try ring
   | @ulam _ _ _ _ _ _ _ _ db tb htb ih =>
     intro V ψ θρ ρ ρ' hr r s
@@ -309,20 +372,20 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | vnil =>
     intro V ψ θρ ρ ρ' hr i
     exact i.elim0
-  | vcons hone hte htv ihe ihv =>
+  | vcons hte htv ihe ihv =>
     rename_i u Vs Θ' de dv s tv
     intro V ψ θρ ρ ρ' hr
     have h1 := ihe V ψ θρ hr
     have h2 := ihv V ψ θρ hr
     simp only [TwRel] at h1 h2
-    rw [hone ψ θρ] at h1
     intro i
     show Fin.cons (α := fun _ => ℝ) (den (V.comp ψ) de ρ') (den (V.comp ψ) dv ρ') i
         = ψ.scale ((u :: Vs).get i)
+          * (Tw.eval ψ (Tw.veccons s tv) θρ i * Tw.eval ψ (Tw.veccons s tv) θρ i)
           * Fin.cons (α := fun _ => ℝ) (den V de ρ) (den V dv ρ) i
     cases i using Fin.cases with
-    | zero => simpa using h1
-    | succ i => simpa using h2 i
+    | zero => simpa [Tw.eval] using h1
+    | succ i => simpa [Tw.eval] using h2 i
   | mnil =>
     intro V ψ θρ ρ ρ' hr a
     exact a.elim0
@@ -337,16 +400,67 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
           (fun i => den (V.comp ψ) dr ρ' (Fin.cast (by simp) i))
           (den (V.comp ψ) dM ρ') a i
         = (ψ.scale ((w :: Ws).get a) / ψ.scale (Vs.get i))
+          * (Tw.eval ψ (Tw.matcons (Tw.castShape (by simp) tr) tM) θρ a i
+            * Tw.eval ψ (Tw.matcons (Tw.castShape (by simp) tr) tM) θρ a i)
           * Fin.cons (α := fun _ => Fin Vs.length → ℝ)
             (fun i => den V dr ρ (Fin.cast (by simp) i)) (den V dM ρ) a i
     cases a using Fin.cases with
     | zero =>
       have h := h1 (Fin.cast (by simp) i)
       simp only [Fin.cons_zero, List.get_eq_getElem, List.getElem_map, Fin.val_cast,
-        Fin.val_zero, List.getElem_cons_zero] at h ⊢
+        Fin.val_zero, List.getElem_cons_zero, Tw.eval, Tw.eval_castShape_vec] at h ⊢
       rw [h, Scaling.scale_div]
     | succ a =>
-      simpa using h2 a i
+      simpa [Tw.eval] using h2 a i
+  | idx hu hte ih =>
+    rename_i e' Vs i u Θ' de t
+    intro V ψ θρ ρ ρ' hr
+    have h := ih V ψ θρ hr
+    simp only [TwRel] at h ⊢
+    have hlt := (List.getElem?_eq_some_iff.mp hu).1
+    have hget : Vs.get ⟨i, hlt⟩ = u := by
+      simpa [List.get_eq_getElem] using (List.getElem?_eq_some_iff.mp hu).2
+    show den (V.comp ψ) de ρ' ⟨i, hlt⟩
+        = ψ.scale u * (Tw.eval ψ t θρ ⟨i, hlt⟩ * Tw.eval ψ t θρ ⟨i, hlt⟩)
+          * den V de ρ ⟨i, hlt⟩
+    rw [← hget]
+    exact h ⟨i, hlt⟩
+  | mapp heq htf htx ihf ihx =>
+    rename_i f' x' Vs Ws Θ' df dx tf tx tw
+    intro V ψ θρ ρ ρ' hr
+    have hf := ihf V ψ θρ hr
+    have hx := ihx V ψ θρ hr
+    simp only [TwRel] at hf hx ⊢
+    intro a
+    show (∑ i, den (V.comp ψ) df ρ' a i * den (V.comp ψ) dx ρ' i)
+        = ψ.scale (Ws.get a) * (Tw.eval ψ tw θρ a * Tw.eval ψ tw θρ a)
+          * ∑ i, den V df ρ a i * den V dx ρ i
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [hf a i, hx i, ← heq ψ θρ a i]
+    simp only [Positive.val_mul]
+    have hvi := ne_of_gt (ψ.scale_pos (Vs.get i))
+    field_simp
+    try ring
+  | comp heq htf htg ihf ihg =>
+    rename_i f' g' Us Vs Ws Θ' df dg tf tg tw
+    intro V ψ θρ ρ ρ' hr
+    have hf := ihf V ψ θρ hr
+    have hg := ihg V ψ θρ hr
+    simp only [TwRel] at hf hg ⊢
+    intro a i
+    show (∑ b, den (V.comp ψ) df ρ' a b * den (V.comp ψ) dg ρ' b i)
+        = ψ.scale (Ws.get a) / ψ.scale (Us.get i)
+          * (Tw.eval ψ tw θρ a i * Tw.eval ψ tw θρ a i)
+          * ∑ b, den V df ρ a b * den V dg ρ b i
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun b _ => ?_
+    rw [hf a b, hg b i, ← heq ψ θρ a i b]
+    simp only [Positive.val_mul]
+    have hvb := ne_of_gt (ψ.scale_pos (Vs.get b))
+    have hui := ne_of_gt (ψ.scale_pos (Us.get i))
+    field_simp
+    try ring
 
 /-! ## The characterization at first order
 
@@ -399,7 +513,7 @@ theorem Twist.eq_one_of_invariant {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
   simp only [TwRel] at htw
   rw [hinv ψ] at htw
   have hu := ne_of_gt (ψ.scale_pos u)
-  set c := Tw.eval ψ t (oneTwEnv (us.map fun _ => Shape.scalar)) with hc
+  set c : ℝ := (Tw.eval ψ t (oneTwEnv (us.map fun _ => Shape.scalar)) : ℝ) with hc
   have hsq : c * c = 1 := by
     have h0 : ψ.scale u * den V d ρ * (c * c - 1) = 0 := by nlinarith [htw]
     rcases mul_eq_zero.mp h0 with h | h
@@ -407,13 +521,9 @@ theorem Twist.eq_one_of_invariant {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
       · exact absurd h' hu
       · exact absurd h' hne
     · linarith [h]
-  have hone : PosEnv (us.map fun _ => Shape.scalar)
-      (oneTwEnv (us.map fun _ => Shape.scalar)) := by
-    clear * -
-    induction us with
-    | nil => trivial
-    | cons u us ih => exact ⟨one_pos, ih⟩
-  have hpos : 0 < c := Tw.eval_pos ψ t (oneTwEnv _) hone
+  have hpos : 0 < c := (Tw.eval ψ t (oneTwEnv _)).2
+  refine Subtype.ext ?_
+  show c = 1
   nlinarith [hsq, hpos]
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] in
@@ -470,17 +580,18 @@ This is the theorem that turns the characterization into an algorithm. -/
 theorem Tw.nfOne_eq_one_iff {k : ℕ} {Θ : List Shape}
     (t : Tw B k Θ .scalar) :
     Tw.nfOne t = 1 ↔ ∀ ψ : Scaling B k, Tw.eval ψ t (oneTwEnv Θ) = 1 := by
-  have hval : ∀ ψ : Scaling B k, Tw.eval ψ t (oneTwEnv Θ) = ψ.scale (Tw.nfOne t) := by
+  have hval : ∀ ψ : Scaling B k,
+      (Tw.eval ψ t (oneTwEnv Θ) : ℝ) = ψ.scale (Tw.nfOne t) := by
     intro ψ
     have h := Tw.nf_correct ψ (idU B k) t (SynEnv.ones Θ) (oneTwEnv Θ)
       (srelEnv_ones ψ Θ)
     rwa [Scaling.pull_id] at h
   constructor
   · intro h1 ψ
-    rw [hval ψ, h1, Scaling.scale_one]
+    exact Subtype.ext (by rw [hval ψ, h1, Scaling.scale_one, Positive.val_one])
   · intro hall
     have : ∀ ψ : Scaling B k, ψ.scale (Tw.nfOne t) = ψ.scale 1 := by
-      intro ψ; rw [← hval ψ, hall ψ, Scaling.scale_one]
+      intro ψ; rw [← hval ψ, hall ψ, Positive.val_one, Scaling.scale_one]
     exact scale_eq_iff.mp this
 
 omit [Fintype D] [DecidableEq D] in
@@ -509,26 +620,26 @@ derivation, a ratio together with its `Twist` derivation, or `none`.
 
 It fails in exactly two circumstances, and they are different in kind. At `add`
 the two branches' ratios must agree up to the unit algebra (`Tw.scalarEq`):
-unit constants merge into one exponent vector and atoms compare as bags, so
-reordered and reassociated conversions are accepted. The residual
-incompleteness is that atoms are never cancelled across the fraction bar,
-which is argued at `twistOf`. At `root`, `log`, `exp`, `idx`, `mapp`, `comp`
-and `ucon` there is no rule to apply. `root` is *inside* the invariance theory
-(`Tm.Parametric` admits it, and `fundamental` covers it through `relQ_rpow`),
-but its scale factor is a rational power `ψ(u)^(1/n)` and the ratio grammar
-`Tw` has no rational-power former, so declining it here is a limitation of
-this analysis rather than an exclusion of the theory. `log` and `exp` are
-nonlinear, so no single ratio describes how they move; `idx`, `mapp` and `comp` would need
-ratios at space shapes, which `triv` does not carry. And `ucon` names a unit,
-which no scaling story survives.
+unit constants merge into one exponent vector and atoms into one rational
+exponent each, so reordered, reassociated and differently split conversions
+are accepted. The same check runs per output component at `mapp` and `comp`,
+whose sums mix one drift per summand: the products along the summed index must
+agree, and the common value is the component's drift; disagreement declines,
+exactly as at `add`. The residual incompleteness is that distinct atoms are
+never identified, which is argued at `twistOf`. At `log`, `exp` and `ucon`
+there is no rule to apply, and the three declines exhaust the grammar. `log`
+and `exp` are nonlinear: no ratio of any form describes how they move, since
+`exp`'s would have to depend on the argument's value, not merely its unit.
+And `ucon` names a unit, which is outside the invariance theory: no scaling
+story survives naming a magnitude.
 
-The vector and matrix introduction forms are *accepted*, at the `triv` shape.
-`vnil`, `mnil` and `mcons` carry no condition. `vcons` carries the `add`-style
-one: the relation at vector types demands exact componentwise scaling with no
-ratio slot, so the consed scalar's ratio must be provably worth `1`, checked by
-`Tw.scalarEq` against `Tw.unit 1`. A literal whose component drifts is declined
-at that `vcons`, exactly as a sum with disagreeing branch ratios is declined at
-its `add`. -/
+The vector and matrix forms are *accepted*, at the `vec` and `mat` shapes,
+with no side conditions at the introductions: the drift of a vector is a
+vector of drifts, the drift of a matrix is a matrix of drifts, and a drifting
+literal component is reported rather than declined. `idx` projects a drift
+back out. `pow` is accepted too: the drift of `e ^ q` is the drift of `e`
+lifted to the `q` by `Tw.qpow`, which the positive scalar carrier makes
+sound. -/
 
 /-- Decidable equality of ratio terms at matching indices. Proof fields are
 propositions, so `var` compares only its index. -/
@@ -538,10 +649,18 @@ def Tw.beq : {k : ℕ} → {Θ : List Shape} → {s : Shape} →
   | _, _, _, .unit u, .unit v => u == v
   | _, _, _, .mul a b, .mul a' b' => a.beq a' && b.beq b'
   | _, _, _, .div a b, .div a' b' => a.beq a' && b.beq b'
+  | _, _, _, .qpow t q, .qpow t' q' => t.beq t' && q == q'
   | _, _, _, .lam t, .lam t' => t.beq t'
   | _, _, _, .app (s := s₁) f a, .app (s := s₂) f' a' =>
       if h : s₁ = s₂ then (h ▸ f).beq f' && (h ▸ a).beq a' else false
-  | _, _, _, .triv, .triv => true
+  | _, _, _, .vecnil, .vecnil => true
+  | _, _, _, .veccons a v, .veccons a' v' => a.beq a' && v.beq v'
+  | _, _, _, .proj (n := n₁) v i, .proj (n := n₂) v' i' =>
+      if h : n₁ = n₂ then (h ▸ v).beq v' && i.val == i'.val else false
+  | _, _, _, .matnil, .matnil => true
+  | _, _, _, .matcons r M, .matcons r' M' => r.beq r' && M.beq M'
+  | _, _, _, .row (m := m₁) M j, .row (m := m₂) M' j' =>
+      if h : m₁ = m₂ then (h ▸ M).beq M' && j.val == j'.val else false
   | _, _, _, .ulam t, .ulam t' => t.beq t'
   | _, _, _, .uapp t μ, .uapp t' μ' => t.beq t' && μ == μ'
   | _, _, _, _, _ => false
@@ -568,22 +687,23 @@ theorem Tw.beq_sound : ∀ {k : ℕ} {Θ : List Shape} {s : Shape}
     intro t' hb
     cases t' <;> simp [Tw.beq] at hb
     next a' b' => rw [iha a' hb.1, ihb b' hb.2]
+  | qpow t q iht =>
+    intro t' hb
+    cases t' <;> try exact Bool.noConfusion hb
+    case qpow =>
+      rename_i q₂ t₂
+      simp only [Tw.beq, Bool.and_eq_true, beq_iff_eq] at hb
+      obtain ⟨hb1, rfl⟩ := hb
+      rw [iht t₂ hb1]
   | lam t iht =>
     intro t' hb
     cases t' <;> simp [Tw.beq] at hb
     next t'' => rw [iht t'' hb]
   | @app _ _ s₁ _ f a ihf iha =>
     intro t' hb
-    cases t' with
-    | var n h => exact Bool.noConfusion hb
-    | unit u => exact Bool.noConfusion hb
-    | mul a b => exact Bool.noConfusion hb
-    | div a b => exact Bool.noConfusion hb
-    | lam t => exact Bool.noConfusion hb
-    | triv => exact Bool.noConfusion hb
-    | ulam t => exact Bool.noConfusion hb
-    | uapp t μ => exact Bool.noConfusion hb
-    | app f' a' =>
+    cases t' <;> try exact Bool.noConfusion hb
+    case app =>
+      rename_i s₂ a' f'
       simp only [Tw.beq] at hb
       split at hb
       · next h =>
@@ -591,41 +711,82 @@ theorem Tw.beq_sound : ∀ {k : ℕ} {Θ : List Shape} {s : Shape}
         simp only [Bool.and_eq_true] at hb
         rw [ihf f' hb.1, iha a' hb.2]
       · exact absurd hb (by simp)
-  | triv =>
+  | vecnil =>
     intro t' hb
     cases t' <;> (try (exact Bool.noConfusion hb))
     rfl
+  | veccons a v iha ihv =>
+    intro t' hb
+    cases t' <;> try exact Bool.noConfusion hb
+    case veccons =>
+      rename_i a' v'
+      simp only [Tw.beq, Bool.and_eq_true] at hb
+      rw [iha a' hb.1, ihv v' hb.2]
+  | @proj _ _ n₁ v i ihv =>
+    intro t' hb
+    cases t' <;> try exact Bool.noConfusion hb
+    case proj =>
+      rename_i n₂ i' v'
+      simp only [Tw.beq] at hb
+      split at hb
+      · next h =>
+        subst h
+        simp only [Bool.and_eq_true, beq_iff_eq] at hb
+        obtain rfl : i = i' := Fin.ext hb.2
+        rw [ihv v' hb.1]
+      · exact absurd hb (by simp)
+  | matnil =>
+    intro t' hb
+    cases t' <;> (try (exact Bool.noConfusion hb))
+    rfl
+  | matcons r M ihr ihM =>
+    intro t' hb
+    cases t' <;> try exact Bool.noConfusion hb
+    case matcons =>
+      rename_i r' M'
+      simp only [Tw.beq, Bool.and_eq_true] at hb
+      rw [ihr r' hb.1, ihM M' hb.2]
+  | @row _ _ _ m₁ M j ihM =>
+    intro t' hb
+    cases t' <;> try exact Bool.noConfusion hb
+    case row =>
+      rename_i m₂ j' M'
+      simp only [Tw.beq] at hb
+      split at hb
+      · next h =>
+        subst h
+        simp only [Bool.and_eq_true, beq_iff_eq] at hb
+        obtain rfl : j = j' := Fin.ext hb.2
+        rw [ihM M' hb.1]
+      · exact absurd hb (by simp)
   | ulam t iht =>
     intro t' hb
     cases t' <;> simp [Tw.beq] at hb
     next t'' => rw [iht t'' hb]
   | uapp t μ iht =>
     intro t' hb
-    cases t' with
-    | var n h => exact Bool.noConfusion hb
-    | unit u => exact Bool.noConfusion hb
-    | mul a b => exact Bool.noConfusion hb
-    | div a b => exact Bool.noConfusion hb
-    | lam t => exact Bool.noConfusion hb
-    | triv => exact Bool.noConfusion hb
-    | ulam t => exact Bool.noConfusion hb
-    | app f a => exact Bool.noConfusion hb
-    | uapp tt μ' =>
+    cases t' <;> try exact Bool.noConfusion hb
+    case uapp =>
+      rename_i μ' t₂
       simp only [Tw.beq, Bool.and_eq_true, beq_iff_eq] at hb
       obtain ⟨hb1, rfl⟩ := hb
-      rw [iht tt hb1]
+      rw [iht t₂ hb1]
 
 /-! ## Comparing branch ratios up to the unit algebra
 
 `Tw.beq` is syntactic. At a sum, syntactic comparison rejects branches whose
 ratios are the same conversions written in a different order, so we compare a
 *flattened* form instead: a scalar ratio splits into its unit-constant part
-(one exponent vector, merged by the group operations) and two bags of opaque
-atoms, numerator and denominator. Atoms are compared as bags because real
-multiplication is commutative; they are **never cancelled across the fraction
-bar**, because an atom is the ratio of a free variable and may be zero, where
-`x / x = 1` fails. Cancelling unit constants is sound because a scaling is
-positive; cancelling atoms is not. -/
+(one exponent vector, merged by the group operations) and a list of opaque
+atoms each carrying a rational exponent, a vector in the free ℚ-vector space
+the atoms generate, exactly as the units themselves are vectors over the base
+units. Multiplication appends, division negates the exponents, and `qpow`
+scales them. Two ratios compare equal when their unit parts agree and every
+atom carries the same total exponent on both sides. What the comparison never
+does is identify *distinct* atoms: an atom is the ratio of a free variable,
+and nothing relates two variables' values. Soundness of the exponent
+arithmetic needs every atom's value positive, which the carrier `SemScalar`
+provides: `x ^ p · x ^ q = x ^ (p + q)` already fails at `x = 0`. -/
 
 /-- `t.beq t` holds. With `Tw.beq_sound`, `beq` is a lawful equality test. -/
 theorem Tw.beq_refl : ∀ {k : ℕ} {Θ : List Shape} {s : Shape}
@@ -636,12 +797,24 @@ theorem Tw.beq_refl : ∀ {k : ℕ} {Θ : List Shape} {s : Shape}
   | unit u => simp [Tw.beq]
   | mul a b iha ihb => simp [Tw.beq, iha, ihb]
   | div a b iha ihb => simp [Tw.beq, iha, ihb]
+  | qpow t q ih => simp [Tw.beq, ih]
   | lam t ih => simp [Tw.beq, ih]
   | app f a ihf iha =>
     rw [Tw.beq]
     rw [dif_pos rfl]
     simp [ihf, iha]
-  | triv => simp [Tw.beq]
+  | vecnil => simp [Tw.beq]
+  | veccons a v iha ihv => simp [Tw.beq, iha, ihv]
+  | proj v i ihv =>
+    rw [Tw.beq]
+    rw [dif_pos rfl]
+    simp [ihv]
+  | matnil => simp [Tw.beq]
+  | matcons r M ihr ihM => simp [Tw.beq, ihr, ihM]
+  | row M j ihM =>
+    rw [Tw.beq]
+    rw [dif_pos rfl]
+    simp [ihM]
   | ulam t ih => simp [Tw.beq, ih]
   | uapp t μ ih => simp [Tw.beq, ih]
 
@@ -651,87 +824,244 @@ instance {k : ℕ} {Θ : List Shape} {s : Shape} : LawfulBEq (Tw B k Θ s) where
   eq_of_beq h := Tw.beq_sound _ _ h
   rfl := Tw.beq_refl _
 
-/-- Flatten a scalar ratio into its unit-constant part and two bags of opaque
-atoms (numerator, denominator). Unit constants merge into one exponent vector;
-everything else is an atom. -/
+instance {k : ℕ} {Θ : List Shape} {s : Shape} : DecidableEq (Tw B k Θ s) :=
+  fun a b =>
+    if h : a.beq b = true then .isTrue (Tw.beq_sound a b h)
+    else .isFalse fun he => h (he ▸ Tw.beq_refl a)
+
+/-- Flatten a scalar ratio into its unit-constant part and its atoms, each
+with a rational exponent. Unit constants merge into one exponent vector;
+everything else is an atom at exponent `1`, negated under the fraction bar and
+scaled under `qpow`. -/
 def Tw.flat : {k : ℕ} → {Θ : List Shape} → Tw B k Θ .scalar →
-    UExp B k × List (Tw B k Θ .scalar) × List (Tw B k Θ .scalar)
-  | _, _, .unit u => (u, [], [])
-  | _, _, .mul a b =>
-      (Term.mul a.flat.1 b.flat.1, a.flat.2.1 ++ b.flat.2.1, a.flat.2.2 ++ b.flat.2.2)
+    UExp B k × List (Tw B k Θ .scalar × ℚ)
+  | _, _, .unit u => (u, [])
+  | _, _, .mul a b => (Term.mul a.flat.1 b.flat.1, a.flat.2 ++ b.flat.2)
   | _, _, .div a b =>
-      (Term.div a.flat.1 b.flat.1, a.flat.2.1 ++ b.flat.2.2, a.flat.2.2 ++ b.flat.2.1)
-  | _, _, t => (1, [t], [])
+      (Term.div a.flat.1 b.flat.1, a.flat.2 ++ b.flat.2.map fun p => (p.1, -p.2))
+  | _, _, .qpow t q => (Term.rpow t.flat.1 q, t.flat.2.map fun p => (p.1, q * p.2))
+  | _, _, t => (1, [(t, 1)])
+
+omit [DecidableEq B] in
+/-- Product of inverses is the inverse of the product, for lists over ℝ. -/
+private theorem list_prod_map_inv {α : Type} (l : List α) (f : α → ℝ) :
+    (l.map fun a => (f a)⁻¹).prod = ((l.map f).prod)⁻¹ := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    simp only [List.map_cons, List.prod_cons, mul_inv, ih]
+    try ring
+
+omit [DecidableEq B] in
+/-- A rational power distributes over a product of nonnegative factors. -/
+private theorem list_prod_map_rpow {α : Type} (q : ℝ) :
+    ∀ (l : List α) (f : α → ℝ), (∀ a ∈ l, 0 ≤ f a) →
+    ((l.map f).prod) ^ q = (l.map fun a => f a ^ q).prod
+  | [], _, _ => by simp
+  | a :: l, f, hf => by
+      simp only [List.map_cons, List.prod_cons]
+      rw [Real.mul_rpow (hf a (List.mem_cons_self ..))
+          (List.prod_nonneg fun x hx => by
+            obtain ⟨b, hb, rfl⟩ := List.mem_map.mp hx
+            exact hf b (List.mem_cons_of_mem _ hb)),
+        list_prod_map_rpow q l f fun b hb => hf b (List.mem_cons_of_mem _ hb)]
 
 omit [DecidableEq B] in
 /-- Flattening preserves the value: a scalar ratio evaluates to its
-unit-constant part's scale times the product of its numerator atoms over the
-product of its denominator atoms. All divisions are `ℝ`'s total division; the
-`div` case is the `GroupWithZero` computation, valid with zeros. -/
+unit-constant part's scale times the product of its atoms' values raised to
+their exponents. Everything in sight is positive, which is what licenses the
+exponent arithmetic. -/
 theorem Tw.flat_eval {k : ℕ} {Θ : List Shape} (ψ : Scaling B k) (θρ : TwEnv Θ) :
     ∀ (t : Tw B k Θ .scalar),
-    Tw.eval ψ t θρ = ψ.scale t.flat.1
-      * ((t.flat.2.1.map fun a => Tw.eval ψ a θρ).prod)
-      / ((t.flat.2.2.map fun a => Tw.eval ψ a θρ).prod)
+    (Tw.eval ψ t θρ : ℝ) = ψ.scale t.flat.1
+      * ((t.flat.2.map fun p => (Tw.eval ψ p.1 θρ : ℝ) ^ (p.2 : ℝ)).prod)
   | .var n h => by simp [Tw.flat]
   | .unit u => by simp [Tw.eval, Tw.flat]
   | .mul a b => by
       have iha := Tw.flat_eval ψ θρ a
       have ihb := Tw.flat_eval ψ θρ b
-      show Tw.eval ψ a θρ * Tw.eval ψ b θρ = _
+      show (Tw.eval ψ a θρ : ℝ) * (Tw.eval ψ b θρ : ℝ) = _
       rw [iha, ihb]
-      simp only [Tw.flat, List.map_append, List.prod_append, Scaling.scale_mul,
-        div_mul_div_comm]
+      simp only [Tw.flat, List.map_append, List.prod_append, Scaling.scale_mul]
       ring
   | .div a b => by
       have iha := Tw.flat_eval ψ θρ a
       have ihb := Tw.flat_eval ψ θρ b
-      show Tw.eval ψ a θρ / Tw.eval ψ b θρ = _
+      show (Tw.eval ψ a θρ : ℝ) / (Tw.eval ψ b θρ : ℝ) = _
       rw [iha, ihb]
       simp only [Tw.flat, List.map_append, List.prod_append, Scaling.scale_div,
-        div_eq_mul_inv, mul_inv, inv_inv]
-      ring
+        List.map_map, Function.comp_def]
+      rw [show (b.flat.2.map fun p => (Tw.eval ψ p.1 θρ : ℝ) ^ ((-p.2 : ℚ) : ℝ)).prod
+          = ((b.flat.2.map fun p => (Tw.eval ψ p.1 θρ : ℝ) ^ (p.2 : ℝ)).prod)⁻¹ by
+        rw [← list_prod_map_inv]
+        refine congrArg List.prod (List.map_congr_left fun p _ => ?_)
+        push_cast
+        rw [Real.rpow_neg (le_of_lt (Tw.eval ψ p.1 θρ).2)]]
+      field_simp
+      try ring
+  | .qpow t q => by
+      have ih := Tw.flat_eval ψ θρ t
+      show ((Tw.eval ψ t θρ : ℝ)) ^ (q : ℝ) = _
+      simp only [Tw.flat, List.map_map, Function.comp_def]
+      rw [ih, mul_rpow_of_pos_left (ψ.scale_pos t.flat.1), ← Scaling.scale_rpow,
+        list_prod_map_rpow (q : ℝ) t.flat.2
+          (fun p => (Tw.eval ψ p.1 θρ : ℝ) ^ (p.2 : ℝ))
+          (fun p _ => le_of_lt (Real.rpow_pos_of_pos (Tw.eval ψ p.1 θρ).2 _))]
+      refine congrArg (_ * ·) (congrArg List.prod (List.map_congr_left fun p _ => ?_))
+      rw [← Real.rpow_mul (le_of_lt (Tw.eval ψ p.1 θρ).2)]
+      push_cast
+      ring_nf
   | .app f a => by simp [Tw.flat]
+  | .proj v i => by simp [Tw.flat]
   | .uapp t μ => by simp [Tw.flat]
 
+/-- The total exponent an atom carries in a flattened atom list. -/
+def Tw.keyMult {k : ℕ} {Θ : List Shape} (L : List (Tw B k Θ .scalar × ℚ))
+    (a : Tw B k Θ .scalar) : ℚ :=
+  (L.map fun p => if p.1 == a then p.2 else 0).sum
+
 /-- Decides whether two scalar ratios are equal up to the unit algebra: equal
-unit-constant
-parts (one exponent-vector comparison) and permutation-equal atom bags on each
-side of the fraction bar. Sound, and strictly wider than `Tw.beq`: it accepts
-the same conversions reassociated, reordered, and with their unit constants
-combined differently. -/
+unit-constant parts (one exponent-vector comparison), and equal total
+exponents on every atom either side mentions. Sound, and strictly wider than
+`Tw.beq`: it accepts the same conversions reassociated, reordered, with their
+unit constants combined differently, and with atom exponents split
+differently. -/
 def Tw.scalarEq {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar) : Bool :=
-  a.flat.1 == b.flat.1 && a.flat.2.1.isPerm b.flat.2.1
-    && a.flat.2.2.isPerm b.flat.2.2
+  a.flat.1 == b.flat.1
+    && (a.flat.2 ++ b.flat.2).all fun p =>
+        Tw.keyMult a.flat.2 p.1 == Tw.keyMult b.flat.2 p.1
+
+/-- An atom list as a finitely supported exponent vector: the coordinates of
+the ratio in the free ℚ-vector space over the atoms. Proof-side only; the
+executable comparison is `Tw.keyMult`. -/
+private noncomputable def atomExp {k : ℕ} {Θ : List Shape}
+    (L : List (Tw B k Θ .scalar × ℚ)) : Tw B k Θ .scalar →₀ ℚ :=
+  (L.map fun p => Finsupp.single p.1 p.2).sum
+
+private theorem atomExp_apply {k : ℕ} {Θ : List Shape}
+    (L : List (Tw B k Θ .scalar × ℚ)) (t : Tw B k Θ .scalar) :
+    atomExp L t = Tw.keyMult L t := by
+  induction L with
+  | nil => simp [atomExp, Tw.keyMult]
+  | cons p L ih =>
+    simp only [atomExp, Tw.keyMult, List.map_cons, List.sum_cons, Finsupp.add_apply,
+      Finsupp.single_apply, beq_iff_eq] at ih ⊢
+    rw [ih]
+
+omit [DecidableEq B] in
+/-- The weighted product of an atom list is a function of its exponent vector
+alone. -/
+private theorem wprod_eq_atomExp {k : ℕ} {Θ : List Shape} (ψ : Scaling B k)
+    (θρ : TwEnv Θ) (L : List (Tw B k Θ .scalar × ℚ)) :
+    (L.map fun p => (Tw.eval ψ p.1 θρ : ℝ) ^ (p.2 : ℝ)).prod
+      = (atomExp L).prod fun t q => (Tw.eval ψ t θρ : ℝ) ^ (q : ℝ) := by
+  induction L with
+  | nil => simp [atomExp]
+  | cons p L ih =>
+    have hstep : atomExp (p :: L) = Finsupp.single p.1 p.2 + atomExp L := by
+      simp [atomExp]
+    rw [List.map_cons, List.prod_cons, hstep,
+      Finsupp.prod_add_index' (fun t => by simp) (fun t q₁ q₂ => by
+        push_cast
+        exact Real.rpow_add (Tw.eval ψ t θρ).2 _ _),
+      Finsupp.prod_single_index (by simp), ih]
 
 /-- `scalarEq` is sound: it implies evaluation equality in every scaling and
-every environment: the hypothesis `Twist.add` carries. -/
+every environment: the hypotheses `Twist.add`, `Twist.mapp` and `Twist.comp`
+carry. -/
 theorem Tw.scalarEq_sound {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar)
     (h : Tw.scalarEq a b = true) :
     ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ := by
   intro ψ θρ
   simp only [Tw.scalarEq, Bool.and_eq_true] at h
-  obtain ⟨⟨hw, hn⟩, hd⟩ := h
+  obtain ⟨hw, hm⟩ := h
   have hweq : a.flat.1 = b.flat.1 := eq_of_beq hw
-  have hneq : ((a.flat.2.1.map fun t => Tw.eval ψ t θρ).prod)
-      = ((b.flat.2.1.map fun t => Tw.eval ψ t θρ).prod) :=
-    ((List.isPerm_iff.mp hn).map _).prod_eq
-  have hdeq : ((a.flat.2.2.map fun t => Tw.eval ψ t θρ).prod)
-      = ((b.flat.2.2.map fun t => Tw.eval ψ t θρ).prod) :=
-    ((List.isPerm_iff.mp hd).map _).prod_eq
-  rw [Tw.flat_eval ψ θρ a, Tw.flat_eval ψ θρ b, hweq, hneq, hdeq]
+  have hzero : ∀ (L : List (Tw B k Θ .scalar × ℚ)) (t : Tw B k Θ .scalar),
+      (∀ p ∈ L, p.1 ≠ t) → Tw.keyMult L t = 0 := by
+    intro L t hL
+    induction L with
+    | nil => simp [Tw.keyMult]
+    | cons p L ih =>
+      simp only [Tw.keyMult, List.map_cons, List.sum_cons] at ih ⊢
+      rw [if_neg (by simpa using hL p (List.mem_cons_self ..)),
+        ih fun p hp => hL p (List.mem_cons_of_mem _ hp), add_zero]
+  have hmult : ∀ t, Tw.keyMult a.flat.2 t = Tw.keyMult b.flat.2 t := by
+    intro t
+    by_cases hmem : ∃ p ∈ a.flat.2 ++ b.flat.2, p.1 = t
+    · obtain ⟨p, hp, rfl⟩ := hmem
+      exact eq_of_beq (List.all_eq_true.mp hm p hp)
+    · have hmem' : ∀ p ∈ a.flat.2 ++ b.flat.2, p.1 ≠ t := fun p hp he =>
+        hmem ⟨p, hp, he⟩
+      rw [hzero _ _ fun p hp => hmem' p (List.mem_append_left _ hp),
+        hzero _ _ fun p hp => hmem' p (List.mem_append_right _ hp)]
+  have hfq : atomExp a.flat.2 = atomExp b.flat.2 :=
+    Finsupp.ext fun t => by rw [atomExp_apply, atomExp_apply, hmult t]
+  refine Subtype.ext ?_
+  rw [Tw.flat_eval ψ θρ a, Tw.flat_eval ψ θρ b, hweq,
+    wprod_eq_atomExp ψ θρ, wprod_eq_atomExp ψ θρ, hfq]
+
+/-- The drift of a matrix application, when the analysis can name one. Per
+output row `a`, the products of an entry drift with the matching argument
+drift must agree across the row up to the unit algebra (`Tw.scalarEq`, exactly
+the `add` check), and the representative at column `0` is the row's output
+drift. Entries are extracted with `projE`/`rowE` so that literal rows compare
+by their components rather than as opaque projections. Over the empty domain
+the sum is empty and the output is the zero vector, so the output drift is `1`
+per component. -/
+def mappDrift {k : ℕ} {Θ : List Shape} {n m : ℕ}
+    (tf : Tw B k Θ (.mat n m)) (tx : Tw B k Θ (.vec n)) :
+    Option (Σ' tw : Tw B k Θ (.vec m),
+      ∀ (ψ : Scaling B k) (θρ : TwEnv Θ) (a : Fin m) (i : Fin n),
+        Tw.eval ψ tf θρ a i * Tw.eval ψ tx θρ i = Tw.eval ψ tw θρ a) :=
+  match n, tf, tx with
+  | 0, _, _ => some ⟨Tw.vecOfFn fun _ => .unit 1, fun _ _ _ i => i.elim0⟩
+  | n' + 1, tf, tx =>
+    if h : ∀ a : Fin m, ∀ i : Fin (n' + 1),
+        Tw.scalarEq (.mul (Tw.projE (Tw.rowE tf a) i) (Tw.projE tx i))
+          (.mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE tx 0)) then
+      some ⟨Tw.vecOfFn fun a => .mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE tx 0),
+        fun ψ θρ a i => by
+          have hs := Tw.scalarEq_sound _ _ (h a i) ψ θρ
+          rw [Tw.eval_vecOfFn]
+          simpa [Tw.eval, Tw.eval_projE, Tw.eval_rowE] using hs⟩
+    else none
+
+/-- The drift of a composition, when the analysis can name one: the analogue
+of `mappDrift` per entry `(a, i)`, with agreement across the middle index and
+the representative taken at middle index `0`. -/
+def compDrift {k : ℕ} {Θ : List Shape} {p n m : ℕ}
+    (tf : Tw B k Θ (.mat n m)) (tg : Tw B k Θ (.mat p n)) :
+    Option (Σ' tw : Tw B k Θ (.mat p m),
+      ∀ (ψ : Scaling B k) (θρ : TwEnv Θ) (a : Fin m) (i : Fin p) (b : Fin n),
+        Tw.eval ψ tf θρ a b * Tw.eval ψ tg θρ b i = Tw.eval ψ tw θρ a i) :=
+  match n, tf, tg with
+  | 0, _, _ =>
+      some ⟨Tw.matOfFn fun _ => Tw.vecOfFn fun _ => .unit 1, fun _ _ _ _ b => b.elim0⟩
+  | n' + 1, tf, tg =>
+    if h : ∀ a : Fin m, ∀ i : Fin p, ∀ b : Fin (n' + 1),
+        Tw.scalarEq (.mul (Tw.projE (Tw.rowE tf a) b) (Tw.projE (Tw.rowE tg b) i))
+          (.mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE (Tw.rowE tg 0) i)) then
+      some ⟨Tw.matOfFn fun a => Tw.vecOfFn fun i =>
+          .mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE (Tw.rowE tg 0) i),
+        fun ψ θρ a i b => by
+          have hs := Tw.scalarEq_sound _ _ (h a i b) ψ θρ
+          rw [Tw.eval_matOfFn, Tw.eval_vecOfFn]
+          simpa [Tw.eval, Tw.eval_projE, Tw.eval_rowE] using hs⟩
+    else none
 
 /-- **Computing the ratio.** For a derivation, the accumulated conversion ratio
 together with its `Twist` derivation, or `none` where the analysis does not
 apply.
 
 The `add` check is `Tw.scalarEq`: branch ratios compare with their unit
-constants merged into one exponent vector and their opaque atoms compared as
-bags, so the same conversions reordered or reassociated are accepted. What the
-check never does is cancel an atom against itself across the fraction bar (an
-atom is the ratio of a free variable and may be zero, where `x / x = 1` fails),
-and completeness at that boundary would need nonzero-ness tracked through the
-relation. Everything downstream of the check is complete: `Tw.nfOne` decides
+constants merged into one exponent vector and their atoms as coordinates of a
+free ℚ-vector space, one total exponent per atom, so the same conversions
+reordered, reassociated, split into different rational powers, and cancelled
+against themselves across the fraction bar are all accepted; the positive
+scalar carrier is what makes `x / x = 1` sound. What the check never does is
+identify *distinct* atoms, since nothing relates two variables' values.
+`mapp` and `comp` run the same check per output component, across the summed
+index. Everything downstream of the checks is complete: `Tw.nfOne` decides
 triviality of the *resulting* ratio exactly. -/
 def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : Tm B D j k} →
     {τ : Ty B D j k} → (Θ : List Shape) → (hΘ : Θ = Γ.shapes) →
@@ -780,24 +1110,33 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
   | _, _, _, _, _, _, Θ, hΘ, .dapp (τ := τ) (d := dm) df => do
       let ⟨tf, htf⟩ ← twistOf Θ hΘ df
       some ⟨Tw.castShape (Ty.shape_substDim τ dm).symm tf, .dapp htf⟩
-  | _, _, _, _, _, _, Θ, _, .vnil => some ⟨.triv, .vnil⟩
+  | _, _, _, _, _, _, Θ, _, .vnil => some ⟨.vecnil, .vnil⟩
   | _, _, _, _, _, _, Θ, hΘ, .vcons de dv => do
       let ⟨te, hte⟩ ← twistOf Θ hΘ de
-      let ⟨_, htv⟩ ← twistOf Θ hΘ dv
-      if hb : Tw.scalarEq te (.unit 1) then
-        some ⟨.triv, .vcons (fun ψ θρ => by
-          simpa [Tw.eval] using Tw.scalarEq_sound te (.unit 1) hb ψ θρ) hte htv⟩
-      else none
-  | _, _, _, _, _, _, Θ, _, .mnil => some ⟨.triv, .mnil⟩
+      let ⟨tv, htv⟩ ← twistOf Θ hΘ dv
+      some ⟨.veccons te tv, .vcons hte htv⟩
+  | _, _, _, _, _, _, Θ, _, .mnil => some ⟨.matnil, .mnil⟩
   | _, _, _, _, _, _, Θ, hΘ, .mcons dr dM => do
-      let ⟨_, htr⟩ ← twistOf Θ hΘ dr
-      let ⟨_, htM⟩ ← twistOf Θ hΘ dM
-      some ⟨.triv, .mcons htr htM⟩
+      let ⟨tr, htr⟩ ← twistOf Θ hΘ dr
+      let ⟨tM, htM⟩ ← twistOf Θ hΘ dM
+      some ⟨.matcons (Tw.castShape (by simp) tr) tM, .mcons htr htM⟩
+  | _, _, _, _, _, _, Θ, hΘ, .idx (i := i) de hu => do
+      let ⟨t, ht⟩ ← twistOf Θ hΘ de
+      some ⟨.proj t ⟨i, (List.getElem?_eq_some_iff.mp hu).1⟩, .idx hu ht⟩
+  | _, _, _, _, _, _, Θ, hΘ, .mapp df dx => do
+      let ⟨tf, htf⟩ ← twistOf Θ hΘ df
+      let ⟨tx, htx⟩ ← twistOf Θ hΘ dx
+      let ⟨tw, heq⟩ ← mappDrift tf tx
+      some ⟨tw, .mapp heq htf htx⟩
+  | _, _, _, _, _, _, Θ, hΘ, .comp df dg => do
+      let ⟨tf, htf⟩ ← twistOf Θ hΘ df
+      let ⟨tg, htg⟩ ← twistOf Θ hΘ dg
+      let ⟨tw, heq⟩ ← compDrift tf tg
+      some ⟨tw, .comp heq htf htg⟩
+  | _, _, _, _, _, _, Θ, hΘ, .pow (q := q) de => do
+      let ⟨t, ht⟩ ← twistOf Θ hΘ de
+      some ⟨.qpow t q, .pow ht⟩
   | _, _, _, _, _, _, _, _, .ucon => none
-  | _, _, _, _, _, _, _, _, .root _ _ => none
-  | _, _, _, _, _, _, _, _, .idx _ _ => none
-  | _, _, _, _, _, _, _, _, .mapp _ _ => none
-  | _, _, _, _, _, _, _, _, .comp _ _ => none
   | _, _, _, _, _, _, _, _, .log _ => none
   | _, _, _, _, _, _, _, _, .exp _ => none
 

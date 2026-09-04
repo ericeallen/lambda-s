@@ -46,9 +46,9 @@ Three read as design justifications rather than lemmas:
   factor `k` is positive, which scale factors are by construction
   (`Scaling.scale_pos`); `mul_rpow_of_pos_left` is the identity. What remains
   true is that on a negative argument the primitive's value is not a root at
-  all (`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, and the compiled `Float`
-  path yields `NaN`), so the lemma certifies covariance of that total
-  function, not root-ness.
+  all (`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, a value the `Float`
+  carrier reproduces by the same branch), so the lemma certifies covariance
+  of that total function, not root-ness.
 * `relQ_log` holds **only at the trivial unit**, which is the semantic content of
   the base-measure problem. A dimensioned quantity has no scale-invariant
   logarithm, so `log p` for a density cannot mean anything that survives a

@@ -19,8 +19,8 @@ file discharges it for the whole of Λs.
 `eeval` is `eval` with two things removed: the **annotations** (values carry no
 units, closures carry no type or dimension ascriptions) and the **checks**
 (`add` does not compare units, `log` and `exp` do not demand dimensionlessness,
-`convert` does not verify its source, `mapp` and `comp` do not compare spaces,
-and `root` does not test its index). Nothing is checked because there is nothing
+`convert` does not verify its source, and `mapp` and `comp` do not compare
+spaces). Nothing is checked because there is nothing
 left to check against, which is the point: the erased evaluator is the one a
 compiler would emit.
 
@@ -117,9 +117,9 @@ def eeval (cf : UExp B 0 → UExp B 0 → R) :
       match eeval cf fu j k η δ ρ a, eeval cf fu j k η δ ρ b with
       | some (.scalar x), some (.scalar y) => some (.scalar (Num.add x y))
       | _, _ => none
-  | fu, j, k, η, δ, ρ, .root n a =>
+  | fu, j, k, η, δ, ρ, .pow q a =>
       match eeval cf fu j k η δ ρ a with
-      | some (.scalar x) => some (.scalar (Num.nroot n x))
+      | some (.scalar x) => some (.scalar (Num.npow q x))
       | _ => none
   | fu, j, k, η, δ, ρ, .log a =>
       match eeval cf fu j k η δ ρ a with
@@ -280,15 +280,13 @@ theorem eeval_erase (cf : UExp B 0 → UExp B 0 → R) :
             eeval_erase cf fu b η δ ρ _ hb, Val.erase]
         · exact absurd h (by simp)
       · exact absurd h (by simp)
-  | fu, _, _, .root n a, η, δ, ρ, v, h => by
+  | fu, _, _, .pow q a, η, δ, ρ, v, h => by
       simp only [eval] at h
       split at h
+      · rename_i x ha
+        obtain rfl := Option.some.inj h.symm
+        simp only [eeval, eeval_erase cf fu a η δ ρ _ ha, Val.erase]
       · exact absurd h (by simp)
-      · split at h
-        · rename_i _ x ha
-          obtain rfl := Option.some.inj h.symm
-          simp only [eeval, eeval_erase cf fu a η δ ρ _ ha, Val.erase]
-        · exact absurd h (by simp)
   | fu, _, _, .log a, η, δ, ρ, v, h => by
       simp only [eval] at h
       split at h

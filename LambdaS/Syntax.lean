@@ -721,9 +721,11 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   | div {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   /-- Addition, where unit errors are caught. -/
   | add {j k} : Tm B D j k → Tm B D j k → Tm B D j k
-  /-- The `n`-th root. Primitive, because it is not definable from the field
-  operations; total over ℚ exponents. -/
-  | root {j k} : ℕ → Tm B D j k → Tm B D j k
+  /-- A constant rational power, `e^q`. Primitive, because it is not definable
+  from the field operations; total, with `pow 0 e : Q 1` denoting `x^0 = 1`.
+  The unit grammar has had `u^q` all along, and this constructor makes the term
+  grammar symmetric with it: `pow (1/n)` is the `n`-th root. -/
+  | pow {j k} : ℚ → Tm B D j k → Tm B D j k
   | idx {j k} : Tm B D j k → ℕ → Tm B D j k
   | mapp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   | comp {j k} : Tm B D j k → Tm B D j k → Tm B D j k

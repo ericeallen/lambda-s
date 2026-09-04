@@ -10,14 +10,14 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:86`](LambdaS/Typing.lean#L86) |
-| Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:274`](LambdaS/Typing.lean#L274) |
-| The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:726`](LambdaS/Examples.lean#L726) |
+| Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:88`](LambdaS/Typing.lean#L88) |
+| Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:276`](LambdaS/Typing.lean#L276) |
+| The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:727`](LambdaS/Examples.lean#L727) |
 | The velocity idiom | `LambdaS.Examples.velocity` | [`LambdaS/Examples.lean:96`](LambdaS/Examples.lean#L96) |
-| Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:102`](LambdaS/Notation.lean#L102) |
-| Elaboration succeeds iff scalar of the target's dimension | `LambdaS.elabConvert_isSome` | [`LambdaS/Notation.lean:115`](LambdaS/Notation.lean#L115) |
-| The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:826`](LambdaS/Examples.lean#L826) |
-| A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:848`](LambdaS/Examples.lean#L848) |
+| Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:106`](LambdaS/Notation.lean#L106) |
+| Elaboration succeeds iff scalar of the target's dimension | `LambdaS.elabConvert_isSome` | [`LambdaS/Notation.lean:119`](LambdaS/Notation.lean#L119) |
+| The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:827`](LambdaS/Examples.lean#L827) |
+| A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:849`](LambdaS/Examples.lean#L849) |
 
 ## Unit declarations
 
@@ -30,62 +30,62 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Consistency characterized (Theorem 3.1) | `LambdaS.consistent_iff_dependencies_mul` | [`LambdaS/Declare.lean:300`](LambdaS/Declare.lean#L300) |
 | Redundant factor forced | `LambdaS.factor_chain_consistent` | [`LambdaS/Declare.lean:364`](LambdaS/Declare.lean#L364) |
 | One-dimension well-formedness | `LambdaS.Decl.Sound` | [`LambdaS/Declare.lean:138`](LambdaS/Declare.lean#L138) |
-| The yard set is satisfiable | `LambdaS.Examples.yard_satisfiable` | [`LambdaS/Examples.lean:525`](LambdaS/Examples.lean#L525) |
-| The mistyped yard set is refuted | `LambdaS.Examples.yard_conflict` | [`LambdaS/Examples.lean:479`](LambdaS/Examples.lean#L479) |
-| The redundant factor is forced | `LambdaS.Examples.yard_forced` | [`LambdaS/Examples.lean:467`](LambdaS/Examples.lean#L467) |
+| The yard set is satisfiable | `LambdaS.Examples.yard_satisfiable` | [`LambdaS/Examples.lean:526`](LambdaS/Examples.lean#L526) |
+| The mistyped yard set is refuted | `LambdaS.Examples.yard_conflict` | [`LambdaS/Examples.lean:480`](LambdaS/Examples.lean#L480) |
+| The redundant factor is forced | `LambdaS.Examples.yard_forced` | [`LambdaS/Examples.lean:468`](LambdaS/Examples.lean#L468) |
 
 ## Dynamics
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:624`](LambdaS/Normalization.lean#L624) |
-| Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:637`](LambdaS/Normalization.lean#L637) |
-| Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:607`](LambdaS/Normalization.lean#L607) |
-| Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:355`](LambdaS/QM.lean#L355) |
+| Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:621`](LambdaS/Normalization.lean#L621) |
+| Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:634`](LambdaS/Normalization.lean#L634) |
+| Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:604`](LambdaS/Normalization.lean#L604) |
+| Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:368`](LambdaS/QM.lean#L368) |
 
 ## Denotational semantics and abstraction
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:726`](LambdaS/Fundamental.lean#L726) |
-| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:648`](LambdaS/Fundamental.lean#L648) |
-| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:878`](LambdaS/Fundamental.lean#L878) |
-| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:745`](LambdaS/Fundamental.lean#L745) |
-| Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:804`](LambdaS/Examples.lean#L804) |
+| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:727`](LambdaS/Fundamental.lean#L727) |
+| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:649`](LambdaS/Fundamental.lean#L649) |
+| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:879`](LambdaS/Fundamental.lean#L879) |
+| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:746`](LambdaS/Fundamental.lean#L746) |
+| Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:805`](LambdaS/Examples.lean#L805) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:364`](LambdaS/Parametricity.lean#L364) |
-| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1175`](LambdaS/Fundamental.lean#L1175) |
-| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1020`](LambdaS/Fundamental.lean#L1020) |
+| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1176`](LambdaS/Fundamental.lean#L1176) |
+| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1021`](LambdaS/Fundamental.lean#L1021) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:450`](LambdaS/Conversion.lean#L450) |
 
 ## Accumulated ratios and the drift diagnostic
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Shapes (Figure 5) | `LambdaS.Shape` | [`LambdaS/Ratio.lean:53`](LambdaS/Ratio.lean#L53) |
-| Ratio expressions (Figure 5) | `LambdaS.Tw` | [`LambdaS/Ratio.lean:132`](LambdaS/Ratio.lean#L132) |
-| Semantic ratios (Figure 5) | `LambdaS.SemTw` | [`LambdaS/Ratio.lean:166`](LambdaS/Ratio.lean#L166) |
-| Ratio evaluation (Figure 5) | `LambdaS.Tw.eval` | [`LambdaS/Ratio.lean:189`](LambdaS/Ratio.lean#L189) |
-| The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:201`](LambdaS/Twist.lean#L201) |
-| Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:446`](LambdaS/Twist.lean#L446) |
-| Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:470`](LambdaS/Twist.lean#L470) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:824`](LambdaS/Twist.lean#L824) |
-| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:703`](LambdaS/Twist.lean#L703) |
-| Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:683`](LambdaS/Examples.lean#L683) |
-| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:876`](LambdaS/Twist.lean#L876) |
+| Shapes (Figure 5) | `LambdaS.Shape` | [`LambdaS/Ratio.lean:56`](LambdaS/Ratio.lean#L56) |
+| Ratio expressions (Figure 5) | `LambdaS.Tw` | [`LambdaS/Ratio.lean:140`](LambdaS/Ratio.lean#L140) |
+| Semantic ratios (Figure 5) | `LambdaS.SemTw` | [`LambdaS/Ratio.lean:213`](LambdaS/Ratio.lean#L213) |
+| Ratio evaluation (Figure 5) | `LambdaS.Tw.eval` | [`LambdaS/Ratio.lean:237`](LambdaS/Ratio.lean#L237) |
+| The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:248`](LambdaS/Twist.lean#L248) |
+| Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:556`](LambdaS/Twist.lean#L556) |
+| Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:580`](LambdaS/Twist.lean#L580) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:1163`](LambdaS/Twist.lean#L1163) |
+| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:929`](LambdaS/Twist.lean#L929) |
+| Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:684`](LambdaS/Examples.lean#L684) |
+| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:1215`](LambdaS/Twist.lean#L1215) |
 
-| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:924`](LambdaS/Examples.lean#L924) |
+| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1011`](LambdaS/Examples.lean#L1011) |
 
 ## Adequacy and erasure
 
 | Paper claim | Lean name | Location |
 |---|---|---|
 | Adequacy at the declared factors | `LambdaS.eval_adeq` | [`LambdaS/Adequacy.lean:338`](LambdaS/Adequacy.lean#L338) |
-| Declared factors reach the compiled evaluator (Theorem 7.1) | `LambdaS.evalC_convert_declared` | [`LambdaS/Adequacy.lean:784`](LambdaS/Adequacy.lean#L784) |
+| Declared factors reach the compiled evaluator (Theorem 7.1) | `LambdaS.evalC_convert_declared` | [`LambdaS/Adequacy.lean:782`](LambdaS/Adequacy.lean#L782) |
 | Erasure simulation, no typing hypothesis (Theorem 7.2) | `LambdaS.eeval_erase` | [`LambdaS/Erasure.lean:198`](LambdaS/Erasure.lean#L198) |
-| Erasure correctness | `LambdaS.erasure_correct` | [`LambdaS/Erasure.lean:389`](LambdaS/Erasure.lean#L389) |
-| The erased evaluator computes the denotation | `LambdaS.eeval_den` | [`LambdaS/Erasure.lean:401`](LambdaS/Erasure.lean#L401) |
-| One yard is three feet, at the evaluator | `LambdaS.Examples.one_yard_is_three_feet` | [`LambdaS/Examples.lean:533`](LambdaS/Examples.lean#L533) |
-| One yard is 0.9144 meters, both routes | `LambdaS.Examples.one_yard_in_metres` | [`LambdaS/Examples.lean:544`](LambdaS/Examples.lean#L544) |
+| Erasure correctness | `LambdaS.erasure_correct` | [`LambdaS/Erasure.lean:387`](LambdaS/Erasure.lean#L387) |
+| The erased evaluator computes the denotation | `LambdaS.eeval_den` | [`LambdaS/Erasure.lean:399`](LambdaS/Erasure.lean#L399) |
+| One yard is three feet, at the evaluator | `LambdaS.Examples.one_yard_is_three_feet` | [`LambdaS/Examples.lean:534`](LambdaS/Examples.lean#L534) |
+| One yard is 0.9144 meters, both routes | `LambdaS.Examples.one_yard_in_metres` | [`LambdaS/Examples.lean:545`](LambdaS/Examples.lean#L545) |
 
 ## Dimensional analysis
 
@@ -136,13 +136,13 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | The ground-state energy is an energy | `LambdaS.QM.groundEnergy` | [`LambdaS/QM.lean:87`](LambdaS/QM.lean#L87) |
 | The uncertainty product is dimensionless | `LambdaS.QM.uncertainty` | [`LambdaS/QM.lean:113`](LambdaS/QM.lean#L113) |
 | The amplitude carries m^(-1/2) | `LambdaS.QM.amplitude` | [`LambdaS/QM.lean:122`](LambdaS/QM.lean#L122) |
-| The squared amplitude is a density | `LambdaS.QM.density` | [`LambdaS/QM.lean:129`](LambdaS/QM.lean#L129) |
-| Density times length is dimensionless | `LambdaS.QM.probability` | [`LambdaS/QM.lean:135`](LambdaS/QM.lean#L135) |
-| The expectation of the Hamiltonian is an energy | `LambdaS.QM.expectH` | [`LambdaS/QM.lean:224`](LambdaS/QM.lean#L224) |
-| The state literal, parametric | `LambdaS.QM.statePlusTm` | [`LambdaS/QM.lean:268`](LambdaS/QM.lean#L268) |
-| The Hamiltonian literal, not parametric | `LambdaS.QM.hamiltonianTm` | [`LambdaS/QM.lean:277`](LambdaS/QM.lean#L277) |
-| The phase is dimensionless; `exp` accepts it | `LambdaS.QM.phase` | [`LambdaS/QM.lean:320`](LambdaS/QM.lean#L320) |
-| The expectation as a curried function | `LambdaS.QM.expectation` | [`LambdaS/QM.lean:337`](LambdaS/QM.lean#L337) |
+| The squared amplitude is a density | `LambdaS.QM.density` | [`LambdaS/QM.lean:134`](LambdaS/QM.lean#L134) |
+| Density times length is dimensionless | `LambdaS.QM.probability` | [`LambdaS/QM.lean:140`](LambdaS/QM.lean#L140) |
+| The expectation of the Hamiltonian is an energy | `LambdaS.QM.expectH` | [`LambdaS/QM.lean:237`](LambdaS/QM.lean#L237) |
+| The state literal, parametric | `LambdaS.QM.statePlusTm` | [`LambdaS/QM.lean:281`](LambdaS/QM.lean#L281) |
+| The Hamiltonian literal, not parametric | `LambdaS.QM.hamiltonianTm` | [`LambdaS/QM.lean:290`](LambdaS/QM.lean#L290) |
+| The phase is dimensionless; `exp` accepts it | `LambdaS.QM.phase` | [`LambdaS/QM.lean:333`](LambdaS/QM.lean#L333) |
+| The expectation as a curried function | `LambdaS.QM.expectation` | [`LambdaS/QM.lean:350`](LambdaS/QM.lean#L350) |
 
 ## Reproducing the worked examples
 

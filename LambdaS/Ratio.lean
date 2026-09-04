@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eric Allen
 -/
 import LambdaS.Fundamental
+import Mathlib.Algebra.Order.Positive.Field
 
 /-!
 # Conversion ratios as syntax
@@ -43,8 +44,10 @@ That is not a simplification but an observation: the deleted semantic ratios
 never inspected a type's units, only its structure, so type-indexing was buying
 nothing. A
 shape records where the ratio is a unit (`scalar`), where it is a map
-(`arrow`), where there is nothing to track (`triv`, for spaces and linear maps),
-and where a unit binder was crossed (`bind`).
+(`arrow`), where it is a family of scalars (`vec` and `mat`, for spaces and
+linear maps: the drift of a vector is a vector of drifts, and the drift of a
+matrix is a matrix of drifts, indexed by component counts, which are
+unit-blind), and where a unit binder was crossed (`bind`).
 -/
 
 namespace LambdaS
@@ -55,8 +58,11 @@ inductive Shape where
   | scalar : Shape
   /-- A function: the ratio maps ratios to ratios. -/
   | arrow : Shape → Shape → Shape
-  /-- A space or a linear map: no ratio to track, since `convert` is scalar. -/
-  | triv : Shape
+  /-- A space of the given length: one scalar ratio per component. -/
+  | vec : ℕ → Shape
+  /-- A linear map, by domain and codomain lengths: one scalar ratio per
+  entry. -/
+  | mat : ℕ → ℕ → Shape
   /-- Under a unit binder: the ratio lives one unit scope out. -/
   | bind : Shape → Shape
   deriving DecidableEq, Repr
@@ -66,12 +72,13 @@ variable {B D : Type}
 /-- The shape of a type. Units are ignored; only the structure survives.
 
 `@[reducible]` for the same reason `Ty.den` is: instance synthesis runs at
-reducible transparency, and `SemTw (Ty.shape (.Q u))` has to resolve to `ℝ`. -/
+reducible transparency, and `SemTw (Ty.shape (.Q u))` has to resolve to the
+positive-real carrier. -/
 @[reducible] def Ty.shape : {j k : ℕ} → Ty B D j k → Shape
   | _, _, .Q _ => .scalar
   | _, _, .arrow a b => .arrow (Ty.shape a) (Ty.shape b)
-  | _, _, .vec _ => .triv
-  | _, _, .lin _ _ => .triv
+  | _, _, .vec V => .vec V.length
+  | _, _, .lin V W => .mat V.length W.length
   | _, _, .all _ τ => .bind (Ty.shape τ)
   | _, _, .allDim τ => Ty.shape τ
 
@@ -86,7 +93,8 @@ def Ctx.shapes {j k : ℕ} (Γ : Ctx B D j k) : List Shape := Γ.map Ty.shape
 
 /-- **Shape is blind to units.** Grounding a type through unit and dimension
 environments leaves its shape alone, which is why ratios need no transport: the
-`Tw` indexed by a type is equally an index for every instantiation of it. -/
+`Tw` indexed by a type is equally an index for every instantiation of it. The
+space cases are `List.length_map`: lengths are unit-blind. -/
 @[simp] theorem Ty.shape_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
     (η : Fin k → UExp B k₀) (δ : Fin j → DExp D j₀),
     Ty.shape (Ty.ground η δ τ) = Ty.shape τ := by
@@ -94,8 +102,8 @@ environments leaves its shape alone, which is why ratios need no transport: the
   induction τ with
   | Q u => intro _ _ _ _; rfl
   | arrow a b iha ihb => intro _ _ η δ; simp only [Ty.ground, Ty.shape, iha, ihb]
-  | vec V => intro _ _ _ _; rfl
-  | lin V W => intro _ _ _ _; rfl
+  | vec V => intro _ _ _ _; simp only [Ty.ground, Ty.shape, List.length_map]
+  | lin V W => intro _ _ _ _; simp only [Ty.ground, Ty.shape, List.length_map]
   | all d τ ih => intro _ _ η δ; simp only [Ty.ground, Ty.shape, ih]
   | allDim τ ih => intro _ _ η δ; simp only [Ty.ground, Ty.shape, ih]
 
@@ -138,13 +146,27 @@ inductive Tw (B : Type) : ℕ → List Shape → Shape → Type where
   | mul {k Θ} : Tw B k Θ .scalar → Tw B k Θ .scalar → Tw B k Θ .scalar
   /-- Division divides them. -/
   | div {k Θ} : Tw B k Θ .scalar → Tw B k Θ .scalar → Tw B k Θ .scalar
+  /-- A constant rational power lifts a ratio to that power. This is what
+  carries the analysis through `pow`: the scale factor of `e ^ q` is
+  `ψ(u) ^ q`, so its drift is the drift of `e` to the `q`. -/
+  | qpow {k Θ} : Tw B k Θ .scalar → ℚ → Tw B k Θ .scalar
   /-- Abstraction binds a ratio variable. This is the first-order replacement
   for the function space, and the whole point of the file. -/
   | lam {k Θ s t} : Tw B k (s :: Θ) t → Tw B k Θ (.arrow s t)
   /-- Application. -/
   | app {k Θ s t} : Tw B k Θ (.arrow s t) → Tw B k Θ s → Tw B k Θ t
-  /-- Nothing to track. -/
-  | triv {k Θ} : Tw B k Θ .triv
+  /-- The empty drift vector. -/
+  | vecnil {k Θ} : Tw B k Θ (.vec 0)
+  /-- Consing a scalar drift onto a drift vector. -/
+  | veccons {k Θ n} : Tw B k Θ .scalar → Tw B k Θ (.vec n) → Tw B k Θ (.vec (n + 1))
+  /-- Projecting a component out of a drift vector. -/
+  | proj {k Θ n} : Tw B k Θ (.vec n) → Fin n → Tw B k Θ .scalar
+  /-- The zero-row drift matrix, at any domain length. -/
+  | matnil {k Θ n} : Tw B k Θ (.mat n 0)
+  /-- Consing a row-drift vector onto a drift matrix. -/
+  | matcons {k Θ n m} : Tw B k Θ (.vec n) → Tw B k Θ (.mat n m) → Tw B k Θ (.mat n (m + 1))
+  /-- Reading a row-drift vector out of a drift matrix. -/
+  | row {k Θ n m} : Tw B k Θ (.mat n m) → Fin m → Tw B k Θ (.vec n)
   /-- Under a unit binder the ratio lives at the larger unit scope. -/
   | ulam {k Θ s} : Tw B (k + 1) Θ s → Tw B k Θ (.bind s)
   /-- Unit instantiation is **recorded**, not performed. -/
@@ -152,7 +174,8 @@ inductive Tw (B : Type) : ℕ → List Shape → Shape → Type where
 
 /-- Retyping a ratio along an equality of shapes. Needed only at `uapp` and
 `dapp`, where the result type is `τ.subst σ` and `Ty.shape_subst` is a theorem
-rather than a definitional equality. -/
+rather than a definitional equality, and at a matrix row, whose space is a
+`map` over the column space with `List.length_map` likewise a theorem. -/
 def Tw.castShape {k : ℕ} {Θ : List Shape} {s s' : Shape} (h : s = s') :
     Tw B k Θ s → Tw B k Θ s' := fun t => h ▸ t
 
@@ -161,12 +184,37 @@ def Tw.castShape {k : ℕ} {Θ : List Shape} {s s' : Shape} (h : s = s') :
 
 /-! ## What a ratio means -/
 
+/-- The semantic ratio at scalar shape: a **positive** real. A definition of
+its own so that the space shapes can be compositional in the scalar meaning:
+change the scalar carrier and every shape follows.
+
+Positivity is carried by the type rather than by a side relation: a ratio's
+value is built from scale factors (positive) by multiplication, division and
+rational powers (positivity-preserving), and the rational-power former is
+sound only on positives, so the carrier says so. This is the semantic face of
+the unit group having no zero. -/
+@[reducible] def SemScalar : Type := { x : ℝ // 0 < x }
+
+/-- Rational powers on positive scalars, via `Real.rpow`. -/
+noncomputable def SemScalar.rpow (x : SemScalar) (q : ℝ) : SemScalar :=
+  ⟨(x : ℝ) ^ q, Real.rpow_pos_of_pos x.2 q⟩
+
+@[simp] theorem SemScalar.val_rpow (x : SemScalar) (q : ℝ) :
+    (SemScalar.rpow x q : ℝ) = (x : ℝ) ^ q := rfl
+
+@[simp] theorem SemScalar.val_div (x y : SemScalar) :
+    ((x / y : SemScalar) : ℝ) = (x : ℝ) / (y : ℝ) := by
+  rw [div_eq_mul_inv, Positive.val_mul, Positive.coe_inv, div_eq_mul_inv]
+
 /-- The semantic ratio at each shape: a scale factor at a quantity, a map at a
-function, a family at a unit binder. -/
+function, a scale factor per component at a space, a scale factor per entry at
+a linear map (entry `(j, i)` is row `j`, column `i`), a family at a unit
+binder. -/
 @[reducible] def SemTw : Shape → Type
-  | .scalar => ℝ
+  | .scalar => SemScalar
   | .arrow s t => SemTw s → SemTw t
-  | .triv => PUnit
+  | .vec n => Fin n → SemScalar
+  | .mat n m => Fin m → Fin n → SemScalar
   | .bind s => ℝ → SemTw s
 
 /-- Semantic ratios for a ratio context. -/
@@ -189,12 +237,18 @@ family at the instantiating unit's magnitude. -/
 noncomputable def Tw.eval : {k : ℕ} → Scaling B k → {Θ : List Shape} → {s : Shape} →
     Tw B k Θ s → TwEnv Θ → SemTw s
   | _, _, _, _, .var n h, ρ => TwEnv.lookup n h ρ
-  | _, ψ, _, _, .unit u, _ => ψ.scale u
+  | _, ψ, _, _, .unit u, _ => ⟨ψ.scale u, ψ.scale_pos u⟩
   | _, ψ, _, _, .mul a b, ρ => Tw.eval ψ a ρ * Tw.eval ψ b ρ
   | _, ψ, _, _, .div a b, ρ => Tw.eval ψ a ρ / Tw.eval ψ b ρ
+  | _, ψ, _, _, .qpow t q, ρ => SemScalar.rpow (Tw.eval ψ t ρ) (q : ℝ)
   | _, ψ, _, _, .lam t, ρ => fun r => Tw.eval ψ t (r, ρ)
   | _, ψ, _, _, .app f a, ρ => (Tw.eval ψ f ρ) (Tw.eval ψ a ρ)
-  | _, _, _, _, .triv, _ => PUnit.unit
+  | _, _, _, _, .vecnil, _ => fun i => i.elim0
+  | _, ψ, _, _, .veccons a v, ρ => Fin.cons (Tw.eval ψ a ρ) (Tw.eval ψ v ρ)
+  | _, ψ, _, _, .proj v i, ρ => Tw.eval ψ v ρ i
+  | _, _, _, _, .matnil, _ => fun j => j.elim0
+  | _, ψ, _, _, .matcons r M, ρ => Fin.cons (Tw.eval ψ r ρ) (Tw.eval ψ M ρ)
+  | _, ψ, _, _, .row M j, ρ => Tw.eval ψ M ρ j
   | _, ψ, _, _, .ulam t, ρ => fun r => Tw.eval (ψ.cons r) t ρ
   | _, ψ, _, _, .uapp t μ, ρ => (Tw.eval ψ t ρ) (ψ.logScale μ)
 
@@ -204,12 +258,103 @@ noncomputable def Tw.eval : {k : ℕ} → Scaling B k → {Θ : List Shape} → 
     Tw.eval ψ (Tw.castShape h t) ρ = h ▸ Tw.eval ψ t ρ := by
   subst h; rfl
 
-/-- The trivial semantic ratio at each shape: `1` at a quantity, and "maps
-trivial to trivial" at a function. -/
+/-- Retyping along an equality of vector shapes reindexes the components and
+changes nothing else. The equality in play is `List.length_map` at a matrix
+row, where the row space is a `map` over the column space. -/
+theorem Tw.eval_castShape_vec {k : ℕ} (ψ : Scaling B k) {Θ : List Shape}
+    {n n' : ℕ} (h : Shape.vec n = Shape.vec n') (t : Tw B k Θ (.vec n))
+    (ρ : TwEnv Θ) (i : Fin n') :
+    Tw.eval ψ (Tw.castShape h t) ρ i
+      = Tw.eval ψ t ρ (Fin.cast (Shape.vec.inj h).symm i) := by
+  have hn : n = n' := Shape.vec.inj h
+  subst hn
+  rw [show Tw.castShape h t = t from eq_of_heq (eqRec_heq h t)]
+  rfl
+
+/-! ### Derived vector and matrix combinators
+
+`vecOfFn` and `matOfFn` build literal drift vectors and matrices from
+component functions. `projE` and `rowE` are `proj` and `row` that reduce on
+literals, so that the syntactic comparison in the drift computation sees a
+literal's components rather than an opaque projection; on anything that is not
+a literal they fall back to the formers. -/
+
+/-- A literal drift vector from a component function. -/
+def Tw.vecOfFn {k : ℕ} {Θ : List Shape} :
+    {n : ℕ} → (Fin n → Tw B k Θ .scalar) → Tw B k Θ (.vec n)
+  | 0, _ => .vecnil
+  | _ + 1, f => .veccons (f 0) (Tw.vecOfFn fun i => f i.succ)
+
+/-- A literal drift matrix from a row function. -/
+def Tw.matOfFn {k : ℕ} {Θ : List Shape} {n : ℕ} :
+    {m : ℕ} → (Fin m → Tw B k Θ (.vec n)) → Tw B k Θ (.mat n m)
+  | 0, _ => .matnil
+  | _ + 1, g => .matcons (g 0) (Tw.matOfFn fun j => g j.succ)
+
+/-- Projection that reduces on vector literals. -/
+def Tw.projE {k : ℕ} {Θ : List Shape} :
+    {n : ℕ} → Tw B k Θ (.vec n) → Fin n → Tw B k Θ .scalar
+  | _, .veccons a v, i => Fin.cases a (fun i' => Tw.projE v i') i
+  | _, t, i => .proj t i
+
+/-- Row extraction that reduces on matrix literals. -/
+def Tw.rowE {k : ℕ} {Θ : List Shape} {n : ℕ} :
+    {m : ℕ} → Tw B k Θ (.mat n m) → Fin m → Tw B k Θ (.vec n)
+  | _, .matcons r M, j => Fin.cases r (fun j' => Tw.rowE M j') j
+  | _, t, j => .row t j
+
+@[simp] theorem Tw.eval_vecOfFn {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} :
+    ∀ {n : ℕ} (f : Fin n → Tw B k Θ .scalar) (ρ : TwEnv Θ) (i : Fin n),
+    Tw.eval ψ (Tw.vecOfFn f) ρ i = Tw.eval ψ (f i) ρ
+  | 0, _, _, i => i.elim0
+  | n + 1, f, ρ, i => by
+      cases i using Fin.cases with
+      | zero => simp [Tw.vecOfFn, Tw.eval]
+      | succ i =>
+        simp [Tw.vecOfFn, Tw.eval, Tw.eval_vecOfFn ψ (fun i => f i.succ) ρ i]
+
+@[simp] theorem Tw.eval_matOfFn {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} {n : ℕ} :
+    ∀ {m : ℕ} (g : Fin m → Tw B k Θ (.vec n)) (ρ : TwEnv Θ) (a : Fin m),
+    Tw.eval ψ (Tw.matOfFn g) ρ a = Tw.eval ψ (g a) ρ
+  | 0, _, _, a => a.elim0
+  | m + 1, g, ρ, a => by
+      cases a using Fin.cases with
+      | zero => simp [Tw.matOfFn, Tw.eval]
+      | succ a =>
+        simp [Tw.matOfFn, Tw.eval, Tw.eval_matOfFn ψ (fun j => g j.succ) ρ a]
+
+@[simp] theorem Tw.eval_projE {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} :
+    ∀ {n : ℕ} (t : Tw B k Θ (.vec n)) (i : Fin n) (ρ : TwEnv Θ),
+    Tw.eval ψ (Tw.projE t i) ρ = Tw.eval ψ t ρ i
+  | _, .veccons a v, i, ρ => by
+      cases i using Fin.cases with
+      | zero => simp [Tw.projE, Tw.eval]
+      | succ i => simp [Tw.projE, Tw.eval, Tw.eval_projE ψ v i ρ]
+  | _, .var n h, i, ρ => by simp [Tw.projE, Tw.eval]
+  | _, .app f a, i, ρ => by simp [Tw.projE, Tw.eval]
+  | _, .uapp t μ, i, ρ => by simp [Tw.projE, Tw.eval]
+  | _, .vecnil, i, ρ => i.elim0
+  | _, .row M j, i, ρ => by simp [Tw.projE, Tw.eval]
+
+@[simp] theorem Tw.eval_rowE {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} {n : ℕ} :
+    ∀ {m : ℕ} (t : Tw B k Θ (.mat n m)) (j : Fin m) (ρ : TwEnv Θ),
+    Tw.eval ψ (Tw.rowE t j) ρ = Tw.eval ψ t ρ j
+  | _, .matcons r M, j, ρ => by
+      cases j using Fin.cases with
+      | zero => simp [Tw.rowE, Tw.eval]
+      | succ j => simp [Tw.rowE, Tw.eval, Tw.eval_rowE ψ M j ρ]
+  | _, .var n h, j, ρ => by simp [Tw.rowE, Tw.eval]
+  | _, .app f a, j, ρ => by simp [Tw.rowE, Tw.eval]
+  | _, .uapp t μ, j, ρ => by simp [Tw.rowE, Tw.eval]
+  | _, .matnil, j, ρ => j.elim0
+
+/-- The trivial semantic ratio at each shape: `1` at a quantity, `1` in every
+component at a space, and "maps trivial to trivial" at a function. -/
 def oneSem : (s : Shape) → SemTw s
   | .scalar => 1
   | .arrow _ t => fun _ => oneSem t
-  | .triv => PUnit.unit
+  | .vec _ => fun _ => 1
+  | .mat _ _ => fun _ _ => 1
   | .bind s => fun _ => oneSem s
 
 /-! ## The twisted logical relation
@@ -230,9 +375,11 @@ def TwRel : {j k : ℕ} → (τ : Ty B D j k) → SemTw (Ty.shape τ) → Scalin
   | _, _, .Q u, s, ψ, x, y => y = ψ.scale u * ((s : ℝ) * (s : ℝ)) * x
   | _, _, .arrow a b, φ, ψ, f, g =>
       ∀ (r : SemTw (Ty.shape a)) x y, TwRel a r ψ x y → TwRel b (φ r) ψ (f x) (g y)
-  | _, _, .vec V, _, ψ, v, w => ∀ i, w i = ψ.scale (V.get i) * v i
-  | _, _, .lin V W, _, ψ, A, C =>
-      ∀ a i, C a i = (ψ.scale (W.get a) / ψ.scale (V.get i)) * A a i
+  | _, _, .vec V, r, ψ, v, w =>
+      ∀ i, w i = ψ.scale (V.get i) * ((r i : ℝ) * (r i)) * v i
+  | _, _, .lin V W, t, ψ, A, C =>
+      ∀ a i, C a i = (ψ.scale (W.get a) / ψ.scale (V.get i))
+        * ((t a i : ℝ) * (t a i)) * A a i
   | _, _, .all _ τ, F, ψ, X, Y =>
       ∀ r s : ℝ, TwRel τ (F s) (ψ.cons s) (X r) (Y (r + s))
   | _, _, .allDim τ, F, ψ, X, Y => TwRel τ F ψ X Y
@@ -244,14 +391,16 @@ others), and it is a *predicate* rather than a value for exactly that reason. -/
 def IsOneSem : (s : Shape) → SemTw s → Prop
   | .scalar, r => r = 1
   | .arrow s t, φ => ∀ r, IsOneSem s r → IsOneSem t (φ r)
-  | .triv, _ => True
+  | .vec _, v => ∀ i, v i = 1
+  | .mat _ _, A => ∀ a i, A a i = 1
   | .bind s, F => ∀ r, IsOneSem s (F r)
 
 /-- The canonical trivial ratio is trivial. -/
 theorem isOneSem_oneSem : ∀ s : Shape, IsOneSem s (oneSem s)
   | .scalar => rfl
   | .arrow _ t => fun _ _ => isOneSem_oneSem t
-  | .triv => trivial
+  | .vec _ => fun _ => rfl
+  | .mat _ _ => fun _ _ => rfl
   | .bind s => fun _ => isOneSem_oneSem s
 
 omit [UnitSys B D] in
@@ -266,57 +415,11 @@ characterization is used, and where the two genuinely coincide. -/
     TwRel (D := D) (j := 0) (.Q u) 1 ψ x y ↔ Rel (D := D) (j := 0) (.Q u) ψ x y := by
   simp [TwRel, Rel]
 
-/-! ## Ratios are positive
-
-A ratio's value is built from scale factors, which are positive, by operations
-that preserve positivity. Stated as a logical relation over shapes, because a
-ratio at arrow shape is positive in the mapping sense. This is what lets the
-characterization divide by a ratio's value, and it is the semantic face of the
-group having no zero. -/
-
-/-- Positivity at each shape. -/
-def PosSem : (s : Shape) → SemTw s → Prop
-  | .scalar, r => 0 < r
-  | .arrow s t, φ => ∀ r, PosSem s r → PosSem t (φ r)
-  | .triv, _ => True
-  | .bind s, F => ∀ r, PosSem s (F r)
-
-/-- Positive ratio environments. -/
-def PosEnv : (Θ : List Shape) → TwEnv Θ → Prop
-  | [], _ => True
-  | s :: Θ, θρ => PosSem s θρ.1 ∧ PosEnv Θ θρ.2
-
-theorem PosEnv.lookup : ∀ {Θ : List Shape} {s : Shape} (n : ℕ) (h : Θ[n]? = some s)
-    {θρ : TwEnv Θ}, PosEnv Θ θρ → PosSem s (TwEnv.lookup n h θρ)
-  | [], _, _, h, _, _ => absurd h (by simp)
-  | _ :: _, _, 0, h, _, hp => by
-      obtain rfl := Option.some.inj h
-      exact hp.1
-  | _ :: _, _, n + 1, h, _, hp => PosEnv.lookup n (by simpa using h) hp.2
-
-/-- The trivial ratio is positive. -/
-theorem posSem_oneSem : ∀ s : Shape, PosSem s (oneSem s)
-  | .scalar => one_pos
-  | .arrow _ t => fun _ _ => posSem_oneSem t
-  | .triv => trivial
-  | .bind s => fun _ => posSem_oneSem s
-
-/-- **Every ratio is positive**, in every positive environment, under every
-scaling. -/
-theorem Tw.eval_pos : ∀ {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} {s : Shape}
-    (t : Tw B k Θ s) (θρ : TwEnv Θ), PosEnv Θ θρ → PosSem s (Tw.eval ψ t θρ)
-  | _, _ψ, _, _, .var n h, _θρ, hp => PosEnv.lookup n h hp
-  | _, ψ, _, _, .unit u, _, _ => ψ.scale_pos u
-  | _, ψ, _, _, .mul a b, θρ, hp =>
-      mul_pos (Tw.eval_pos ψ a θρ hp) (Tw.eval_pos ψ b θρ hp)
-  | _, ψ, _, _, .div a b, θρ, hp =>
-      div_pos (Tw.eval_pos ψ a θρ hp) (Tw.eval_pos ψ b θρ hp)
-  | _, ψ, _, _, .lam t, θρ, hp => fun r hr => Tw.eval_pos ψ t (r, θρ) ⟨hr, hp⟩
-  | _, ψ, _, _, .app f a, θρ, hp =>
-      (Tw.eval_pos ψ f θρ hp) _ (Tw.eval_pos ψ a θρ hp)
-  | _, _, _, _, .triv, _, _ => trivial
-  | _, ψ, _, _, .ulam t, θρ, hp => fun r => Tw.eval_pos (ψ.cons r) t θρ hp
-  | _, ψ, _, _, .uapp t μ, θρ, hp => (Tw.eval_pos ψ t θρ hp) (ψ.logScale μ)
+/-! Ratios were once proved positive by a logical relation over shapes
+(`PosSem`); the positivity now lives in the carrier itself, `SemScalar`, where
+the rational-power former needs it. A scalar ratio's value is positive by
+type, which is what lets the characterization divide by it, and it is the
+semantic face of the group having no zero. -/
 
 /-! ## Transporting the twisted relation
 
@@ -341,45 +444,54 @@ theorem twRel_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
     obtain rfl := eq_of_heq hy
     simp [Ty.ground, TwRel, Scaling.scale_pull]
   | vec V =>
-    intro _ _ η δ ψ w w' x y x' y' _ hx hy
+    intro _ _ η δ ψ w w' x y x' y' hw hx hy
     have hlen : V.length = (V.map (substU η)).length := by simp
+    have hw : HEq (show Fin V.length → SemScalar from w)
+        (show Fin (V.map (substU η)).length → SemScalar from w') := hw
     have hx : HEq (show Fin V.length → ℝ from x)
         (show Fin (V.map (substU η)).length → ℝ from x') := hx
     have hy : HEq (show Fin V.length → ℝ from y)
         (show Fin (V.map (substU η)).length → ℝ from y') := hy
-    rw [Fin.heq_fun_iff hlen] at hx hy
-    show (∀ i, y' i = ψ.scale ((V.map (substU η)).get i) * x' i)
-      ↔ ∀ i, y i = (ψ.pull η).scale (V.get i) * x i
+    rw [Fin.heq_fun_iff hlen] at hw hx hy
+    show (∀ i, y' i
+        = ψ.scale ((V.map (substU η)).get i) * ((w' i : ℝ) * (w' i : ℝ)) * x' i)
+      ↔ ∀ i, y i = (ψ.pull η).scale (V.get i) * ((w i : ℝ) * (w i : ℝ)) * x i
     constructor
     · intro h i
       have := h ⟨(i : ℕ), hlen ▸ i.2⟩
-      rw [← hx i, ← hy i] at this
+      rw [← hw i, ← hx i, ← hy i] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
     · intro h i
       have := h ⟨(i : ℕ), hlen.symm ▸ i.2⟩
-      rw [hx ⟨(i : ℕ), hlen.symm ▸ i.2⟩, hy ⟨(i : ℕ), hlen.symm ▸ i.2⟩] at this
+      rw [hw ⟨(i : ℕ), hlen.symm ▸ i.2⟩, hx ⟨(i : ℕ), hlen.symm ▸ i.2⟩,
+          hy ⟨(i : ℕ), hlen.symm ▸ i.2⟩] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
   | lin V W =>
-    intro _ _ η δ ψ w w' x y x' y' _ hx hy
+    intro _ _ η δ ψ w w' x y x' y' hw hx hy
     have hV : V.length = (V.map (substU η)).length := by simp
     have hW : W.length = (W.map (substU η)).length := by simp
+    have hw : HEq (show Fin W.length → Fin V.length → SemScalar from w)
+        (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → SemScalar from w') := hw
     have hx : HEq (show Fin W.length → Fin V.length → ℝ from x)
         (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → ℝ from x') := hx
     have hy : HEq (show Fin W.length → Fin V.length → ℝ from y)
         (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → ℝ from y') := hy
-    rw [Fin.heq_fun₂_iff hW hV] at hx hy
+    rw [Fin.heq_fun₂_iff hW hV] at hw hx hy
     show (∀ a i, y' a i
-            = (ψ.scale ((W.map (substU η)).get a) / ψ.scale ((V.map (substU η)).get i)) * x' a i)
+            = (ψ.scale ((W.map (substU η)).get a) / ψ.scale ((V.map (substU η)).get i))
+              * ((w' a i : ℝ) * (w' a i : ℝ)) * x' a i)
       ↔ ∀ a i, y a i
-            = ((ψ.pull η).scale (W.get a) / (ψ.pull η).scale (V.get i)) * x a i
+            = ((ψ.pull η).scale (W.get a) / (ψ.pull η).scale (V.get i))
+              * ((w a i : ℝ) * (w a i : ℝ)) * x a i
     constructor
     · intro h a i
       have := h ⟨(a : ℕ), hW ▸ a.2⟩ ⟨(i : ℕ), hV ▸ i.2⟩
-      rw [← hx a i, ← hy a i] at this
+      rw [← hw a i, ← hx a i, ← hy a i] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
     · intro h a i
       have := h ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩
-      rw [hx ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩,
+      rw [hw ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩,
+          hx ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩,
           hy ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
   | arrow a b iha ihb =>
@@ -485,14 +597,16 @@ there is agreement everywhere it is consulted. -/
 @[reducible] def SynTw (B : Type) (k₀ : ℕ) : Shape → Type
   | .scalar => UExp B k₀
   | .arrow s t => SynTw B k₀ s → SynTw B k₀ t
-  | .triv => PUnit
+  | .vec n => Fin n → UExp B k₀
+  | .mat n m => Fin m → Fin n → UExp B k₀
   | .bind s => UExp B k₀ → SynTw B k₀ s
 
 /-- Trivial values, at every shape. -/
 def SynTw.one : {k₀ : ℕ} → (s : Shape) → SynTw B k₀ s
   | _, .scalar => 1
   | _, .arrow _ t => fun _ => SynTw.one t
-  | _, .triv => PUnit.unit
+  | _, .vec _ => fun _ => 1
+  | _, .mat _ _ => fun _ _ => 1
   | _, .bind s => fun _ => SynTw.one s
 
 /-- Symbolic environments. -/
@@ -519,9 +633,15 @@ def Tw.nf {k₀ : ℕ} : {k : ℕ} → (υ : Fin k → UExp B k₀) → {Θ : Li
   | _, υ, _, _, .unit u, _ => substU υ u
   | _, υ, _, _, .mul a b, ρ => Term.mul (Tw.nf υ a ρ) (Tw.nf υ b ρ)
   | _, υ, _, _, .div a b, ρ => Term.div (Tw.nf υ a ρ) (Tw.nf υ b ρ)
+  | _, υ, _, _, .qpow t q, ρ => Term.rpow (Tw.nf υ t ρ) q
   | _, υ, _, _, .lam t, ρ => fun x => Tw.nf υ t (x, ρ)
   | _, υ, _, _, .app f a, ρ => (Tw.nf υ f ρ) (Tw.nf υ a ρ)
-  | _, _, _, _, .triv, _ => PUnit.unit
+  | _, _, _, _, .vecnil, _ => fun i => i.elim0
+  | _, υ, _, _, .veccons a v, ρ => Fin.cons (Tw.nf υ a ρ) (Tw.nf υ v ρ)
+  | _, υ, _, _, .proj v i, ρ => (Tw.nf υ v ρ) i
+  | _, _, _, _, .matnil, _ => fun j => j.elim0
+  | _, υ, _, _, .matcons r M, ρ => Fin.cons (Tw.nf υ r ρ) (Tw.nf υ M ρ)
+  | _, υ, _, _, .row M j, ρ => (Tw.nf υ M ρ) j
   | _, υ, _, _, .ulam t, ρ => fun μ => Tw.nf (Fin.cons μ υ) t ρ
   | _, υ, _, _, .uapp t μ, ρ => (Tw.nf υ t ρ) (substU υ μ)
 
@@ -531,9 +651,10 @@ def Tw.nf {k₀ : ℕ} : {k : ℕ} → (υ : Fin k → UExp B k₀) → {Θ : Li
 families need only agree at magnitudes of expressible units: those are the only
 points `uapp` ever reads. -/
 def SRel {k₀ : ℕ} (ψ : Scaling B k₀) : (s : Shape) → SynTw B k₀ s → SemTw s → Prop
-  | .scalar, m, v => v = ψ.scale m
+  | .scalar, m, v => (v : ℝ) = ψ.scale m
   | .arrow s t, F, G => ∀ m v, SRel ψ s m v → SRel ψ t (F m) (G v)
-  | .triv, _, _ => True
+  | .vec _, mV, vV => ∀ i, (vV i : ℝ) = ψ.scale (mV i)
+  | .mat _ _, mA, vA => ∀ a i, (vA a i : ℝ) = ψ.scale (mA a i)
   | .bind s, F, G => ∀ μ : UExp B k₀, SRel ψ s (F μ) (G (ψ.logScale μ))
 
 /-- Environments related pointwise. -/
@@ -556,7 +677,8 @@ theorem srel_one {k₀ : ℕ} (ψ : Scaling B k₀) :
     ∀ s : Shape, SRel ψ s (SynTw.one s) (oneSem s)
   | .scalar => by simp [SRel, SynTw.one, oneSem]
   | .arrow s t => fun _ _ _ => srel_one ψ t
-  | .triv => trivial
+  | .vec _ => fun _ => by simp [SynTw.one, oneSem]
+  | .mat _ _ => fun _ _ => by simp [SynTw.one, oneSem]
   | .bind s => fun _ => srel_one ψ s
 
 /-- The all-ones environments are related. -/
@@ -578,26 +700,45 @@ theorem Tw.nf_correct {k₀ : ℕ} (ψ : Scaling B k₀) : ∀ {k : ℕ}
   | _, υ, _, _, .unit u, _, _, _ =>
       show (ψ.pull υ).scale u = ψ.scale (substU υ u) from Scaling.scale_pull ψ υ u
   | _, υ, _, _, .mul a b, mρ, θρ, hρ => by
-      show (Tw.eval (ψ.pull υ) a θρ) * (Tw.eval (ψ.pull υ) b θρ)
+      show (Tw.eval (ψ.pull υ) a θρ : ℝ) * (Tw.eval (ψ.pull υ) b θρ : ℝ)
         = ψ.scale (Term.mul (Tw.nf υ a mρ) (Tw.nf υ b mρ))
       rw [Scaling.scale_mul,
-        show Tw.eval (ψ.pull υ) a θρ = ψ.scale (Tw.nf υ a mρ) from
+        show (Tw.eval (ψ.pull υ) a θρ : ℝ) = ψ.scale (Tw.nf υ a mρ) from
           Tw.nf_correct ψ υ a mρ θρ hρ,
-        show Tw.eval (ψ.pull υ) b θρ = ψ.scale (Tw.nf υ b mρ) from
+        show (Tw.eval (ψ.pull υ) b θρ : ℝ) = ψ.scale (Tw.nf υ b mρ) from
           Tw.nf_correct ψ υ b mρ θρ hρ]
   | _, υ, _, _, .div a b, mρ, θρ, hρ => by
-      show (Tw.eval (ψ.pull υ) a θρ) / (Tw.eval (ψ.pull υ) b θρ)
+      show (Tw.eval (ψ.pull υ) a θρ : ℝ) / (Tw.eval (ψ.pull υ) b θρ : ℝ)
         = ψ.scale (Term.div (Tw.nf υ a mρ) (Tw.nf υ b mρ))
       rw [Scaling.scale_div,
-        show Tw.eval (ψ.pull υ) a θρ = ψ.scale (Tw.nf υ a mρ) from
+        show (Tw.eval (ψ.pull υ) a θρ : ℝ) = ψ.scale (Tw.nf υ a mρ) from
           Tw.nf_correct ψ υ a mρ θρ hρ,
-        show Tw.eval (ψ.pull υ) b θρ = ψ.scale (Tw.nf υ b mρ) from
+        show (Tw.eval (ψ.pull υ) b θρ : ℝ) = ψ.scale (Tw.nf υ b mρ) from
           Tw.nf_correct ψ υ b mρ θρ hρ]
+  | _, υ, _, _, .qpow t q, mρ, θρ, hρ => by
+      show (Tw.eval (ψ.pull υ) t θρ : ℝ) ^ (q : ℝ)
+        = ψ.scale (Term.rpow (Tw.nf υ t mρ) q)
+      rw [Scaling.scale_rpow,
+        show (Tw.eval (ψ.pull υ) t θρ : ℝ) = ψ.scale (Tw.nf υ t mρ) from
+          Tw.nf_correct ψ υ t mρ θρ hρ]
   | _, υ, _, _, .lam t, mρ, θρ, hρ => fun m v hmv =>
       Tw.nf_correct ψ υ t (m, mρ) (v, θρ) ⟨hmv, hρ⟩
   | _, υ, _, _, .app f a, mρ, θρ, hρ =>
       (Tw.nf_correct ψ υ f mρ θρ hρ) _ _ (Tw.nf_correct ψ υ a mρ θρ hρ)
-  | _, _, _, _, .triv, _, _, _ => trivial
+  | _, _, _, _, .vecnil, _, _, _ => fun i => i.elim0
+  | _, υ, _, _, .veccons a v, mρ, θρ, hρ => by
+      intro i
+      cases i using Fin.cases with
+      | zero => simpa [SRel, Tw.eval, Tw.nf] using Tw.nf_correct ψ υ a mρ θρ hρ
+      | succ i => simpa [SRel, Tw.eval, Tw.nf] using (Tw.nf_correct ψ υ v mρ θρ hρ) i
+  | _, υ, _, _, .proj v i, mρ, θρ, hρ => (Tw.nf_correct ψ υ v mρ θρ hρ) i
+  | _, _, _, _, .matnil, _, _, _ => fun a => a.elim0
+  | _, υ, _, _, .matcons r M, mρ, θρ, hρ => by
+      intro a i
+      cases a using Fin.cases with
+      | zero => simpa [SRel, Tw.eval, Tw.nf] using (Tw.nf_correct ψ υ r mρ θρ hρ) i
+      | succ a => simpa [SRel, Tw.eval, Tw.nf] using (Tw.nf_correct ψ υ M mρ θρ hρ) a i
+  | _, υ, _, _, .row M j, mρ, θρ, hρ => (Tw.nf_correct ψ υ M mρ θρ hρ) j
   | _, υ, _, _, .ulam t, mρ, θρ, hρ => fun μ => by
       have h := Tw.nf_correct ψ (Fin.cons μ υ) t mρ θρ hρ
       rwa [Scaling.pull_cons] at h

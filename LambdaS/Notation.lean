@@ -53,6 +53,9 @@ syntax:max "‹" term "›" : lamS
 /-- A de Bruijn value variable. -/
 syntax:max "%" num : lamS
 syntax:max "√" num ppSpace lamS:max : lamS
+/-- A constant rational power, `e ^ q` with `q` a Lean-level rational literal.
+Tighter than `*`, so `a * b ^ q` is `a * (b ^ q)`. -/
+syntax:75 lamS:75 " ^ " term:max : lamS
 syntax:max "log" ppSpace lamS:max : lamS
 syntax:max "exp" ppSpace lamS:max : lamS
 /-- Abstraction, annotated with a Lean-level type. -/
@@ -77,7 +80,8 @@ macro_rules
   | `(⟪ $n:scientific ⟫) => `(Tm.lit $n)
   | `(⟪ ‹$u:term› ⟫)     => `(Tm.ucon $u)
   | `(⟪ %$n:num ⟫)       => `(Tm.var $n)
-  | `(⟪ √$n:num $e ⟫)    => `(Tm.root $n ⟪ $e ⟫)
+  | `(⟪ √$n:num $e ⟫)    => `(Tm.pow (1 / $n) ⟪ $e ⟫)
+  | `(⟪ $e ^ $q:term ⟫)  => `(Tm.pow $q ⟪ $e ⟫)
   | `(⟪ log $e ⟫)        => `(Tm.log ⟪ $e ⟫)
   | `(⟪ exp $e ⟫)        => `(Tm.exp ⟪ $e ⟫)
   | `(⟪ fn[$t] $e ⟫)     => `(Tm.lam $t ⟪ $e ⟫)

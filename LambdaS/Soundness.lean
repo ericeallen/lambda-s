@@ -361,20 +361,18 @@ theorem eval_sound (cf : UExp B 0 → UExp B 0 → R) :
         · injection hv with hv; subst hv; exact ValTy.scalar _ _
         · exact absurd hv (by simp)
       · exact absurd hv (by simp)
-  | root i a iha =>
+  | pow q a iha =>
     intro η δ ρ Δ Γ τ v hρ hΔ ht hv
     cases ht with
-    | root hi hta =>
+    | pow hta =>
       simp only [eval] at hv
       split at hv
+      · rename_i x ha
+        obtain ⟨m, hm⟩ := (iha η δ ρ Δ Γ _ _ hρ hΔ hta ha).scalar_inv
+        injection hm with hm; subst hm
+        injection hv with hv; subst hv
+        simpa [Ty.ground, substU_rpow] using ValTy.scalar (R := R) _ _
       · exact absurd hv (by simp)
-      · split at hv
-        · rename_i x ha
-          obtain ⟨m, hm⟩ := (iha η δ ρ Δ Γ _ _ hρ hΔ hta ha).scalar_inv
-          injection hm with hm; subst hm
-          injection hv with hv; subst hv
-          simpa [Ty.ground, substU_rpow] using ValTy.scalar (R := R) _ _
-        · exact absurd hv (by simp)
   | log a iha =>
     intro η δ ρ Δ Γ τ v hρ hΔ ht hv
     cases ht with

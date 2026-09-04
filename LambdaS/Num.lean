@@ -28,13 +28,14 @@ type system or a single theorem.
 
 ## Positivity
 
-`nroot` and `nlog` are meaningful on positive arguments. Λs's `root` is
-applied to positive magnitudes in practice, but the language does not enforce
-it, and off that domain the two carriers disagree: at `ℝ`, `nroot` reads
-through `Real.rpow`, whose value on a negative base is the real part of the
-principal complex power (`(-8) ^ (1/3 : ℝ)` denotes `1`), while the `Float`
-path yields `NaN`. The invariance theory needs no positivity (`relQ_rpow`
-carries no sign hypothesis); Kennedy's Pi theorem still does.
+`npow` and `nlog` are meaningful on positive arguments. Λs's `pow` is applied
+to positive magnitudes in practice, but the language does not enforce it. At
+`ℝ`, `npow` reads through `Real.rpow`, whose value on a negative base is the
+real part of the principal complex power (`(-8) ^ (1/3 : ℝ)` denotes `1`), and
+the `Float` instance implements the same branch explicitly so the two carriers
+agree pointwise on finite inputs, up to rounding. The invariance theory needs
+no positivity (`relQ_rpow` carries no sign hypothesis); Kennedy's Pi theorem
+still does.
 -/
 
 namespace LambdaS
@@ -88,9 +89,9 @@ class Num (R : Type) where
   add : R → R → R
   mul : R → R → R
   div : R → R → R
-  /-- The `n`-th root. Primitive because it is not definable from the field
-  operations; see `LambdaS.NonDef.sqrt_not_definable`. -/
-  nroot : ℕ → R → R
+  /-- A constant rational power. Primitive because it is not definable from
+  the field operations; see `LambdaS.NonDef.sqrt_not_definable`. -/
+  npow : ℚ → R → R
   nlog : R → R
   nexp : R → R
   /-- Inner product. Defaulted to a fold; carriers with a native kernel override
@@ -112,17 +113,28 @@ noncomputable instance : Num ℝ where
   add := (· + ·)
   mul := (· * ·)
   div := (· / ·)
-  nroot n x := x ^ ((1 : ℝ) / (n : ℝ))
+  npow q x := x ^ ((q : ℚ) : ℝ)
   nlog := Real.log
   nexp := Real.exp
 
-/-- Real double precision. -/
+/-- Real double precision.
+
+`npow` cannot be bare `Float.pow`: C's `pow` returns `NaN` on a negative base
+with a fractional exponent, while the `ℝ` carrier reads through `Real.rpow`,
+whose value there is the real part of the principal complex power. The negative
+branch implements that value, `|x|^q * cos(pi * q)`, so the `Float` carrier
+matches the denotational semantics pointwise up to rounding on finite inputs.
+The zero and infinity conventions still differ (Mathlib has `0 ^ q = 0` for
+nonzero `q` and `x / 0 = 0`), exactly as they already do for division. -/
 instance : Num Float where
   ofRat q := Float.ofInt q.num / Float.ofNat q.den
   add := (· + ·)
   mul := (· * ·)
   div := (· / ·)
-  nroot n x := Float.pow x (1.0 / Float.ofNat n)
+  npow q x :=
+    let qf := Float.ofInt q.num / Float.ofNat q.den
+    if x < 0 then Float.pow (-x) qf * Float.cos (3.141592653589793 * qf)
+    else Float.pow x qf
   nlog := Float.log
   nexp := Float.exp
   dot xs ys := ddot ⟨xs.toArray⟩ ⟨ys.toArray⟩

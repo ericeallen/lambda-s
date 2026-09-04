@@ -101,7 +101,7 @@ def colOf (N : List (List R)) (i : ℕ) : List R :=
 
 
 /-- **Instrumented evaluation.** Values carry their units, and the evaluator is
-*partial*: adding mismatched units, taking a zeroth root, taking `log` of a
+*partial*: adding mismatched units, taking `log` of a
 dimensioned quantity, and applying a linear map to a vector of the wrong space
 all get stuck.
 
@@ -163,12 +163,10 @@ def eval (cf : UExp B 0 → UExp B 0 → R) :
       | some (.scalar x), some (.scalar y) =>
           if x.unit = y.unit then some (.scalar ⟨Num.add x.mag y.mag, x.unit⟩) else none
       | _, _ => none
-  | fu, j, k, η, δ, ρ, .root n a =>
-      if n = 0 then none else
-        match eval cf fu j k η δ ρ a with
-        | some (.scalar x) =>
-            some (.scalar ⟨Num.nroot n x.mag, Term.rpow x.unit (1 / (n : ℚ))⟩)
-        | _ => none
+  | fu, j, k, η, δ, ρ, .pow q a =>
+      match eval cf fu j k η δ ρ a with
+      | some (.scalar x) => some (.scalar ⟨Num.npow q x.mag, Term.rpow x.unit q⟩)
+      | _ => none
   | fu, j, k, η, δ, ρ, .log a =>
       match eval cf fu j k η δ ρ a with
       | some (.scalar x) =>

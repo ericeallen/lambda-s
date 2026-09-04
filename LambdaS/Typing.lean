@@ -37,10 +37,12 @@ design:
 
 * `add` requires the two units to be **equal**. This is where dimensional errors
   are caught.
-* `root` is **primitive**, with side condition `n ≠ 0`. It is not definable from
-  the field operations, because the closure of the arguments under arithmetic is
-  the subgroup they generate and roots escape it. Over ℚ exponents it is
-  *total*, so `√` of a volume is well-typed here and is a type error in F#.
+* `pow` is **primitive**, with no side condition. It is not definable from the
+  field operations, because the closure of the arguments under arithmetic is
+  the subgroup they generate and rational powers escape it. Over ℚ exponents it
+  is *total*, so `√` of a volume is well-typed here and is a type error in F#,
+  and `pow 0 e : Q 1` is fine, denoting `x^0 = 1`. The rule mirrors the unit
+  grammar, which has had `u^q` all along.
 * `idx` reads the unit **out of the space**. `V[i]? = some u` is Λs in one
   hypothesis: the unit of a component is determined by its index.
 * `uapp` **substitutes** a unit expression for a unit variable, and checks that
@@ -102,9 +104,10 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
   `convert` is how you say you meant it. -/
   | add {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {a b u} :
       HasTy Δ Γ a (.Q u) → HasTy Δ Γ b (.Q u) → HasTy Δ Γ (.add a b) (.Q u)
-  /-- Roots are primitive and, over ℚ, total. -/
-  | root {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {n e u} :
-      n ≠ 0 → HasTy Δ Γ e (.Q u) → HasTy Δ Γ (.root n e) (.Q (Term.rpow u (1 / (n : ℚ))))
+  /-- Constant rational powers are primitive and total: the exponent acts on
+  the unit exactly as the unit grammar's `u^q` does. -/
+  | pow {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {q : ℚ} {e u} :
+      HasTy Δ Γ e (.Q u) → HasTy Δ Γ (.pow q e) (.Q (Term.rpow u q))
   /-- The unit of a component is read out of the space. -/
   | idx {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e V i u} :
       HasTy Δ Γ e (.vec V) → V[i]? = some u → HasTy Δ Γ (.idx e i) (.Q u)
@@ -195,11 +198,10 @@ def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm
       | some ⟨.Q u, da⟩, some ⟨.Q v, db⟩ =>
           if h : u = v then some ⟨_, .add (h ▸ da) db⟩ else none
       | _, _ => none
-  | _, _, Δ, Γ, .root n e =>
-      if h : n = 0 then none else
-        match check Δ Γ e with
-        | some ⟨.Q _, d⟩ => some ⟨_, .root h d⟩
-        | _ => none
+  | _, _, Δ, Γ, .pow _ e =>
+      match check Δ Γ e with
+      | some ⟨.Q _, d⟩ => some ⟨_, .pow d⟩
+      | _ => none
   | _, _, Δ, Γ, .idx e i =>
       match check Δ Γ e with
       | some ⟨.vec V, d⟩ =>
@@ -287,7 +289,7 @@ theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm 
   | mul _ _ iha ihb => simp [check, iha, ihb]
   | div _ _ iha ihb => simp [check, iha, ihb]
   | add _ _ iha ihb => simp [check, iha, ihb]
-  | root hn _ ih => simp [check, ih, hn]
+  | pow _ ih => simp [check, ih]
   | idx _ hu ih =>
     simp only [check, ih]
     split

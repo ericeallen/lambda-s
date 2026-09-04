@@ -102,15 +102,12 @@ theorem eval_mono (cf : UExp B 0 → UExp B 0 → R) :
         rw [eval_mono cf n a m η δ ρ _ hnm ha, eval_mono cf n b m η δ ρ _ hnm hb]
         exact h
       · exact absurd h (by simp)
-  | n, _, _, .root i a, m, η, δ, ρ, v, hnm, h => by
+  | n, _, _, .pow q a, m, η, δ, ρ, v, hnm, h => by
       simp only [eval] at h ⊢
-      by_cases hi : i = 0
-      · simp [hi] at h
-      · rw [if_neg hi] at h ⊢
-        split at h
-        · rename_i x ha
-          rw [eval_mono cf n a m η δ ρ _ hnm ha]; exact h
-        · exact absurd h (by simp)
+      split at h
+      · rename_i x ha
+        rw [eval_mono cf n a m η δ ρ _ hnm ha]; exact h
+      · exact absurd h (by simp)
   | n, _, _, .log a, m, η, δ, ρ, v, hnm, h => by
       simp only [eval] at h ⊢
       split at h
@@ -385,18 +382,18 @@ theorem red_eval (cf : UExp B 0 → UExp B 0 → R) :
       case r_add =>
         simp only [Ty.ground, Red]
         exact ⟨_, rfl⟩
-  | root i a iha =>
+  | pow q a iha =>
     intro η δ ρ Δ Γ τ hρ hΔ ht
     cases ht with
-    | root hi hta =>
+    | pow hta =>
       obtain ⟨n₁, va, ha, hra⟩ := iha η δ ρ Δ Γ _ hρ hΔ hta
       simp only [Ty.ground, Red] at hra
       obtain ⟨m, rfl⟩ := hra
-      refine ⟨n₁, ?v_root, ?e_root, ?r_root⟩
-      case e_root =>
+      refine ⟨n₁, ?v_pow, ?e_pow, ?r_pow⟩
+      case e_pow =>
         simp only [eval]
-        rw [if_neg hi, ha]
-      case r_root =>
+        rw [ha]
+      case r_pow =>
         simp only [Ty.ground, Red, substU_rpow]
         exact ⟨_, rfl⟩
   | log a iha =>

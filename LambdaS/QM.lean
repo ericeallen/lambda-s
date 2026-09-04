@@ -30,7 +30,7 @@ meaningless number.
 `m^(-1/2)`, so that `|ψ|²` is a probability *density* at `m⁻¹` and `|ψ|²dx` is
 dimensionless. This is the example that forces ℚ exponents: `m^(-1/2)` is not
 expressible in F#, in `Data.Dimensional`, or in the Isabelle ISQ development,
-all of which fix exponents to ℤ. `root` is primitive here for the reason
+all of which fix exponents to ℤ. `pow` is primitive here for the reason
 `LambdaS.NonDef.sqrt_not_definable` gives, and over ℚ it is total.
 
 ## Numbers
@@ -123,6 +123,11 @@ def amplitude : Term₀ := ⟪ √2 (2 / width) ⟫
 
 /- Half a negative power of length: inexpressible in any ℤ-exponent system. -/
 #guard typeOf amplitude == some (.Q (Term.rpow (Term.div 1 m) (1 / 2)))
+
+/- The `√n` sugar is `pow (1/n)`; the exponent form writes the same term
+directly, at any rational exponent the unit grammar can absorb. -/
+#guard typeOf ⟪ (2 / width) ^ (1/2 : ℚ) ⟫ == some (.Q (Term.rpow (Term.div 1 m) (1 / 2)))
+#guard typeOf ⟪ width ^ (3/2 : ℚ) ⟫ == some (.Q (Term.rpow m (3/2)))
 #guard (Term.rpow (Term.div (1 : UExp Base 0) m) (1 / 2)).base .metre == (-1 / 2 : ℚ)
 
 /-- `|ψ|²` is a probability **density**, at `m⁻¹`. -/
@@ -181,6 +186,14 @@ def report : String :=
 
 /- And the ground-state energy is the textbook 0.376 eV. -/
 #guard (run groundEnergy).any (fun x => decide (0.375 * eV ≤ x) && decide (x ≤ 0.377 * eV))
+
+/-- `(-8)^(1/3)` under the principal-power semantics: `|x|^q · cos(π·q)`, which
+is `2 · cos(π/3) = 1`. This exercises the negative-base branch of the `Float`
+carrier's `npow`, whose whole point is to agree with `Real.rpow` rather than
+return the `NaN` that C's `pow` would. -/
+def negBase : Term₀ := .pow (1/3) (.lit (-8))
+
+#guard (run negBase).any (fun x => decide (Float.abs (x - 1.0) < 1e-9))
 
 /-! ## A two-state system
 
@@ -373,11 +386,14 @@ expectation applied to the Hamiltonian and state *written as terms*, so the
 evaluator's `vcons`/`mcons` cases and the extern `dgemv` are all on the
 path of one closed program. -/
 
-/-- The particle-in-a-box claims, re-checked by the compiled evaluator. -/
+/-- The particle-in-a-box claims, re-checked by the compiled evaluator, plus
+the negative-base branch of `npow`: `(-8)^(1/3) = 1` under the principal-power
+semantics. -/
 def boxChecks : Bool :=
   (run groundEnergy).any (fun x => decide (0.375 * eV ≤ x) && decide (x ≤ 0.377 * eV))
     && (run uncertainty).any (fun x => decide (0.5 ≤ x))
     && (run density).any (fun x => decide (1.999e9 ≤ x) && decide (x ≤ 2.001e9))
+    && (run negBase).any (fun x => decide (Float.abs (x - 1.0) < 1e-9))
 
 /-- `⟨ψ|H|ψ⟩` as one closed term: curried expectation, literal operator,
 literal state. -/
@@ -390,9 +406,21 @@ def expectFromLiterals : Term₀ := ⟪ expectation ◃ hamiltonianTm ◃ stateP
 def literalChecks : Bool :=
   (runIn [] expectFromLiterals).any (fun x => decide (Float.abs (x - (-splitJ)) < 1e-28))
 
+/-- The carrier-boundary conventions, asserted through the `Num` instance the
+evaluator actually uses, so a platform or libm change cannot shift them
+silently. The IEEE points behave as IEEE (division by zero and `log 0` give
+infinities, `0^q` at negative `q` gives an infinity), and the
+semantics-bearing point behaves as the semantics: `(-8)^(1/3) = 1`, the
+principal-power real part, checked through the evaluator in `boxChecks`. -/
+def boundaryChecks : Bool :=
+  (Num.div (1.0 : Float) 0.0).isInf
+    && (Num.nlog (0.0 : Float)).isInf
+    && (Num.npow (-1 : ℚ) (0.0 : Float)).isInf
+    && !(Num.npow (1/3 : ℚ) (-8.0 : Float)).isNaN
+
 /-- Every run-time numeric check the binary performs; `main` exits nonzero
 unless this holds. -/
-def allChecks : Bool := boxChecks && twoStateChecks && literalChecks
+def allChecks : Bool := boxChecks && twoStateChecks && literalChecks && boundaryChecks
 
 /-- The validation summary the binary prints. -/
 def checksReport : String :=
@@ -401,6 +429,7 @@ def checksReport : String :=
     ++ "  particle in a box         = " ++ verdict boxChecks ++ "\n"
     ++ "  two-state system          = " ++ verdict twoStateChecks ++ "\n"
     ++ "  literals through dgemv    = " ++ verdict literalChecks ++ "\n"
+    ++ "  carrier boundary (IEEE)   = " ++ verdict boundaryChecks ++ "\n"
 
 /-! ### The native kernel on the evaluation path
 

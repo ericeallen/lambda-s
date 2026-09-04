@@ -519,11 +519,11 @@ theorem eval_adeq (V : Scaling B 0) :
           show _ = _
           simp only [Val.scalar.injEq, Meas.mk.injEq, and_true]
           rfl
-  | root m a iha =>
+  | pow q a iha =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
     cases d with
-    | root hm da =>
-      simp only [eval, if_neg hm] at hv
+    | pow da =>
+      simp only [eval] at hv
       cases hA : eval (conv V) n _ _ η δ ρ a with
       | none => rw [hA] at hv; simp at hv
       | some va =>
@@ -535,9 +535,7 @@ theorem eval_adeq (V : Scaling B 0) :
         obtain rfl := (Option.some.inj hv).symm
         show _ = _
         simp only [substU_rpow, Val.scalar.injEq, Meas.mk.injEq, and_true]
-        show _ ^ _ = _ ^ _
-        push_cast
-        ring_nf
+        rfl
   | log a iha =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
     cases d with

@@ -120,13 +120,14 @@ lands at `m^(3/2)`. -/
 
 def volume : Term₀ := .mul (.mul (.ucon m) (.ucon m)) (.ucon m)
 
-#guard typeOf (.root 2 volume) == some (.Q (Term.rpow (Term.mul (Term.mul m m) m) (1/2)))
+#guard typeOf (.pow (1/2) volume) == some (.Q (Term.rpow (Term.mul (Term.mul m m) m) (1/2)))
 
 /- And `m^(3/2)` really is a half-integer exponent, not an artifact. -/
 #guard (Term.rpow (Term.mul (Term.mul m m) m) (1/2)).base .metre == (3/2 : ℚ)
 
-/- The zeroth root is rejected: the side condition is real. -/
-#guard (typeOf (.root 0 volume)).isNone
+/- The zeroth power is total, not an error: `x^0 = 1`, so the type is `Q 1`,
+exactly as the unit grammar's `u^0 = 1` says it should be. -/
+#guard typeOf (.pow 0 volume) == some (.Q 1)
 
 /-! ## Spaces
 
@@ -274,15 +275,15 @@ abbrev c : UExp Base 0 := Term.div m sec
 exponent matrix of rank 3, so by the Pi theorem the combination with dimension
 Length is *unique*. The checker confirms the standard formula lands on metres. -/
 def planckLength : Term₀ :=
-  .root 2 (.div (.mul (.ucon hbar) (.ucon G))
-                (.mul (.ucon c) (.mul (.ucon c) (.ucon c))))
+  .pow (1/2) (.div (.mul (.ucon hbar) (.ucon G))
+                   (.mul (.ucon c) (.mul (.ucon c) (.ucon c))))
 
 #guard typeOf planckLength == some (.Q m)
 
 /- Getting the power of c wrong is caught. -/
 def planckWrong : Term₀ :=
-  .root 2 (.div (.mul (.ucon hbar) (.ucon G))
-                (.mul (.mul (.ucon c) (.ucon c)) (.mul (.ucon c) (.ucon c))))
+  .pow (1/2) (.div (.mul (.ucon hbar) (.ucon G))
+                   (.mul (.mul (.ucon c) (.ucon c)) (.mul (.ucon c) (.ucon c))))
 
 #guard typeOf planckWrong != some (.Q m)
 
@@ -295,7 +296,7 @@ intermediate has integer exponents and F# types it fine after grouping. A
 fermion field carries `3/2` **standing alone**, appearing by itself in every
 interaction term with nothing to group against. No integer-exponent units system
 can write its type. -/
-def fermionField : Term₀ := .root 2 (.mul (.ucon kg) (.mul (.ucon kg) (.ucon kg)))
+def fermionField : Term₀ := .pow (1/2) (.mul (.ucon kg) (.mul (.ucon kg) (.ucon kg)))
 
 #guard typeOf fermionField == some (.Q (Term.rpow (Term.mul kg (Term.mul kg kg)) (1/2)))
 
@@ -677,9 +678,9 @@ branches below convert the same product of meters to feet, placed differently:
 the first converts the product once at `m·m`, the second converts each factor
 at `m`. Their ratio terms differ syntactically (the syntactic check `Tw.beq`
 rejects exactly
-this pair), but `Tw.scalarEq` flattens both to the unit vector `m²/ft²` and
-the atom bag `{x, y}`, so the analysis answers, and the answer is the drift
-the branches share. -/
+this pair), but `Tw.scalarEq` flattens both to the unit vector `m²/ft²` with
+atom exponent `1` on each of `x` and `y`, so the analysis answers, and the
+answer is the drift the branches share. -/
 def addAssoc : Term₀ :=
   .add (.convert (.mul (.var 0) (.var 1)) (Term.mul m m) (Term.mul ft ft))
        (.mul (.convert (.var 0) m ft) (.convert (.var 1) m ft))
@@ -883,6 +884,94 @@ value of its consed component, magnitude and unit both. -/
 
 end Literals
 
+/-! ## Drift for vectors and matrices
+
+The drift of a vector is a vector of drifts, and the drift of a matrix is a
+matrix of drifts. A literal whose component converts one way is *reported*
+with a drift vector naming the component's ratio, not declined; `idx` projects
+the component's drift back out; and a matrix application carries the
+`add`-style agreement condition per output row, across the summed index, so a
+product of drifts the row's terms do not share is still declined. -/
+
+section VectorDrift
+
+/-- `x : Q m, t : Q s ⊢ ⟨x in ft, t⟩`: a vector literal whose first component
+converts one way and whose second does not. -/
+def driftVec : Term₀ := .vcons (.convert (.var 0) m ft) (.vcons (.var 1) .vnil)
+
+def driftVecDeriv : HasTy Δ₀ (scalarCtx [m, sec]) driftVec (.vec [ft, sec]) :=
+  .vcons (.convert (.var rfl) sameDim_m_ft) (.vcons (.var rfl) .vnil)
+
+/- The literal is reported, not declined: its drift is the vector
+`⟨m/ft, 1⟩`, one ratio per component. -/
+#guard (twistOf (Γ := scalarCtx [m, sec]) (scalarCtx [m, sec]).shapes rfl
+    driftVecDeriv).map
+    (fun p => Tw.nfOne (.proj p.1 0) == Term.div m ft
+      && Tw.nfOne (.proj p.1 1) == (1 : UExp Base 0)) == some true
+
+/-- Indexing the drifting component recovers exactly the scalar diagnosis the
+one-way conversion would get on its own. -/
+def driftIdx : Term₀ := .idx driftVec 0
+
+def driftIdxDeriv : HasTy Δ₀ (scalarCtx [m, sec]) driftIdx (.Q ft) :=
+  .idx driftVecDeriv rfl
+
+#guard (unitDrift driftIdxDeriv).map (· == Term.div m ft) == some true
+
+/- And the non-drifting component answers `1`. -/
+def driftIdx1Deriv : HasTy Δ₀ (scalarCtx [m, sec]) (.idx driftVec 1) (.Q sec) :=
+  .idx driftVecDeriv rfl
+
+#guard (unitDrift driftIdx1Deriv).map (· == (1 : UExp Base 0)) == some true
+
+/-- A context for the matrix-application examples: a length, and a
+dimensionless entry at exactly the unit `ft/ft` the rank-one row space
+demands. -/
+abbrev Γv : Ctx Base Dim 0 0 := scalarCtx [m, Term.div ft ft]
+
+/-- A 1×2 matrix applied to a drifting vector, agreement *holding*: both
+argument components carry the same variable through the same conversion, and
+both row entries are the same variable, so the two products across the sum
+agree and the output row's drift is their common value. -/
+def mappOk : Term₀ := .mapp
+  (.mcons ft (.vcons (.var 1) (.vcons (.var 1) .vnil)) (.mnil [ft, ft]))
+  (.vcons (.convert (.var 0) m ft) (.vcons (.convert (.var 0) m ft) .vnil))
+
+def mappOkDeriv : HasTy Δ₀ Γv mappOk (.vec [ft]) :=
+  .mapp (.mcons (.vcons (.var rfl) (.vcons (.var rfl) .vnil)) .mnil)
+        (.vcons (.convert (.var rfl) sameDim_m_ft)
+          (.vcons (.convert (.var rfl) sameDim_m_ft) .vnil))
+
+#guard typeOfIn Γv mappOk == some (.vec [ft])
+
+/- The application is accepted and its output drift, projected at row 0, is
+the shared `m/ft` of the argument's components. -/
+def mappOkIdxDeriv : HasTy Δ₀ Γv (.idx mappOk 0) (.Q ft) := .idx mappOkDeriv rfl
+
+#guard (unitDrift mappOkIdxDeriv).map (· == Term.div m ft) == some true
+
+/-- The same shape with the agreement *failing*: the two argument components
+are distinct variables, so the products across the sum carry different atoms,
+exactly as `x in ft + y in ft` does at `add`. -/
+abbrev Γv₂ : Ctx Base Dim 0 0 := scalarCtx [m, m, Term.div ft ft]
+
+def mappBad : Term₀ := .mapp
+  (.mcons ft (.vcons (.var 2) (.vcons (.var 2) .vnil)) (.mnil [ft, ft]))
+  (.vcons (.convert (.var 0) m ft) (.vcons (.convert (.var 1) m ft) .vnil))
+
+def mappBadDeriv : HasTy Δ₀ Γv₂ mappBad (.vec [ft]) :=
+  .mapp (.mcons (.vcons (.var rfl) (.vcons (.var rfl) .vnil)) .mnil)
+        (.vcons (.convert (.var rfl) sameDim_m_ft)
+          (.vcons (.convert (.var rfl) sameDim_m_ft) .vnil))
+
+#guard typeOfIn Γv₂ mappBad == some (.vec [ft])
+
+/- Declined: the per-row agreement check fails, and rightly so, since the two
+summands rescale by different variables' factors. -/
+#guard (twistOf (Γ := Γv₂) Γv₂.shapes rfl mappBadDeriv).isNone
+
+end VectorDrift
+
 /-! ## Case study: a mixed-unit ballistics kernel
 
 The drift diagnostic has so far run on one-line programs. This section runs it
@@ -907,16 +996,14 @@ reporting variants, four verdicts, all decided at build time:
   input and squaring the metric velocity, once by squaring the imperial
   velocity and converting the square at `ft²/s²`. The branch ratios differ
   syntactically (`Tw.beq` rejects the pair), but `Tw.scalarEq` flattens both
-  to the exponent vector `ft²/m²` over the atom bags `{x, x}/{t, t}`, so the
+  to the exponent vector `ft²/m²` with atom exponents `x² / t²`, so the
   sum is accepted and carries the branches' shared drift.
-* `kernelDeclined` takes the speed back out of the energy with a square
-  root, and there the analysis declines: `twistOf` has no rule at `root`.
-  The invariance *theory* covers roots (`Tm.Parametric` admits them, and
-  `fundamental` handles them through `relQ_rpow`), but the root's scale
-  factor is a rational power `ψ(u)^(1/n)` and the ratio grammar `Tw` has no
-  rational-power former, so declining is a limitation of the analysis, not
-  an exclusion by the theory. `unitDrift` answers `none` rather than
-  guessing.
+* `kernelRoot` takes the speed back out of the energy with a square root,
+  and the analysis follows it through: `Tw.qpow` lifts the energy's drift
+  `ft²/m²` to the power `1/2`, and the diagnostic names the speed's drift
+  `ft/m` exactly. The exponent arithmetic is sound because ratio values are
+  positive by type (`SemScalar`), the same positivity `fundamental` uses
+  through `relQ_rpow`.
 
 Every routine typechecks by a `#guard` on the inferred type, and every drift
 claim is a `#guard` on `unitDrift`, so a wrong claim fails the build. -/
@@ -1026,25 +1113,25 @@ def kernelMixedPathsDeriv : HasTy Δ₀ Γb kernelMixedPaths (.Q (Term.mul 1 mps
 drift is the same `ft²/m²` the one-way variant carries. -/
 #guard (unitDrift kernelMixedPathsDeriv).map (· == driftSq) == some true
 
-/-! ### Variant 4: the rooted variant, declined -/
+/-! ### Variant 4: the rooted variant, followed through the root -/
 
 /-- `√(2 · kernelOneWay)`: the speed recovered from the energy. Well-typed at
-`m/s` (roots are total over ℚ exponents), but outside the analysis: `Tw` has
-no rational-power former, so `twistOf` has no rule at `root`. -/
-def kernelDeclined : Term₀ := .root 2 (.mul (.lit 2) kernelOneWay)
+`m/s` (rational powers are total over ℚ exponents), and inside the analysis:
+`Tw.qpow` lifts the energy's drift to the power. -/
+def kernelRoot : Term₀ := .pow (1/2) (.mul (.lit 2) kernelOneWay)
 
-def kernelDeclinedDeriv :
-    HasTy Δ₀ Γb kernelDeclined
-      (.Q (Term.rpow (Term.mul 1 (Term.mul 1 mps2)) (1 / ((2 : ℕ) : ℚ)))) :=
-  .root (by decide) (.mul .lit kernelOneWayDeriv)
+def kernelRootDeriv :
+    HasTy Δ₀ Γb kernelRoot
+      (.Q (Term.rpow (Term.mul 1 (Term.mul 1 mps2)) (1/2))) :=
+  .pow (.mul .lit kernelOneWayDeriv)
 
 /- The exponent vectors identify `1·(1·v²)` with `v²`, so the root lands at
 `m/s`, the unit a speed should have. -/
-#guard typeOfIn Γb kernelDeclined == some (.Q (Term.rpow mps2 (1/2)))
+#guard typeOfIn Γb kernelRoot == some (.Q (Term.rpow mps2 (1/2)))
 
-/- The analysis declines rather than answers: theory covers the root, the
-ratio grammar does not. -/
-#guard (unitDrift kernelDeclinedDeriv).isNone
+/- The root's drift is named, not declined: the energy's `ft²/m²` to the
+power `1/2` is `ft/m`, the drift of the speed. -/
+#guard (unitDrift kernelRootDeriv).map (· == Term.div ft m) == some true
 
 end Ballistics
 
