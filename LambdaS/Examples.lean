@@ -661,10 +661,7 @@ def oneWayDeriv : HasTy Δ₀ (scalarCtx [m]) oneWay (.Q ft) :=
 #guard (unitDrift oneWayDeriv).map (· == Term.div m ft) == some true
 
 /-- Addition demands agreeing branch ratios, and `x in ft + x in ft` has them:
-both branches carry the same variable's ratio times `m/ft`. Note that
-`x in ft + y in ft` for *distinct* variables is rightly outside the relation:
-its branches' ratios differ at some environments, and indeed that program is
-not scale-invariant. -/
+both branches carry the drift `m/ft`. -/
 def addSame : Term₀ := .add (.convert (.var 0) m ft) (.convert (.var 0) m ft)
 
 def addSameDeriv : HasTy Δ₀ (scalarCtx [m]) addSame (.Q ft) :=
@@ -672,6 +669,66 @@ def addSameDeriv : HasTy Δ₀ (scalarCtx [m]) addSame (.Q ft) :=
 
 /- The shared drift is reported. -/
 #guard (unitDrift addSameDeriv).map (· == Term.div m ft) == some true
+
+/-- `x in ft + y in ft` for *distinct* measurements `x y : Q m` is accepted
+too, with the same drift `m/ft`. This is the frees-at-one assignment at work:
+`x` and `y` are inputs, inputs rescale ideally, so each contributes the ratio
+`1` rather than an opaque atom, and the branch ratios are the same exponent
+vector. An earlier design gave every free variable an atom and declined this
+program, answering a stronger question than the certified theorems ask: the
+theorems instantiate the inputs' ratios at `1` (`oneTwEnv`), and at that
+instantiation the two branches agree. -/
+def addTwoVars : Term₀ := .add (.convert (.var 0) m ft) (.convert (.var 1) m ft)
+
+def addTwoVarsDeriv : HasTy Δ₀ (scalarCtx [m, m]) addTwoVars (.Q ft) :=
+  .add (.convert (.var rfl) sameDim_m_ft) (.convert (.var rfl) sameDim_m_ft)
+
+/- Accepted, and the drift is named. -/
+#guard (unitDrift addTwoVarsDeriv).map (· == Term.div m ft) == some true
+
+/-- What `add` still declines at first order: a genuine drift disagreement.
+`x in ft + y` with `x : Q m` and `y : Q ft` converts one branch and not the
+other, so the branch drifts are `m/ft` and `1`, distinct exponent vectors,
+and the sum has no uniform drift; indeed the program is not scale-invariant.
+By `Tw.scalarEq_iff_eval_eq` such disagreements are the *only* first-order
+declines at `add`, the ratios being atom-free there. -/
+def addMixed : Term₀ := .add (.convert (.var 0) m ft) (.var 1)
+
+def addMixedDeriv : HasTy Δ₀ (scalarCtx [m, ft]) addMixed (.Q ft) :=
+  .add (.convert (.var rfl) sameDim_m_ft) (.var rfl)
+
+/- Declined: the branch drifts disagree. -/
+#guard (unitDrift addMixedDeriv).isNone
+
+/-- β at the ratio level. The left branch wraps `x in ft` in an identity
+application, so its ratio arrives as a β-redex; `twistOf` reduces it on the
+spot (`Tw.appE`), the flat form sees the bare exponent vector `m/ft` rather
+than an opaque atom, and the sum is accepted with the shared drift. Before
+the reduction this program was declined for a spelling difference. -/
+def betaShared : Term₀ :=
+  .add (.app (.lam (.Q ft) (.var 0)) (.convert (.var 0) m ft))
+       (.convert (.var 0) m ft)
+
+def betaSharedDeriv : HasTy Δ₀ (scalarCtx [m]) betaShared (.Q ft) :=
+  .add (.app (.lam (.var rfl)) (.convert (.var rfl) sameDim_m_ft))
+       (.convert (.var rfl) sameDim_m_ft)
+
+#guard (unitDrift betaSharedDeriv).map (· == Term.div m ft) == some true
+
+/-- The λ-wrapped kernel: `λx:Q m. λy:Q m. (x in ft) + (y in ft)`. Closed,
+so `unitDrift` has no context to pin; `unitDriftLam` strips the two leading
+binders, treats `x` and `y` as inputs, and reports the kernel's drift, the
+same verdict `addTwoVars` receives as an open term. -/
+def lamKernel : Term₀ :=
+  .lam (.Q m) (.lam (.Q m)
+    (.add (.convert (.var 1) m ft) (.convert (.var 0) m ft)))
+
+def lamKernelDeriv :
+    HasTy Δ₀ [] lamKernel (.arrow (.Q m) (.arrow (.Q m) (.Q ft))) :=
+  .lam (.lam (.add (.convert (.var rfl) sameDim_m_ft)
+                   (.convert (.var rfl) sameDim_m_ft)))
+
+#guard (unitDriftLam lamKernelDeriv).map (· == Term.div m ft) == some true
 
 /-- Branch ratios compare up to the unit algebra, not up to spelling. The two
 branches below convert the same product of meters to feet, placed differently:
@@ -748,6 +805,69 @@ Length, not `δ`. -/
 variable admits, and it typechecks. -/
 #guard (typeOf (.dlam (.ulam δVar (.lam (.Q castU1)
   (.convert (.var 0) castU1 castU1))))).isSome
+
+/-! ### Drift through the unit quantifiers
+
+The caster's ratio is a *family*: at `bind` shape it is indexed by the
+instantiating unit, and its body's drift is the open exponent vector `u/v`.
+The normalizer reads the family at chosen units, so reading it at two fresh
+unit variables exhibits the open vector itself; and an instantiation is a
+recorded `uapp` that `twistOf` performs on the spot (`Tw.uappE`). -/
+
+/-- Checker plus diagnostic, for the guards below: the drift of a
+quantity-typed term over `Γ`, or `none` where either the checker or the
+analysis declines. -/
+def driftOf (Γ : Ctx Base Dim 0 0) (e : Term₀) : Option (UExp Base 0) :=
+  match check Δ₀ Γ e with
+  | some ⟨.Q _, d⟩ => (twistOf 0 Γ.shapes rfl d).map fun p => Tw.nfOne p.1
+  | _ => none
+
+/- The caster's ratio family, read at two fresh unit variables (`u` the
+outer application, `v` the inner) and a trivial argument ratio: the body's
+drift is the open exponent vector `u/v`, with the unit variables as
+coordinates. -/
+#guard (match check Δ₀ [] caster with
+  | some ⟨.allDim (.all _ (.all _ (.arrow (.Q _) (.Q _)))), d⟩ =>
+      match twistOf 0 [] rfl d with
+      | some ⟨t, _⟩ =>
+          (Tw.nf (k₀ := 2) (fun i => i.elim0) t PUnit.unit)
+              (Term.ofVar 0) (Term.ofVar 1) 1
+            == Term.div (Term.ofVar 0) (Term.ofVar 1)
+      | none => false
+  | _ => false)
+
+/- Instantiated at two distinct Length units the caster is a one-way cast
+and the diagnostic names its drift; at equal units it is the identity. Both
+instantiations are recorded `uapp`s the analysis performs on the spot. -/
+#guard driftOf (scalarCtx [m])
+    (.app (.uapp (.uapp (.dapp caster (Term.ofBase Dim.length)) m) ft) (.var 0))
+  == some (Term.div m ft)
+#guard driftOf (scalarCtx [m])
+    (.app (.uapp (.uapp (.dapp caster (Term.ofBase Dim.length)) m) m) (.var 0))
+  == some (1 : UExp Base 0)
+
+/-- The polymorphic round trip: `Λδ. Λu:δ. Λv:δ. λx:Q u. (x in v) in u`. -/
+def casterRound : Term₀ :=
+  .dlam (.ulam δVar (.ulam δVar
+    (.lam (.Q castU) (.convert (.convert (.var 0) castU castV) castV castU))))
+
+/- Certified drift-free *without* instantiation: read at two fresh unit
+variables, the family's conversions cancel in the free group,
+`u/v · v/u = 1`, coordinatewise over the variables themselves. -/
+#guard (match check Δ₀ [] casterRound with
+  | some ⟨.allDim (.all _ (.all _ (.arrow (.Q _) (.Q _)))), d⟩ =>
+      match twistOf 0 [] rfl d with
+      | some ⟨t, _⟩ =>
+          (Tw.nf (k₀ := 2) (fun i => i.elim0) t PUnit.unit)
+              (Term.ofVar 0) (Term.ofVar 1) 1
+            == (1 : UExp Base 2)
+      | none => false
+  | _ => false)
+
+/- And at representative instantiations: distinct units still cancel. -/
+#guard driftOf (scalarCtx [m])
+    (.app (.uapp (.uapp (.dapp casterRound (Term.ofBase Dim.length)) m) ft) (.var 0))
+  == some (1 : UExp Base 0)
 
 end Caster
 
@@ -891,7 +1011,7 @@ matrix of drifts. A literal whose component converts one way is *reported*
 with a drift vector naming the component's ratio, not declined; `idx` projects
 the component's drift back out; and a matrix application carries the
 `add`-style agreement condition per output row, across the summed index, so a
-product of drifts the row's terms do not share is still declined. -/
+row whose summands carry genuinely different drifts is declined. -/
 
 section VectorDrift
 
@@ -904,7 +1024,7 @@ def driftVecDeriv : HasTy Δ₀ (scalarCtx [m, sec]) driftVec (.vec [ft, sec]) :
 
 /- The literal is reported, not declined: its drift is the vector
 `⟨m/ft, 1⟩`, one ratio per component. -/
-#guard (twistOf (Γ := scalarCtx [m, sec]) (scalarCtx [m, sec]).shapes rfl
+#guard (twistOf (Γ := scalarCtx [m, sec]) 0 (scalarCtx [m, sec]).shapes rfl
     driftVecDeriv).map
     (fun p => Tw.nfOne (.proj p.1 0) == Term.div m ft
       && Tw.nfOne (.proj p.1 1) == (1 : UExp Base 0)) == some true
@@ -950,25 +1070,51 @@ def mappOkIdxDeriv : HasTy Δ₀ Γv (.idx mappOk 0) (.Q ft) := .idx mappOkDeriv
 
 #guard (unitDrift mappOkIdxDeriv).map (· == Term.div m ft) == some true
 
-/-- The same shape with the agreement *failing*: the two argument components
-are distinct variables, so the products across the sum carry different atoms,
-exactly as `x in ft + y in ft` does at `add`. -/
+/-- The same shape with *distinct* measurements in the argument components:
+the `mapp` analogue of `addTwoVars`. Under the frees-at-one assignment both
+components contribute the ratio `1` through their own variable, so the
+products across the sum agree at the exponent vector `m/ft` and the
+application is accepted; an earlier design gave `x` and `y` distinct atoms
+and declined it. -/
 abbrev Γv₂ : Ctx Base Dim 0 0 := scalarCtx [m, m, Term.div ft ft]
 
-def mappBad : Term₀ := .mapp
+def mappTwoVars : Term₀ := .mapp
   (.mcons ft (.vcons (.var 2) (.vcons (.var 2) .vnil)) (.mnil [ft, ft]))
   (.vcons (.convert (.var 0) m ft) (.vcons (.convert (.var 1) m ft) .vnil))
 
-def mappBadDeriv : HasTy Δ₀ Γv₂ mappBad (.vec [ft]) :=
+def mappTwoVarsDeriv : HasTy Δ₀ Γv₂ mappTwoVars (.vec [ft]) :=
   .mapp (.mcons (.vcons (.var rfl) (.vcons (.var rfl) .vnil)) .mnil)
         (.vcons (.convert (.var rfl) sameDim_m_ft)
           (.vcons (.convert (.var rfl) sameDim_m_ft) .vnil))
 
-#guard typeOfIn Γv₂ mappBad == some (.vec [ft])
+#guard typeOfIn Γv₂ mappTwoVars == some (.vec [ft])
 
-/- Declined: the per-row agreement check fails, and rightly so, since the two
-summands rescale by different variables' factors. -/
-#guard (twistOf (Γ := Γv₂) Γv₂.shapes rfl mappBadDeriv).isNone
+/- Accepted, and the output drift at row 0 is the components' shared `m/ft`. -/
+def mappTwoVarsIdxDeriv : HasTy Δ₀ Γv₂ (.idx mappTwoVars 0) (.Q ft) :=
+  .idx mappTwoVarsDeriv rfl
+
+#guard (unitDrift mappTwoVarsIdxDeriv).map (· == Term.div m ft) == some true
+
+/-- What `mapp` still declines at first order: a genuine drift disagreement
+across the summed index, the `mapp` analogue of `addMixed`. One argument
+component converts (`x in ft`, drift `m/ft`) and the other is already in
+feet (drift `1`), so the row's two products carry distinct exponent vectors
+and no uniform output drift exists. -/
+abbrev Γv₃ : Ctx Base Dim 0 0 := scalarCtx [m, ft, Term.div ft ft]
+
+def mappMixed : Term₀ := .mapp
+  (.mcons ft (.vcons (.var 2) (.vcons (.var 2) .vnil)) (.mnil [ft, ft]))
+  (.vcons (.convert (.var 0) m ft) (.vcons (.var 1) .vnil))
+
+def mappMixedDeriv : HasTy Δ₀ Γv₃ mappMixed (.vec [ft]) :=
+  .mapp (.mcons (.vcons (.var rfl) (.vcons (.var rfl) .vnil)) .mnil)
+        (.vcons (.convert (.var rfl) sameDim_m_ft)
+          (.vcons (.var rfl) .vnil))
+
+#guard typeOfIn Γv₃ mappMixed == some (.vec [ft])
+
+/- Declined: the per-row agreement check fails on a real disagreement. -/
+#guard (twistOf (Γ := Γv₃) 0 Γv₃.shapes rfl mappMixedDeriv).isNone
 
 end VectorDrift
 

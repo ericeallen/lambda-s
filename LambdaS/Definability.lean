@@ -390,7 +390,13 @@ first-order function invariant under every scaling is the zero function.
 This is the semantic form of the pendulum argument: the scaling that moves only
 that base unit fixes every input and moves the output, so the output has nowhere
 to go but zero. Compare `Pi.eq_zero_of_appears_once`, which says the same thing
-about exponent matrices. -/
+about exponent matrices.
+
+It is also the one-variable special case of the solvability dichotomy
+(`Pi.mulScaleLaw_eq_zero_of_unsolvable`): a base unit missing from every
+argument but present in the result makes `A X = b` unsolvable with the
+annihilator being that base unit's coordinate direction, and the general
+collapse specializes to this one. -/
 theorem scaleLaw_forces_zero {us : List (UExp B k)} {u₀ : UExp B k}
     (f : Env (scalarCtx (D := D) (j := j) us) → ℝ)
     (hlaw : ∀ (ψ : Scaling B k) (ρ : Env (scalarCtx (D := D) (j := j) us)),

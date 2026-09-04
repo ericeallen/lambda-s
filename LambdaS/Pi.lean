@@ -59,8 +59,12 @@ open Matrix
 
 variable {m n : ℕ}
 
-/-- The **exponent matrix** of a first-order unit-polymorphic signature: `A i j`
-is the exponent of unit variable `i` in the unit of argument `j`. -/
+/-- The **exponent matrix** of a first-order signature: `A v i` is the
+exponent, in the unit of argument `i`, of the `v`-th rescalable unit symbol.
+In Kennedy's statement the rows are the quantified unit variables; the bridge
+in `LambdaS.PiTheorem` (`den_mulScaleLaw`) instantiates the row index with
+`B ⊕ Fin k`, one row per base unit *and* per unit variable in scope, so the
+matrix sees every rescaling the fundamental theorem provides. -/
 abbrev ExpMatrix (m n : ℕ) := Matrix (Fin m) (Fin n) ℚ
 
 /-- A **dimensionless power-product** of the arguments: exponents `x` such that

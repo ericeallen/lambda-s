@@ -12,12 +12,12 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 |---|---|---|
 | Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:88`](LambdaS/Typing.lean#L88) |
 | Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:276`](LambdaS/Typing.lean#L276) |
-| The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:727`](LambdaS/Examples.lean#L727) |
+| The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:784`](LambdaS/Examples.lean#L784) |
 | The velocity idiom | `LambdaS.Examples.velocity` | [`LambdaS/Examples.lean:96`](LambdaS/Examples.lean#L96) |
 | Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:106`](LambdaS/Notation.lean#L106) |
 | Elaboration succeeds iff scalar of the target's dimension | `LambdaS.elabConvert_isSome` | [`LambdaS/Notation.lean:119`](LambdaS/Notation.lean#L119) |
-| The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:827`](LambdaS/Examples.lean#L827) |
-| A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:849`](LambdaS/Examples.lean#L849) |
+| The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:947`](LambdaS/Examples.lean#L947) |
+| A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:969`](LambdaS/Examples.lean#L969) |
 
 ## Unit declarations
 
@@ -51,7 +51,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:649`](LambdaS/Fundamental.lean#L649) |
 | Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:879`](LambdaS/Fundamental.lean#L879) |
 | Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:746`](LambdaS/Fundamental.lean#L746) |
-| Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:805`](LambdaS/Examples.lean#L805) |
+| Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:925`](LambdaS/Examples.lean#L925) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:364`](LambdaS/Parametricity.lean#L364) |
 | The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1176`](LambdaS/Fundamental.lean#L1176) |
 | The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1021`](LambdaS/Fundamental.lean#L1021) |
@@ -61,19 +61,26 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Shapes (Figure 5) | `LambdaS.Shape` | [`LambdaS/Ratio.lean:56`](LambdaS/Ratio.lean#L56) |
-| Ratio expressions (Figure 5) | `LambdaS.Tw` | [`LambdaS/Ratio.lean:140`](LambdaS/Ratio.lean#L140) |
-| Semantic ratios (Figure 5) | `LambdaS.SemTw` | [`LambdaS/Ratio.lean:213`](LambdaS/Ratio.lean#L213) |
-| Ratio evaluation (Figure 5) | `LambdaS.Tw.eval` | [`LambdaS/Ratio.lean:237`](LambdaS/Ratio.lean#L237) |
-| The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:248`](LambdaS/Twist.lean#L248) |
-| Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:556`](LambdaS/Twist.lean#L556) |
-| Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:580`](LambdaS/Twist.lean#L580) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:1163`](LambdaS/Twist.lean#L1163) |
-| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:929`](LambdaS/Twist.lean#L929) |
-| Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:684`](LambdaS/Examples.lean#L684) |
-| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:1215`](LambdaS/Twist.lean#L1215) |
+| Shapes (Figure 3) | `LambdaS.Shape` | [`LambdaS/Ratio.lean:56`](LambdaS/Ratio.lean#L56) |
+| Ratio expressions (Figure 3) | `LambdaS.Tw` | [`LambdaS/Ratio.lean:146`](LambdaS/Ratio.lean#L146) |
+| Semantic ratios (Figure 3) | `LambdaS.SemTw` | [`LambdaS/Ratio.lean:347`](LambdaS/Ratio.lean#L347) |
+| Ratio evaluation (Figure 3) | `LambdaS.Tw.eval` | [`LambdaS/Ratio.lean:371`](LambdaS/Ratio.lean#L371) |
+| The scaling law, twisted (Theorem 6.1) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:293`](LambdaS/Twist.lean#L293) |
+| Invariance iff trivial ratio | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:608`](LambdaS/Twist.lean#L608) |
+| Decidability (Theorem 6.2) | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:632`](LambdaS/Twist.lean#L632) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:1292`](LambdaS/Twist.lean#L1292) |
+| Branch comparison at `+` | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:989`](LambdaS/Twist.lean#L989) |
+| Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:741`](LambdaS/Examples.lean#L741) |
+| Drift-free programs are declaration-independent | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:1364`](LambdaS/Twist.lean#L1364) |
 
-| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1011`](LambdaS/Examples.lean#L1011) |
+| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1157`](LambdaS/Examples.lean#L1157) |
+
+| Sum of two converted inputs, accepted at m/ft | `LambdaS.Examples.addTwoVars` | [`LambdaS/Examples.lean:681`](LambdaS/Examples.lean#L681) |
+| Genuinely drifting sum, declined | `LambdaS.Examples.addMixed` | [`LambdaS/Examples.lean:695`](LambdaS/Examples.lean#L695) |
+| A visible application analyzes as its redex | `LambdaS.Examples.betaShared` | [`LambdaS/Examples.lean:708`](LambdaS/Examples.lean#L708) |
+| Polymorphic round trip, drift-free uninstantiated | `LambdaS.Examples.casterRound` | [`LambdaS/Examples.lean:850`](LambdaS/Examples.lean#L850) |
+| Leading lambda binders analyzed as inputs | `LambdaS.unitDriftLam` | [`LambdaS/Twist.lean:1315`](LambdaS/Twist.lean#L1315) |
+| Comparison exact for atom-free ratios (iff) | `LambdaS.Tw.scalarEq_iff_eval_eq` | [`LambdaS/Twist.lean:1105`](LambdaS/Twist.lean#L1105) |
 
 ## Adequacy and erasure
 
@@ -97,19 +104,23 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Square root not definable, at the term grammar | `LambdaS.NonDef.sqrt_not_definable_tm` | [`LambdaS/NonDefinability.lean:245`](LambdaS/NonDefinability.lean#L245) |
 | No seed for Newton's method | `LambdaS.NonDef.no_newton_seed` | [`LambdaS/NonDefinability.lean:155`](LambdaS/NonDefinability.lean#L155) |
 | No seed, at the term grammar | `LambdaS.NonDef.no_newton_seed_tm` | [`LambdaS/NonDefinability.lean:256`](LambdaS/NonDefinability.lean#L256) |
-| The multiplicative scale law (definition) | `LambdaS.Pi.MulScaleLaw` | [`LambdaS/PiTheorem.lean:220`](LambdaS/PiTheorem.lean#L220) |
-| Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:375`](LambdaS/PiTheorem.lean#L375) |
-| Log transport, positivity hypothesis | `LambdaS.Pi.scaleLaw_of_mulScaleLaw` | [`LambdaS/PiTheorem.lean:249`](LambdaS/PiTheorem.lean#L249) |
-| Pi (Theorem 8.1) | `LambdaS.Pi.pi_theorem` | [`LambdaS/PiTheorem.lean:92`](LambdaS/PiTheorem.lean#L92) |
-| Pi, multiplicative coordinates | `LambdaS.Pi.mulScaleLaw_factorization` | [`LambdaS/PiTheorem.lean:273`](LambdaS/PiTheorem.lean#L273) |
-| Invariants are the dimensionless monomials | `LambdaS.Pi.invariant_iff_dimensionless` | [`LambdaS/PiTheorem.lean:119`](LambdaS/PiTheorem.lean#L119) |
-| Buckingham's counting | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:142`](LambdaS/PiTheorem.lean#L142) |
-| The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:182`](LambdaS/PiTheorem.lean#L182) |
-| The pendulum signature | `LambdaS.Pi.pendulum` | [`LambdaS/Pi.lean:133`](LambdaS/Pi.lean#L133) |
-| The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:161`](LambdaS/Pi.lean#L161) |
-| The pendulum ignores its mass | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:399`](LambdaS/PiTheorem.lean#L399) |
-| A once-appearing base unit forces zero in every invariant | `LambdaS.Pi.eq_zero_of_appears_once` | [`LambdaS/Pi.lean:101`](LambdaS/Pi.lean#L101) |
-| A once-appearing base unit forces a zero exponent | `LambdaS.Pi.solution_eq_zero_of_appears_once` | [`LambdaS/Pi.lean:118`](LambdaS/Pi.lean#L118) |
+| The multiplicative scale law (definition) | `LambdaS.Pi.MulScaleLaw` | [`LambdaS/PiTheorem.lean:228`](LambdaS/PiTheorem.lean#L228) |
+| Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:623`](LambdaS/PiTheorem.lean#L623) |
+| Log transport, positivity hypothesis | `LambdaS.Pi.scaleLaw_of_mulScaleLaw` | [`LambdaS/PiTheorem.lean:485`](LambdaS/PiTheorem.lean#L485) |
+| Pi (Theorem 8.1) | `LambdaS.Pi.pi_theorem` | [`LambdaS/PiTheorem.lean:93`](LambdaS/PiTheorem.lean#L93) |
+| Pi, multiplicative coordinates | `LambdaS.Pi.mulScaleLaw_factorization` | [`LambdaS/PiTheorem.lean:337`](LambdaS/PiTheorem.lean#L337) |
+| Invariants are the dimensionless monomials | `LambdaS.Pi.invariant_iff_dimensionless` | [`LambdaS/PiTheorem.lean:120`](LambdaS/PiTheorem.lean#L120) |
+| Buckingham's counting | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:143`](LambdaS/PiTheorem.lean#L143) |
+| The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:183`](LambdaS/PiTheorem.lean#L183) |
+| The pendulum signature | `LambdaS.Pi.pendulum` | [`LambdaS/Pi.lean:137`](LambdaS/Pi.lean#L137) |
+| The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:165`](LambdaS/Pi.lean#L165) |
+| The pendulum ignores its mass | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:649`](LambdaS/PiTheorem.lean#L649) |
+| A once-appearing base unit forces zero in every invariant | `LambdaS.Pi.eq_zero_of_appears_once` | [`LambdaS/Pi.lean:105`](LambdaS/Pi.lean#L105) |
+| A once-appearing base unit forces a zero exponent | `LambdaS.Pi.solution_eq_zero_of_appears_once` | [`LambdaS/Pi.lean:122`](LambdaS/Pi.lean#L122) |
+
+| Signed equivalence, multiplicative coordinates | `LambdaS.Pi.piEquivSigned` | [`LambdaS/PiTheorem.lean:291`](LambdaS/PiTheorem.lean#L291) |
+| Unsolvable signatures admit only zero | `LambdaS.Pi.mulScaleLaw_eq_zero_of_unsolvable` | [`LambdaS/PiTheorem.lean:430`](LambdaS/PiTheorem.lean#L430) |
+| The solvability dichotomy | `LambdaS.Pi.mulScaleLaw_dichotomy` | [`LambdaS/PiTheorem.lean:458`](LambdaS/PiTheorem.lean#L458) |
 
 ## Dimensioned linear algebra
 

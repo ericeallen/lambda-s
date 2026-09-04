@@ -71,7 +71,12 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.pi_count
 #print axioms LambdaS.Pi.piEquiv
 #print axioms LambdaS.Pi.scaleLaw_of_mulScaleLaw
+#print axioms LambdaS.Pi.piEquivSigned
+#print axioms LambdaS.Pi.expScaleLaw_of_mulScaleLaw
 #print axioms LambdaS.Pi.mulScaleLaw_factorization
+#print axioms LambdaS.Pi.mulScaleLaw_factorization_pos
+#print axioms LambdaS.Pi.mulScaleLaw_eq_zero_of_unsolvable
+#print axioms LambdaS.Pi.mulScaleLaw_dichotomy
 #print axioms LambdaS.Pi.den_mulScaleLaw
 #print axioms LambdaS.Pi.pendulum_mass_absent
 #print axioms LambdaS.Pi.solution_eq_zero_of_appears_once

@@ -91,6 +91,12 @@ def Ctx.shapes {j k : ℕ} (Γ : Ctx B D j k) : List Shape := Γ.map Ty.shape
 @[simp] theorem Ctx.shapes_cons {j k : ℕ} (τ : Ty B D j k) (Γ : Ctx B D j k) :
     Ctx.shapes (τ :: Γ) = Ty.shape τ :: Ctx.shapes Γ := rfl
 
+/-- A context lookup, read at the shapes. -/
+theorem Ctx.shapes_getElem? {j k : ℕ} {Γ : Ctx B D j k} {n : ℕ}
+    {τ : Ty B D j k} (h : Γ[n]? = some τ) :
+    (Ctx.shapes Γ)[n]? = some (Ty.shape τ) := by
+  simp [Ctx.shapes, h]
+
 /-- **Shape is blind to units.** Grounding a type through unit and dimension
 environments leaves its shape alone, which is why ratios need no transport: the
 `Tw` indexed by a type is equally an index for every instantiation of it. The
@@ -181,6 +187,134 @@ def Tw.castShape {k : ℕ} {Θ : List Shape} {s s' : Shape} (h : s = s') :
 
 @[simp] theorem Tw.castShape_rfl {k : ℕ} {Θ : List Shape} {s : Shape}
     (t : Tw B k Θ s) : Tw.castShape rfl t = t := rfl
+
+/-! ### Renaming and substitution
+
+`uapp` records unit instantiation, so no unit-substitution is ever *forced*;
+but a recorded β-redex (`app (lam t) s`, or `uapp (ulam t) μ`) is opaque to
+the flat-form comparison, which costs completeness at the agreement checks.
+These operations let the redexes that arise at construction be reduced on the
+spot: a ratio-context renaming (for weakening a substituend under `lam`), a
+unit-scope pullback (for carrying a substituend under `ulam`, and for
+performing a recorded instantiation), and simultaneous substitution built
+from the two. Each preserves evaluation, which is proved below the
+interpreter. -/
+
+/-- Lifting a ratio-context renaming under a binder. -/
+def Tw.liftR (f : ℕ → ℕ) : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => f n + 1
+
+/-- A lifted renaming stays coherent with the shape contexts. -/
+theorem Tw.liftR_ok {Θ Θ' : List Shape} {s₀ : Shape} (f : ℕ → ℕ)
+    (hf : ∀ (n : ℕ) (s : Shape), Θ[n]? = some s → Θ'[f n]? = some s) :
+    ∀ (n : ℕ) (s : Shape), (s₀ :: Θ)[n]? = some s → (s₀ :: Θ')[Tw.liftR f n]? = some s
+  | 0, _, h => h
+  | n + 1, s, h => by simpa [Tw.liftR] using hf n s (by simpa using h)
+
+/-- Renaming the ratio context along a coherent index map. -/
+def Tw.rename : {k : ℕ} → {Θ Θ' : List Shape} → (f : ℕ → ℕ) →
+    (∀ (n : ℕ) (s : Shape), Θ[n]? = some s → Θ'[f n]? = some s) → {s : Shape} →
+    Tw B k Θ s → Tw B k Θ' s
+  | _, _, _, f, hf, _, .var n h => .var (f n) (hf n _ h)
+  | _, _, _, _, _, _, .unit u => .unit u
+  | _, _, _, f, hf, _, .mul a b => .mul (a.rename f hf) (b.rename f hf)
+  | _, _, _, f, hf, _, .div a b => .div (a.rename f hf) (b.rename f hf)
+  | _, _, _, f, hf, _, .qpow t q => .qpow (t.rename f hf) q
+  | _, _, _, f, hf, _, .lam t => .lam (t.rename (Tw.liftR f) (Tw.liftR_ok f hf))
+  | _, _, _, f, hf, _, .app g a => .app (g.rename f hf) (a.rename f hf)
+  | _, _, _, _, _, _, .vecnil => .vecnil
+  | _, _, _, f, hf, _, .veccons a v => .veccons (a.rename f hf) (v.rename f hf)
+  | _, _, _, f, hf, _, .proj v i => .proj (v.rename f hf) i
+  | _, _, _, _, _, _, .matnil => .matnil
+  | _, _, _, f, hf, _, .matcons r M => .matcons (r.rename f hf) (M.rename f hf)
+  | _, _, _, f, hf, _, .row M j => .row (M.rename f hf) j
+  | _, _, _, f, hf, _, .ulam t => .ulam (t.rename f hf)
+  | _, _, _, f, hf, _, .uapp t μ => .uapp (t.rename f hf) μ
+
+/-- Weakening by a fresh ratio variable at position `0`. -/
+def Tw.weakenR {k : ℕ} {Θ : List Shape} {s₀ s : Shape} (t : Tw B k Θ s) :
+    Tw B k (s₀ :: Θ) s :=
+  t.rename (· + 1) fun _ _ h => by simpa using h
+
+/-- Pulling a ratio back along a unit substitution: every unit constant is
+substituted, and a recorded instantiation records the substituted unit. The
+syntactic face of `Scaling.pull`. -/
+def Tw.pullU : {k k' : ℕ} → (η : Fin k → UExp B k') → {Θ : List Shape} →
+    {s : Shape} → Tw B k Θ s → Tw B k' Θ s
+  | _, _, _, _, _, .var n h => .var n h
+  | _, _, η, _, _, .unit u => .unit (substU η u)
+  | _, _, η, _, _, .mul a b => .mul (a.pullU η) (b.pullU η)
+  | _, _, η, _, _, .div a b => .div (a.pullU η) (b.pullU η)
+  | _, _, η, _, _, .qpow t q => .qpow (t.pullU η) q
+  | _, _, η, _, _, .lam t => .lam (t.pullU η)
+  | _, _, η, _, _, .app g a => .app (g.pullU η) (a.pullU η)
+  | _, _, _, _, _, .vecnil => .vecnil
+  | _, _, η, _, _, .veccons a v => .veccons (a.pullU η) (v.pullU η)
+  | _, _, η, _, _, .proj v i => .proj (v.pullU η) i
+  | _, _, _, _, _, .matnil => .matnil
+  | _, _, η, _, _, .matcons r M => .matcons (r.pullU η) (M.pullU η)
+  | _, _, η, _, _, .row M j => .row (M.pullU η) j
+  | _, _, η, _, _, .ulam t => .ulam (t.pullU (liftU η))
+  | _, _, η, _, _, .uapp t μ => .uapp (t.pullU η) (substU η μ)
+
+/-- Weakening the unit scope by a fresh unit variable. -/
+def Tw.uweaken {k : ℕ} {Θ : List Shape} {s : Shape} (t : Tw B k Θ s) :
+    Tw B (k + 1) Θ s :=
+  t.pullU fun i => Term.ofVar i.succ
+
+/-- Lifting a simultaneous substitution under a binder: the bound variable
+maps to itself and everything else is weakened past it. -/
+def Tw.liftS {k : ℕ} {Θ Θ' : List Shape} {s₀ : Shape}
+    (σ : ∀ (n : ℕ) (s : Shape), Θ[n]? = some s → Tw B k Θ' s) :
+    ∀ (n : ℕ) (s : Shape), (s₀ :: Θ)[n]? = some s → Tw B k (s₀ :: Θ') s
+  | 0, _, h => .var 0 (by simpa using h)
+  | n + 1, s, h => (σ n s (by simpa using h)).weakenR
+
+/-- Simultaneous substitution of ratios for ratio variables. Crossing `lam`
+lifts the substitution; crossing `ulam` weakens every substituend's unit
+scope. -/
+def Tw.subst : {k : ℕ} → {Θ Θ' : List Shape} →
+    (σ : ∀ (n : ℕ) (s : Shape), Θ[n]? = some s → Tw B k Θ' s) → {s : Shape} →
+    Tw B k Θ s → Tw B k Θ' s
+  | _, _, _, σ, _, .var n h => σ n _ h
+  | _, _, _, _, _, .unit u => .unit u
+  | _, _, _, σ, _, .mul a b => .mul (a.subst σ) (b.subst σ)
+  | _, _, _, σ, _, .div a b => .div (a.subst σ) (b.subst σ)
+  | _, _, _, σ, _, .qpow t q => .qpow (t.subst σ) q
+  | _, _, _, σ, _, .lam t => .lam (t.subst (Tw.liftS σ))
+  | _, _, _, σ, _, .app g a => .app (g.subst σ) (a.subst σ)
+  | _, _, _, _, _, .vecnil => .vecnil
+  | _, _, _, σ, _, .veccons a v => .veccons (a.subst σ) (v.subst σ)
+  | _, _, _, σ, _, .proj v i => .proj (v.subst σ) i
+  | _, _, _, _, _, .matnil => .matnil
+  | _, _, _, σ, _, .matcons r M => .matcons (r.subst σ) (M.subst σ)
+  | _, _, _, σ, _, .row M j => .row (M.subst σ) j
+  | _, _, _, σ, _, .ulam t => .ulam (t.subst fun n s h => (σ n s h).uweaken)
+  | _, _, _, σ, _, .uapp t μ => .uapp (t.subst σ) μ
+
+/-- Substituting for the most recently bound ratio variable. -/
+def Tw.subst0 {k : ℕ} {Θ : List Shape} {s₀ s : Shape}
+    (t : Tw B k (s₀ :: Θ) s) (a : Tw B k Θ s₀) : Tw B k Θ s :=
+  t.subst fun n _ h =>
+    match n, h with
+    | 0, h => Tw.castShape (Option.some.inj h) a
+    | n + 1, h => .var n (by simpa using h)
+
+/-- Application that β-reduces when the head is a literal abstraction, so
+that a redex formed at construction is not left for the flat form to treat
+as an opaque atom. -/
+def Tw.appE {k : ℕ} {Θ : List Shape} {s t : Shape} :
+    Tw B k Θ (.arrow s t) → Tw B k Θ s → Tw B k Θ t
+  | .lam b, a => b.subst0 a
+  | f, a => .app f a
+
+/-- Unit instantiation that reduces when the head is a literal unit
+abstraction, by performing the recorded substitution through `pullU`. -/
+def Tw.uappE {k : ℕ} {Θ : List Shape} {s : Shape} :
+    Tw B k Θ (.bind s) → UExp B k → Tw B k Θ s
+  | .ulam t, μ => t.pullU (Fin.cons μ (idU B k))
+  | t, μ => .uapp t μ
 
 /-! ## What a ratio means -/
 
@@ -303,6 +437,19 @@ def Tw.rowE {k : ℕ} {Θ : List Shape} {n : ℕ} :
   | _, .matcons r M, j => Fin.cases r (fun j' => Tw.rowE M j') j
   | _, t, j => .row t j
 
+/-- The trivial ratio, as syntax, at every shape: the unit `1` at a scalar,
+`1` in every component at a space, the constant trivial family at an arrow
+and under a unit binder. This is the ratio the frees-at-one assignment gives
+every context variable of a program: an input is a measurement, and a
+measurement rescales ideally, so its ratio is `1`. Atoms are reserved for
+`lam`-bound variables, whose future arguments may genuinely drift. -/
+def Tw.one : {k : ℕ} → {Θ : List Shape} → (s : Shape) → Tw B k Θ s
+  | _, _, .scalar => .unit 1
+  | _, _, .arrow _ t => .lam (Tw.one t)
+  | _, _, .vec _ => Tw.vecOfFn fun _ => .unit 1
+  | _, _, .mat _ _ => Tw.matOfFn fun _ => Tw.vecOfFn fun _ => .unit 1
+  | _, _, .bind s => .ulam (Tw.one s)
+
 @[simp] theorem Tw.eval_vecOfFn {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} :
     ∀ {n : ℕ} (f : Fin n → Tw B k Θ .scalar) (ρ : TwEnv Θ) (i : Fin n),
     Tw.eval ψ (Tw.vecOfFn f) ρ i = Tw.eval ψ (f i) ρ
@@ -348,6 +495,189 @@ def Tw.rowE {k : ℕ} {Θ : List Shape} {n : ℕ} :
   | _, .uapp t μ, j, ρ => by simp [Tw.rowE, Tw.eval]
   | _, .matnil, j, ρ => j.elim0
 
+/-! ### Renaming and substitution preserve evaluation -/
+
+/-- Renaming preserves evaluation, at environments that agree along the
+renaming. -/
+theorem Tw.eval_rename : ∀ {k : ℕ} (ψ : Scaling B k) {Θ Θ' : List Shape}
+    (f : ℕ → ℕ) (hf : ∀ (n : ℕ) (s : Shape), Θ[n]? = some s → Θ'[f n]? = some s)
+    {s : Shape} (t : Tw B k Θ s) (ρ : TwEnv Θ) (ρ' : TwEnv Θ'),
+    (∀ (n : ℕ) (sh : Shape) (h : Θ[n]? = some sh),
+        TwEnv.lookup (f n) (hf n sh h) ρ' = TwEnv.lookup n h ρ) →
+    Tw.eval ψ (t.rename f hf) ρ' = Tw.eval ψ t ρ
+  | _, ψ, _, _, f, hf, _, .var n h, ρ, ρ', hρ => hρ n _ h
+  | _, _, _, _, _, _, _, .unit u, _, _, _ => rfl
+  | _, ψ, _, _, f, hf, _, .mul a b, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf a ρ ρ' hρ,
+        Tw.eval_rename ψ f hf b ρ ρ' hρ]
+  | _, ψ, _, _, f, hf, _, .div a b, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf a ρ ρ' hρ,
+        Tw.eval_rename ψ f hf b ρ ρ' hρ]
+  | _, ψ, _, _, f, hf, _, .qpow t q, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf t ρ ρ' hρ]
+  | _, ψ, _, _, f, hf, _, .lam t, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval]
+      exact funext fun r => Tw.eval_rename ψ (Tw.liftR f) (Tw.liftR_ok f hf) t
+        (r, ρ) (r, ρ') fun n sh h => by
+          cases n with
+          | zero => rfl
+          | succ n => exact hρ n sh (by simpa using h)
+  | _, ψ, _, _, f, hf, _, .app g a, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf g ρ ρ' hρ,
+        Tw.eval_rename ψ f hf a ρ ρ' hρ]
+  | _, _, _, _, _, _, _, .vecnil, _, _, _ => rfl
+  | _, ψ, _, _, f, hf, _, .veccons a v, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf a ρ ρ' hρ,
+        Tw.eval_rename ψ f hf v ρ ρ' hρ]
+  | _, ψ, _, _, f, hf, _, .proj v i, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf v ρ ρ' hρ]
+  | _, _, _, _, _, _, _, .matnil, _, _, _ => rfl
+  | _, ψ, _, _, f, hf, _, .matcons r M, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf r ρ ρ' hρ,
+        Tw.eval_rename ψ f hf M ρ ρ' hρ]
+  | _, ψ, _, _, f, hf, _, .row M j, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf M ρ ρ' hρ]
+  | _, ψ, _, _, f, hf, _, .ulam t, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval]
+      exact funext fun r => Tw.eval_rename (ψ.cons r) f hf t ρ ρ' hρ
+  | _, ψ, _, _, f, hf, _, .uapp t μ, ρ, ρ', hρ => by
+      simp only [Tw.rename, Tw.eval, Tw.eval_rename ψ f hf t ρ ρ' hρ]
+
+/-- Weakening by a fresh ratio variable is invisible to evaluation. -/
+theorem Tw.eval_weakenR {k : ℕ} (ψ : Scaling B k) {Θ : List Shape}
+    {s₀ s : Shape} (t : Tw B k Θ s) (r : SemTw s₀) (ρ : TwEnv Θ) :
+    Tw.eval ψ (t.weakenR (s₀ := s₀)) (r, ρ) = Tw.eval ψ t ρ := by
+  rw [Tw.weakenR]
+  refine Tw.eval_rename (Θ' := s₀ :: Θ) ψ (· + 1) _ t ρ (r, ρ) fun _ _ _ => ?_
+  rfl
+
+/-- The unit-scope pullback is the syntactic face of `Scaling.pull`. -/
+theorem Tw.eval_pullU : ∀ {k k' : ℕ} (ψ : Scaling B k') (η : Fin k → UExp B k')
+    {Θ : List Shape} {s : Shape} (t : Tw B k Θ s) (ρ : TwEnv Θ),
+    Tw.eval ψ (t.pullU η) ρ = Tw.eval (ψ.pull η) t ρ
+  | _, _, _, _, _, _, .var n h, _ => rfl
+  | _, _, ψ, η, _, _, .unit u, _ => by
+      simp only [Tw.pullU, Tw.eval]
+      exact Subtype.ext (Scaling.scale_pull ψ η u).symm
+  | _, _, ψ, η, _, _, .mul a b, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η a ρ, Tw.eval_pullU ψ η b ρ]
+  | _, _, ψ, η, _, _, .div a b, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η a ρ, Tw.eval_pullU ψ η b ρ]
+  | _, _, ψ, η, _, _, .qpow t q, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η t ρ]
+  | _, _, ψ, η, _, _, .lam t, ρ => by
+      simp only [Tw.pullU, Tw.eval]
+      exact funext fun r => Tw.eval_pullU (Θ := _ :: _) ψ η t (r, ρ)
+  | _, _, ψ, η, _, _, .app g a, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η g ρ, Tw.eval_pullU ψ η a ρ]
+  | _, _, _, _, _, _, .vecnil, _ => rfl
+  | _, _, ψ, η, _, _, .veccons a v, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η a ρ, Tw.eval_pullU ψ η v ρ]
+  | _, _, ψ, η, _, _, .proj v i, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η v ρ]
+  | _, _, _, _, _, _, .matnil, _ => rfl
+  | _, _, ψ, η, _, _, .matcons r M, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η r ρ, Tw.eval_pullU ψ η M ρ]
+  | _, _, ψ, η, _, _, .row M j, ρ => by
+      simp only [Tw.pullU, Tw.eval, Tw.eval_pullU ψ η M ρ]
+  | _, _, ψ, η, _, _, .ulam t, ρ => by
+      simp only [Tw.pullU, Tw.eval]
+      exact funext fun r => by
+        rw [Tw.eval_pullU (ψ.cons r) (liftU η) t ρ, Scaling.pull_liftU]
+  | _, _, ψ, η, _, _, .uapp t μ, ρ => by
+      simp only [Tw.pullU, Tw.eval]
+      rw [Tw.eval_pullU ψ η t ρ, Scaling.logScale_pull]
+
+/-- Weakening the unit scope is invisible to evaluation. -/
+theorem Tw.eval_uweaken {k : ℕ} (ψ : Scaling B k) (r : ℝ) {Θ : List Shape}
+    {s : Shape} (t : Tw B k Θ s) (ρ : TwEnv Θ) :
+    Tw.eval (ψ.cons r) t.uweaken ρ = Tw.eval ψ t ρ := by
+  rw [Tw.uweaken, Tw.eval_pullU, Scaling.pull_weaken]
+
+/-- Substitution preserves evaluation, at environments where each substituend
+evaluates to the value it replaces. -/
+theorem Tw.eval_subst : ∀ {k : ℕ} (ψ : Scaling B k) {Θ Θ' : List Shape}
+    (σ : ∀ (n : ℕ) (s : Shape), Θ[n]? = some s → Tw B k Θ' s) {s : Shape}
+    (t : Tw B k Θ s) (ρ : TwEnv Θ) (ρ' : TwEnv Θ'),
+    (∀ (n : ℕ) (sh : Shape) (h : Θ[n]? = some sh),
+        Tw.eval ψ (σ n sh h) ρ' = TwEnv.lookup n h ρ) →
+    Tw.eval ψ (t.subst σ) ρ' = Tw.eval ψ t ρ
+  | _, ψ, _, _, σ, _, .var n h, ρ, ρ', hσ => hσ n _ h
+  | _, _, _, _, _, _, .unit u, _, _, _ => rfl
+  | _, ψ, _, _, σ, _, .mul a b, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ a ρ ρ' hσ,
+        Tw.eval_subst ψ σ b ρ ρ' hσ]
+  | _, ψ, _, _, σ, _, .div a b, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ a ρ ρ' hσ,
+        Tw.eval_subst ψ σ b ρ ρ' hσ]
+  | _, ψ, _, _, σ, _, .qpow t q, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ t ρ ρ' hσ]
+  | _, ψ, _, _, σ, _, .lam t, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval]
+      exact funext fun r => Tw.eval_subst ψ (Tw.liftS σ) t (r, ρ) (r, ρ')
+        fun n sh h => by
+          cases n with
+          | zero => rfl
+          | succ n =>
+              simpa [Tw.liftS, Tw.eval_weakenR, TwEnv.lookup]
+                using hσ n sh (by simpa using h)
+  | _, ψ, _, _, σ, _, .app g a, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ g ρ ρ' hσ,
+        Tw.eval_subst ψ σ a ρ ρ' hσ]
+  | _, _, _, _, _, _, .vecnil, _, _, _ => rfl
+  | _, ψ, _, _, σ, _, .veccons a v, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ a ρ ρ' hσ,
+        Tw.eval_subst ψ σ v ρ ρ' hσ]
+  | _, ψ, _, _, σ, _, .proj v i, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ v ρ ρ' hσ]
+  | _, _, _, _, _, _, .matnil, _, _, _ => rfl
+  | _, ψ, _, _, σ, _, .matcons r M, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ r ρ ρ' hσ,
+        Tw.eval_subst ψ σ M ρ ρ' hσ]
+  | _, ψ, _, _, σ, _, .row M j, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ M ρ ρ' hσ]
+  | _, ψ, _, _, σ, _, .ulam t, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval]
+      exact funext fun r => Tw.eval_subst (ψ.cons r) _ t ρ ρ' fun n sh h => by
+        rw [Tw.eval_uweaken]
+        exact hσ n sh h
+  | _, ψ, _, _, σ, _, .uapp t μ, ρ, ρ', hσ => by
+      simp only [Tw.subst, Tw.eval, Tw.eval_subst ψ σ t ρ ρ' hσ]
+
+/-- β: substituting for the most recent ratio variable evaluates the body at
+the substituend's value. -/
+theorem Tw.eval_subst0 {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} {s₀ s : Shape}
+    (t : Tw B k (s₀ :: Θ) s) (a : Tw B k Θ s₀) (ρ : TwEnv Θ) :
+    Tw.eval ψ (t.subst0 a) ρ = Tw.eval ψ t (Tw.eval ψ a ρ, ρ) := by
+  refine Tw.eval_subst ψ _ t (Tw.eval ψ a ρ, ρ) ρ fun n sh h => ?_
+  cases n with
+  | zero =>
+      obtain rfl : s₀ = sh := Option.some.inj h
+      rfl
+  | succ n => rfl
+
+/-- The reducing application evaluates as `app` does. -/
+@[simp] theorem Tw.eval_appE {k : ℕ} (ψ : Scaling B k) : ∀ {Θ : List Shape}
+    {s t : Shape} (f : Tw B k Θ (.arrow s t)) (a : Tw B k Θ s) (ρ : TwEnv Θ),
+    Tw.eval ψ (Tw.appE f a) ρ = Tw.eval ψ f ρ (Tw.eval ψ a ρ)
+  | _, _, _, .lam b, a, ρ => by
+      simp only [Tw.appE, Tw.eval, Tw.eval_subst0]
+  | _, _, _, .var n h, a, ρ => by simp [Tw.appE, Tw.eval]
+  | _, _, _, .app g b, a, ρ => by simp [Tw.appE, Tw.eval]
+  | _, _, _, .uapp t μ, a, ρ => by simp [Tw.appE, Tw.eval]
+
+/-- The reducing unit instantiation evaluates as `uapp` does: performing the
+recorded substitution syntactically agrees with reading the family at the
+instantiating unit's magnitude, which is `Scaling.pull_subst`. -/
+@[simp] theorem Tw.eval_uappE {k : ℕ} (ψ : Scaling B k) : ∀ {Θ : List Shape}
+    {s : Shape} (t : Tw B k Θ (.bind s)) (μ : UExp B k) (ρ : TwEnv Θ),
+    Tw.eval ψ (Tw.uappE t μ) ρ = Tw.eval ψ t ρ (ψ.logScale μ)
+  | _, _, .ulam t, μ, ρ => by
+      simp only [Tw.uappE, Tw.eval, Tw.eval_pullU, Scaling.pull_subst]
+  | _, _, .var n h, μ, ρ => by simp [Tw.uappE, Tw.eval]
+  | _, _, .app g a, μ, ρ => by simp [Tw.uappE, Tw.eval]
+  | _, _, .uapp t ν, μ, ρ => by simp [Tw.uappE, Tw.eval]
+
 /-- The trivial semantic ratio at each shape: `1` at a quantity, `1` in every
 component at a space, and "maps trivial to trivial" at a function. -/
 def oneSem : (s : Shape) → SemTw s
@@ -356,6 +686,22 @@ def oneSem : (s : Shape) → SemTw s
   | .vec _ => fun _ => 1
   | .mat _ _ => fun _ _ => 1
   | .bind s => fun _ => oneSem s
+
+/-- The trivial syntactic ratio evaluates to the trivial semantic one, in
+every scaling and every environment. -/
+theorem Tw.eval_one : ∀ {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} (s : Shape)
+    (θρ : TwEnv Θ), Tw.eval ψ (Tw.one s) θρ = oneSem s
+  | _, ψ, _, .scalar, _ => Subtype.ext (by simp [Tw.one, Tw.eval, oneSem])
+  | _, ψ, _, .arrow _ t, θρ => by
+      simp only [Tw.one, Tw.eval, oneSem]
+      exact funext fun r => Tw.eval_one (Θ := _ :: _) ψ t (r, θρ)
+  | _, ψ, _, .vec _, θρ =>
+      funext fun i => Subtype.ext (by simp [Tw.one, Tw.eval, oneSem])
+  | _, ψ, _, .mat _ _, θρ =>
+      funext fun a => funext fun i => Subtype.ext (by simp [Tw.one, Tw.eval, oneSem])
+  | _, ψ, _, .bind s, θρ => by
+      simp only [Tw.one, Tw.eval, oneSem]
+      exact funext fun r => Tw.eval_one (ψ.cons r) s θρ
 
 /-! ## The twisted logical relation
 
@@ -577,6 +923,37 @@ theorem twRel_weaken {j k : ℕ} (τ : Ty B D j k) (ψ : Scaling B k) (s : ℝ)
 def oneTwEnv : (Θ : List Shape) → TwEnv Θ
   | [] => PUnit.unit
   | s :: Θ => (oneSem s, oneTwEnv Θ)
+
+/-- Looking up the all-ones environment gives the trivial ratio. -/
+theorem TwEnv.lookup_oneTwEnv : ∀ {Θ : List Shape} {s : Shape} (n : ℕ)
+    (h : Θ[n]? = some s), TwEnv.lookup n h (oneTwEnv Θ) = oneSem s
+  | [], _, _, h => absurd h (by simp)
+  | _ :: _, _, 0, h => by obtain rfl := Option.some.inj h; rfl
+  | _ :: _, _, n + 1, h => TwEnv.lookup_oneTwEnv n (by simpa using h)
+
+/-- **The pinned region of a ratio environment.** A ratio environment is
+trivial from position `p` on: positions below `p` are the genuine atoms,
+introduced by `lam` binders, and positions at `p` and beyond are the
+program's own context variables, whose ratio the frees-at-one assignment
+fixes at `1`. -/
+def TwEnv.OnesFrom (p : ℕ) {Θ : List Shape} (θρ : TwEnv Θ) : Prop :=
+  ∀ (n : ℕ) (s : Shape) (h : Θ[n]? = some s), p ≤ n →
+    TwEnv.lookup n h θρ = oneSem s
+
+/-- Extending the environment at a fresh atom moves the pinned region one
+position out: the `lam` case of the scaling law. -/
+theorem TwEnv.OnesFrom.cons {p : ℕ} {Θ : List Shape} {θρ : TwEnv Θ}
+    {s : Shape} (r : SemTw s) (hθ : TwEnv.OnesFrom p θρ) :
+    TwEnv.OnesFrom (p + 1) (Θ := s :: Θ) (r, θρ) := by
+  intro n s' h hp
+  cases n with
+  | zero => exact absurd hp (by omega)
+  | succ n => exact hθ n s' (by simpa using h) (by omega)
+
+/-- The all-ones environment is trivial from every position on. -/
+theorem TwEnv.onesFrom_oneTwEnv (p : ℕ) {Θ : List Shape} :
+    TwEnv.OnesFrom p (oneTwEnv Θ) :=
+  fun n _ h _ => TwEnv.lookup_oneTwEnv n h
 
 /-! ## The symbolic normalizer
 
