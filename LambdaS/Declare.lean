@@ -409,6 +409,25 @@ def elabDimDefs (baseName : String → Option D) :
     List (String × List (Ref D)) → Option (List (String × DExp D 0)) :=
   List.foldlM (fun env (d : String × List (Ref D)) => elabOne baseName env d.1 d.2) []
 
+/-- **Primary-unit declarations.** A base unit is introduced by naming it
+and its dimension, with no factor: `unit meter : Length` makes `meter`
+primary (Fortress's term), and the declaration is what determines the
+unit's dimension. Elaboration is scoping again: a fresh unit name, and a
+dimension that denotes (a base dimension or an abbreviation already
+elaborated). The surviving table is the calculus's `dimOf`, restricted to
+the declared generators. -/
+def elabPrimary (baseName : String → Option D)
+    (dims : List (String × DExp D 0)) :
+    List (String × (D ⊕ String)) → Option (List (String × DExp D 0))
+  | [] => some []
+  | (n, dref) :: rest => do
+      let table ← elabPrimary baseName dims rest
+      if (table.lookup n).isSome then none else do
+        let d ← match dref with
+          | .inl b => some (Term.ofBase b)
+          | .inr sname => dims.lookup sname
+        some ((n, d) :: table)
+
 end DimAbbrev
 
 end LambdaS

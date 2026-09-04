@@ -517,6 +517,23 @@ def dimCycle : List (String × List (DimAbbrev.Ref Dim)) :=
 #guard (DimAbbrev.elabDimDefs dimName
     [("Accel", [(.inr "Speed", 1), (.inl .time, -1)])]).isNone
 
+/-- Primary-unit declarations: `unit meter : Length; unit second : Time;
+unit hertz : Frequency` with `Frequency` an abbreviation. Elaborates; the
+duplicate and the unknown dimension are rejected. -/
+def primaries : List (String × (Dim ⊕ String)) :=
+  [("meter", .inl .length), ("second", .inl .time), ("hertz", .inr "Frequency")]
+
+def freqDims : List (String × DExp Dim 0) :=
+  (DimAbbrev.elabDimDefs dimName [("Frequency", [(.inl .time, -1)])]).getD []
+
+#guard (DimAbbrev.elabPrimary dimName freqDims primaries).isSome
+#guard ((DimAbbrev.elabPrimary dimName freqDims primaries).bind (·.lookup "hertz"))
+    == some (Term.div 1 (Term.ofBase Dim.time))
+#guard (DimAbbrev.elabPrimary dimName freqDims
+    (("meter", .inl .mass) :: primaries)).isNone
+#guard (DimAbbrev.elabPrimary dimName freqDims
+    [("parsec", .inr "Distance")]).isNone
+
 /-! ### The valuation the declarations determine, and the compiled evaluator using it
 
 `yard_conflict` says the bad set has no valuation; this is the other half,
