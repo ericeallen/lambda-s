@@ -1330,6 +1330,13 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
           (Tw.scalarEq_sound t (.unit 1) h1 ψ θρ).trans
             (Tw.eval_one ψ .scalar θρ)) ht⟩
       else none
+  -- `ucon` is the one unconditional decline, by design rather than necessity.
+  -- The relation would accept it at ratio `u^(-1/2)` (its defect is incurred
+  -- once where conversion's is incurred twice, hence the half exponent), but a
+  -- unit constant's defect is a covariance failure with no dependence on the
+  -- declarations, and tracking it would make a reported drift mean two
+  -- different things. Declined, conversion remains the only analyzed construct
+  -- that reads the valuation.
   | _, _, _, _, _, _, _, _, _, .ucon => none
 
 /-! ## The diagnostic, end to end -/
