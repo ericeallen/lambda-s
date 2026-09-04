@@ -108,13 +108,19 @@ def elabConvert {j k : ℕ} (Δ : DCtx D j k) (Γ : Ctx B D j k) (e : Tm B D j k
 /-- **Elaboration succeeds exactly when the surface syntax is meaningful**: the
 subject is a scalar, and its unit shares the target's dimension.
 
-That is the whole specification. There is no companion theorem saying the
-elaborated term typechecks, because `elabConvert` returns the derivation: a
-surface `in` cannot produce a core term the checker would reject. -/
+That is the whole specification, in both directions. There is no companion
+theorem saying the elaborated term typechecks, because `elabConvert` returns
+the derivation: a surface `in` cannot produce a core term the checker would
+reject. -/
 theorem elabConvert_isSome {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
-    {e : Tm B D j k} {u v : UExp B k} (hu : infer Δ Γ e = some (.Q u))
-    (hd : SameDim Δ u v) : (elabConvert Δ Γ e v).isSome := by
-  obtain ⟨⟨_, d⟩, hc, rfl⟩ := Option.map_eq_some_iff.mp hu
-  simp [elabConvert, hc, hd]
+    {e : Tm B D j k} {v : UExp B k} :
+    (elabConvert Δ Γ e v).isSome ↔
+      ∃ u, infer Δ Γ e = some (.Q u) ∧ SameDim Δ u v := by
+  unfold elabConvert infer
+  cases hc : check Δ Γ e with
+  | none => simp
+  | some p =>
+    obtain ⟨τ, d⟩ := p
+    cases τ <;> simp
 
 end LambdaS

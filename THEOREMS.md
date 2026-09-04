@@ -15,7 +15,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:726`](LambdaS/Examples.lean#L726) |
 | The velocity idiom | `LambdaS.Examples.velocity` | [`LambdaS/Examples.lean:96`](LambdaS/Examples.lean#L96) |
 | Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:102`](LambdaS/Notation.lean#L102) |
-| Elaboration succeeds iff scalar of the target's dimension | `LambdaS.elabConvert_isSome` | [`LambdaS/Notation.lean:114`](LambdaS/Notation.lean#L114) |
+| Elaboration succeeds iff scalar of the target's dimension | `LambdaS.elabConvert_isSome` | [`LambdaS/Notation.lean:115`](LambdaS/Notation.lean#L115) |
 | The state-vector literal | `LambdaS.Examples.stateVec` | [`LambdaS/Examples.lean:826`](LambdaS/Examples.lean#L826) |
 | A matrix literal, rank-one checked at introduction | `LambdaS.Examples.toTime` | [`LambdaS/Examples.lean:848`](LambdaS/Examples.lean#L848) |
 
@@ -39,6 +39,7 @@ CI fails if any depends on more than `propext`, `Classical.choice`, and
 | Paper claim | Lean name | Location |
 |---|---|---|
 | Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:623`](LambdaS/Normalization.lean#L623) |
+| Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:636`](LambdaS/Normalization.lean#L636) |
 | Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:606`](LambdaS/Normalization.lean#L606) |
 | Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:355`](LambdaS/QM.lean#L355) |
 

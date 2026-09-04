@@ -601,7 +601,7 @@ theorem eval_terminates (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
 value, and that value has the type the checker predicted.
 
 Termination comes from `eval_terminates`, the typing of the result from
-`eval_sound`; neither implies the other, and the theorem worth quoting is their
+`eval_sound`; neither implies the other, and the theorem is their
 conjunction. -/
 theorem eval_total (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
     {τ : Ty B D 0 0} (ht : HasTy (DCtx.nil D) [] e τ) :
@@ -627,5 +627,17 @@ theorem unit_soundness_total (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
   simp only [Red] at hred
   obtain ⟨m, rfl⟩ := hred
   exact ⟨n, m, hev⟩
+
+/-- **Space soundness for linear maps.** Every well-typed closed term of map
+type evaluates to a matrix value carrying exactly the spaces its type
+predicted: the `Lin` analogue of `unit_soundness_total`. With the
+introduction forms of `LambdaS.Syntax`, matrix literals are among the terms
+it governs. -/
+theorem lin_soundness_total (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
+    {V W : Sp B 0} (ht : HasTy (DCtx.nil D) [] e (.lin V W)) :
+    ∃ n M, evalC cf n [] e = some (.matrix M V W) := by
+  obtain ⟨n, v, hev, hvt⟩ := eval_total cf ht
+  obtain ⟨M, rfl, -, -⟩ := hvt.matrix_inv
+  exact ⟨n, M, hev⟩
 
 end LambdaS

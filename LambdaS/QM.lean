@@ -357,6 +357,7 @@ def twoStateChecks : Bool :=
   (runIn [hamiltonian, statePlus] expectH).any (fun x => near x (-splitJ))
     && (runIn [hamiltonian, stateMinus] expectH).any (fun x => near x splitJ)
     && (runIn [hamiltonian, statePlus] applied).any (fun x => near x (-splitJ))
+    && (runIn [hamiltonian, stateMinus] applied).any (fun x => near x splitJ)
     -- fuel is spent only on *nested* application: a `lam` under an `app` is free,
     -- so two applications need one unit, zero gets stuck, first-order needs none
     && (runFuel 1 [hamiltonian, statePlus] applied).isSome
