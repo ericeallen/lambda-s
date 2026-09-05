@@ -22,7 +22,7 @@ unit yard = 3 foot
 declares a generator **and** an equation, and equations can conflict. This is
 the bug that the Comp 311 assignment's one-unit-per-dimension restriction
 (`LambdaS.Conversion`) exists to dodge: with units nameable in terms
-of other units, two routes from `yard` to `metre` need not agree, and nothing in
+of other units, two routes from `yard` to `meter` need not agree, and nothing in
 a free abelian group of units forces them to.
 
 ## What the resolution is, and what it is not
@@ -40,7 +40,7 @@ of the declarations whose *unit* parts cancel forces the corresponding
 respect every dependency and a satisfying valuation exists, so
 `consistent_iff_dependencies` (and its multiplicative form) characterizes
 consistency outright. `factor_chain` is the two-step instance that is
-literally the yard/foot/metre conflict. `not_satisfiable_of_chain` turns it
+literally the yard/foot/meter conflict. `not_satisfiable_of_chain` turns it
 around: get the arithmetic wrong and **no** valuation exists, so the declaration
 set is rejected rather than silently picking a route.
 
@@ -56,9 +56,9 @@ in ℝ, and consistency is decided in ℚ⁺.
 ## What is not declared has no factor
 
 A base unit with no declaration is a primitive, and its magnitude is free. So
-`metre` and `foot` as bare generators are same-dimension units with **no**
+`meter` and `foot` as bare generators are same-dimension units with **no**
 determined conversion factor: `convert` between them typechecks, but its value
-is whatever the valuation says. Declaring `unit foot = 0.3048 metre` is exactly
+is whatever the valuation says. Declaring `unit foot = 0.3048 meter` is exactly
 what pins it. That is the sense in which declarations, not the type system, give
 conversion its content.
 -/
@@ -66,182 +66,177 @@ conversion its content.
 /-!
 ## From the paper's long form: Unit Declarations
 
-The paper's tag `long-form` carries this section in full; preserved here,
-lightly de-TeXed, so the documentation develops what the paper now
-summarizes.
-
- sectionUnit Declarations]
-
+The paper's tag `long-form` carries this section in full; it is reproduced
+here, converted to Markdown, so the documentation develops what the paper
+now summarizes. Section references name the module that carries the
+section; theorem references name the declaration.
 
 Conversion forces a question the parametric literature never faces: where do
 the factors come from? The answer is unit declarations, in the style
 scientists write them:
- [
-unit] yard] = 3 foot];  qquad
-unit] foot] = 0.3048 meter].
- ]
+
+    unit yard = 3 foot;  unit foot = 0.3048 meter.
+
 Declarations are not terms of Λs: they are the interface a surface
 language hands to the calculus, and the artifact consumes them as data. Each
 declaration constrains one unit against another by a factor; in
-unit] yard] = 3 foot], the declared factor is
+unit yard = 3 foot, the declared factor is
 3.
 
 Declarations can conflict. With units nameable in terms of other units, a
-system that implements conversion by **walking the declared structure]
+system that implements conversion by *walking the declared structure*
 can offer more than one route between two units, with no guarantee the routes
-agree: add the redundant declaration yard] = 0.9 meter]
+agree: add the redundant declaration yard = 0.9 meter
 and the direct route disagrees with the route through feet, since
-3  times 0.3048 = 0.9144  neq 0.9. [footnote: Redundant declarations are not
-a strawman: real unit databases can carry them deliberately, because lookup
-through a hub unit loses precision that a directly stored factor preserves.
-The design question is not whether redundancy occurs but what happens when it
-disagrees.] Any implementation that converts by chaining declared factors
+3 × 0.3048 = 0.9144 ≠ 0.9 (see note 1). Any implementation that converts by chaining declared factors
 ad hoc admits this defect, and nothing in the algebra of units forbids it: the units
-form a free ℚ-vector space (Section [ref: sec:units]), and the
+form a free ℚ-vector space (“Units and Dimensions” (`Typing.lean`)), and the
 declared factors are data the algebra does not constrain.
+
+> **Note 1.** Redundant declarations are not
+> a strawman: real unit databases can carry them deliberately, because lookup
+> through a hub unit loses precision that a directly stored factor preserves.
+> The design question is not whether redundancy occurs but what happens when it
+> disagrees.
 
 Dimension declarations, by contrast, carry no factor, and the only
 check they need is scoping. A bare one,
-dimension] Length], introduces a base dimension;
+dimension Length, introduces a base dimension;
 freshness is its whole check, and the bare declarations jointly supply
 the calculus's parameter D. One with a right-hand side is an
 abbreviation: it introduces a fresh name for a vector
 over the base dimensions, its right-hand side mentioning only base
 dimensions and earlier abbreviations, and expands at once:
-dimension] Velocity] = Length]/Time]
-is the vector (Length]  mapsto 1,  Time]  mapsto -1)
+dimension Velocity = Length/Time
+is the vector (Length ↦ 1, Time ↦ -1)
 from then on. Cycles are consequently not detected but unrepresentable:
-the incorrect pair Velocity] = Length]/Time],
-Length] = Velocity]/Time] is rejected at its
+the incorrect pair Velocity = Length/Time,
+Length = Velocity/Time is rejected at its
 second line for rebinding a generator, before any question of
 consistency can arise, and a forward reference is rejected because an
-undefined name does not denote (`elabDimDefs]; the cyclic pair
-is `dimCycle]). Base units are declared the same way, by a
-dimension and no factor: unit] meter] : Length]
-makes meter] **primary], Fortress's
-term [cite: fortress2008], and the declaration is what determines the
+undefined name does not denote (`elabDimDefs`; the cyclic pair
+is `dimCycle`). Base units are declared the same way, by a
+dimension and no factor: unit meter : Length
+makes meter *primary*, Fortress's
+term [Allen et al. 2008], and the declaration is what determines the
 unit's dimension. The primary declarations jointly supply the calculus's
-parameters B and  dimOf, and they too need only scoping
-(`elabPrimary]): a fresh name, and a dimension that denotes.
+parameters B and dim, and they too need only scoping
+(`elabPrimary`): a fresh name, and a dimension that denotes.
 This section is therefore about the declarations that carry a factor.
 
 Λs does not implement conversion as a walk. Recall that a
 valuation
 V assigns each base unit a positive magnitude: an exchange-rate table
 into an arbitrary fixed reference scale, not a measurement. For example,
-V(meter]) = 1, V(foot]) = 0.3048,
-V(yard]) = 0.9144 is a valuation, and it satisfies both
+V(meter) = 1, V(foot) = 0.3048,
+V(yard) = 0.9144 is a valuation, and it satisfies both
 declarations above. A valuation extends to a homomorphism from unit
-expressions to (ℝ^>0], times), and the conversion factor from u
-to v is the ratio conv]_V(u,v) = V(u)/V(v). Path independence is
+expressions to (ℝ^(>0),×), and the conversion factor from u
+to v is the ratio conv_V(u,v) = V(u)/V(v). Path independence is
 then a theorem rather than a proof obligation (any chain of intermediate
 conversions telescopes to the direct factor). Declarations constrain
-valuations; we say a declaration set is **consistent] when some valuation
+valuations; we say a declaration set is *consistent* when some valuation
 satisfies every declared equation. Note that declarations carry no order,
 and no acyclicity condition is imposed or needed: each declaration is an
 equation, the set is a simultaneous system, and a cycle is just a
 dependency the criterion below decides. The benign cycle
-yard] = 3 foot],
-foot] =  tfrac1]3] yard] is satisfiable
-(`cycle_satisfiable]); close it wrongly, with
-foot] = yard], and the dependency forces 3 = 1, so no
-valuation exists (`cycle_conflict]). Nor can a declaration
+yard = 3 foot,
+foot = 1/3 yard is satisfiable
+(`cycle_satisfiable`); close it wrongly, with
+foot = yard, and the dependency forces 3 = 1, so no
+valuation exists (`cycle_conflict`). Nor can a declaration
 mention an undeclared generator: the base units are the calculus's
 parameter B, so the reference is unrepresentable. What remains is the
 prior question:
-**do the declarations determine a valuation at all?]
+*do the declarations determine a valuation at all?*
 
-A declaration unit] b = q w constrains the ratio b/w to the
-value q  in ℚ^>0]. In logarithmic coordinates each declaration is
-one linear equation in the unknowns  log V(b), so a valuation exists
+A declaration unit b = q w constrains the ratio b/w to the
+value q ∈ ℚ^(>0). In logarithmic coordinates each declaration is
+one linear equation in the unknowns log V(b), so a valuation exists
 exactly when that linear system is consistent: every linear dependency among
 the constrained ratios must force the matching relation among the declared
 factors. Both directions are theorems. Necessity holds
-(`dependency_forces]; in product form,
-`dependency_forces_mul]). Sufficiency invites a worry. The
-unknowns  log V(b) are real, and necessarily so: valuations are
+(`dependency_forces`; in product form,
+`dependency_forces_mul`). Sufficiency invites a worry. The
+unknowns log V(b) are real, and necessarily so: valuations are
 real-valued, not merely their logarithms, since rational exponents can
-force irrational magnitudes (declare c] = 2 and
-b] = c]^1/2], and every satisfying valuation has
-V(b]) =  sqrt2]), and even a rational magnitude has an
+force irrational magnitudes (declare c = 2 and
+b = c^(1/2), and every satisfying valuation has
+V(b) = √2), and even a rational magnitude has an
 irrational logarithm. The dependencies, by contrast, are rational, so we
 might fear a real-coefficient dependency imposing a constraint the rational
 ones miss. None does: ℝ is itself a vector space over
 ℚ, its vectors the reals and its scalars the rationals, so
 the rational coefficient matrix has the same dependencies over either
 field, and the system is solved ℚ-linearly with real
-values (`dependency_sufficient]).
+values (`dependency_sufficient`).
 
-
-
-A declaration set with ratios r_i and factors q_i admits a satisfying
+**Theorem (Consistency; `consistent_iff_dependencies_mul`).** A declaration set with ratios r_i and factors q_i admits a satisfying
 valuation if and only if, for every
-ℚ-linear combination with  sum_i c_i r_i = 0 in the unit
-group,  prod_i q_i^ c_i] = 1; equivalently, in logarithmic form,
- sum_i c_i  log q_i = 0 (`consistent_iff_dependencies]).
-
+ℚ-linear combination with ∑_i c_i r_i = 0 in the unit
+group, ∏_i q_i^c_i = 1; equivalently, in logarithmic form,
+∑_i c_i log q_i = 0 (`consistent_iff_dependencies`).
 
 With the criterion in hand, we work the example in full. The three
 declarations
- [
-unit] yard] = 3 foot];  quad
-unit] foot] = 0.3048 meter];  quad
-unit] yard] = 0.9144 meter]
- ]
-constrain the ratios r_1 = yard]/foot],
-r_2 = foot]/meter], and
-r_3 = yard]/meter]. Writing y, f, m for
- log V(yard]),  log V(foot]),  log V(meter]),
+
+    unit yard = 3 foot;  unit foot = 0.3048 meter;  unit yard = 0.9144 meter
+
+constrain the ratios r₁ = yard/foot,
+r₂ = foot/meter, and
+r₃ = yard/meter. Writing y, f, m for
+log V(yard), log V(foot), log V(meter),
 they induce the linear system
- [
-y - f =  log 3,  qquad f - m =  log 0.3048,  qquad y - m =  log 0.9144.
- ]
+
+    y - f = log 3,  f - m = log 0.3048,  y - m = log 0.9144.
+
 The ratios are linearly dependent: with coefficients c = (1, 1, -1) in
-Theorem [ref: thm:consistency], r_1 + r_2 - r_3 = 0 in the unit group
+the theorem “Consistency” (`consistent_iff_dependencies_mul`), r₁ + r₂ - r₃ = 0 in the unit group
 (multiplicatively,
-(yard]/foot])(foot]/meter])(meter]/yard])
+(yard/foot)(foot/meter)(meter/yard)
 is the dimensionless 1), so consistency demands
-q_1 q_2 q_3^-1] = 1, that is,
-3  times 0.3048 = 0.9144. [footnote: The yard has been exactly 0.9144
-meters only since 1959, when six English-speaking countries agreed to end a
-disagreement of roughly two parts per
-million [cite: astinkaro1959]. The United States kept its
-earlier foot for surveying; that redundant declaration, inconsistent with
-the new one in the seventh decimal place, survived until the end of 2022; its
-retirement, effective December 31, 2022, was announced by a 2020 Federal
-Register notice [cite: surveyfoot2020].] The equation
+q₁ q₂ q₃⁻¹ = 1, that is,
+3 × 0.3048 = 0.9144 (see note 2). The equation
 holds, and the artifact exhibits a satisfying valuation explicitly
-(`yard_satisfiable]): the exchange-rate table V above. Now replace
-the third declaration by yard] = 0.9 meter]. The same
-dependency demands 3  times 0.3048 = 0.9, which is false; the artifact
-refutes the set (`yard_conflict]): **no] valuation satisfies all
+(`yard_satisfiable`): the exchange-rate table V above. Now replace
+the third declaration by yard = 0.9 meter. The same
+dependency demands 3 × 0.3048 = 0.9, which is false; the artifact
+refutes the set (`yard_conflict`): *no* valuation satisfies all
 three, the set is rejected at declaration time, and there is never a choice
 of route to get wrong. Because coefficients and factors are rational, the
 test is exact arithmetic; the irrationality that ℚ exponents
-introduce (V(m]^1/2]) is irrational) enters only at  log, after
+introduce (V(m^(1/2)) is irrational) enters only at log, after
 the check. Note that a satisfied redundant declaration has no freedom in its
 factor: any valuation satisfying all three declarations forces
-3  times 0.3048 = 0.9144 (`yard_forced]), and the general lemma
-(`factor_chain_consistent]) states this for an arbitrary third
+3 × 0.3048 = 0.9144 (`yard_forced`), and the general lemma
+(`factor_chain_consistent`) states this for an arbitrary third
 declaration.
+
+> **Note 2.** The yard has been exactly 0.9144
+> meters only since 1959, when six English-speaking countries agreed to end a
+> disagreement of roughly two parts per
+> million [Astin et al. 1959]. The United States kept its
+> earlier foot for surveying; that redundant declaration, inconsistent with
+> the new one in the seventh decimal place, survived until the end of 2022; its
+> retirement, effective December 31, 2022, was announced by a 2020 Federal
+> Register notice [NIST and NOAA 2020].
 
 Note that a base unit with no declaration is a primitive, and its magnitude
 is free. Its dimension is not: the unit system assigns every base unit a
-dimension ( dimOf : B  to ℚ^D is total, Section [ref: sec:units]),
+dimension (dim : B → ℚ^D is total, “Units and Dimensions” (`Typing.lean`)),
 so declarations add magnitudes, never dimensions. Declarations, not the type
 system, give conversion its numeric content; the type system contributes a
 separate, decidable check that each declaration relates
-units of one dimension: unit] yard] = 3 second]
-is rejected (`Sound], orthogonal to
-Theorem [ref: thm:consistency]).
+units of one dimension: unit yard = 3 second
+is rejected (`Sound`, orthogonal to
+the theorem “Consistency” (`consistent_iff_dependencies_mul`)).
 
 What the declared numbers are worth to running code is the subject of
-Section [ref: sec:erasure], where the chain from declaration to compiled
+“Adequacy and Erasure” (`Erasure.lean`), where the chain from declaration to compiled
 output is closed: the compiled evaluator converts one yard into feet by
 multiplying by the declared 3 and into meters by the forced
-0.9144 (`one_yard_is_three_feet]; through the forced
-factor, `one_yard_in_metres]).
-
+0.9144 (`one_yard_is_three_feet`; through the forced
+factor, `one_yard_in_meters`).
 -/
 
 namespace LambdaS
@@ -500,8 +495,8 @@ theorem consistent_iff_dependencies_mul {n : ℕ} {ds : Fin n → Decl B} :
 /-! ## The conflict, exhibited
 
 Three declarations, two routes from the first unit to the last. This is the
-Comp 311 configuration exactly: `yard = 3 foot`, `foot = 0.3048 metre`, and a
-redundant `yard = q metre`. -/
+Comp 311 configuration exactly: `yard = 3 foot`, `foot = 0.3048 meter`, and a
+redundant `yard = q meter`. -/
 
 /-- **Chained declarations force the factor.** If `a` is declared against `b`'s
 unit, `b` against some `w`, and `c` declares `a`'s unit directly against the same

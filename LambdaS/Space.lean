@@ -9,8 +9,8 @@ import LambdaS.Uom
 # Dimensioned spaces
 
 A **space** is an index type `I` together with a unit assignment `δ : I → Uom B`.
-A vector over it is a dependent function `(i : I) → Q[F, δ i]`; a linear map is
-handled in `LambdaS.Map`.
+A vector over it is a family of quantities indexed by `I`, the component at `i`
+carrying the unit `δ i`; a linear map is handled in `LambdaS.Map`.
 
 ## Spaces are structural
 

@@ -73,7 +73,7 @@ a time yields a velocity, and the checker derives that rather than being told. -
 #guard typeOf (at₂ dLen m dTime sec deriv)
     == some (.arrow (.arrow (.Q sec) (.Q m)) (.arrow (.Q sec) (.arrow (.Q sec) (.Q (Term.div m sec)))))
 
-/- Instantiating at the wrong dimension is rejected: `metre` is not a time. -/
+/- Instantiating at the wrong dimension is rejected: `meter` is not a time. -/
 #guard (typeOf (at₂ dTime m dTime sec deriv)).isNone
 
 /-! ## Simpson's rule
@@ -185,19 +185,22 @@ def report : String :=
 /-! ## Declared conversions, compiled
 
 The conversion oracle below is not `fun _ _ => 1.0`: it is computed from the
-declared magnitudes (metre `1`, foot `0.3048`, yard `0.9144`), the `Float`
-shadow of the valuation `ψyd` that `LambdaS.Examples` proves satisfies the
-declaration set. `evalC_convert_declared` is the theorem that the instrumented
-evaluator multiplies by exactly the declared factor; this is that theorem's
-number coming out of the compiled binary.
+declared magnitudes (meter `1`, foot `0.3048`, yard `0.9144`). `magB` is a
+transcription by hand, at `Float`, of the valuation `ψyd` that
+`LambdaS.Examples` proves satisfies the declaration set; nothing derives it
+from `ψyd`, and the agreement between the two is checked by the numbers
+below rather than by a theorem. `evalC_convert_declared` is the theorem that
+the instrumented evaluator at carrier `ℝ` multiplies by exactly the declared
+factor; this is that theorem's number coming out of the compiled binary.
 
-Two routes from yards to metres (direct, and through feet) print the same
+Two routes from yards to meters (direct, and through feet) print the same
 number, which is `convChain_eq` and `yard_forced` made observable: the factors
 are forced by the declarations, so there is no route to get wrong. -/
 
-/-- The declared magnitude of each base unit, in metres (and SI mates). -/
+/-- The declared magnitude of each base unit, in meters (and SI mates):
+`ψyd` of `LambdaS.Examples`, transcribed at `Float`. -/
 def magB : Base → Float
-  | .metre => 1
+  | .meter => 1
   | .foot => 0.3048
   | .yard => 0.9144
   | .kilogram => 1
@@ -206,7 +209,7 @@ def magB : Base → Float
 /-- The magnitude of a compound unit: the product of its bases' declared
 magnitudes, at their exponents. -/
 def magF (w : UExp Base 0) : Float :=
-  [Base.metre, .foot, .yard, .kilogram, .second].foldl
+  [Base.meter, .foot, .yard, .kilogram, .second].foldl
     (fun acc b => acc * Float.pow (magB b) (Num.ofRat (w.base b))) 1
 
 /-- The conversion oracle the declarations determine: a ratio of magnitudes,
@@ -216,11 +219,11 @@ def cfDecl (u v : UExp Base 0) : Float := magF u / magF v
 def hundredYards : Term₀ := .mul (.lit 100) (.ucon yd)
 
 def inFeet : Term₀ := .convert hundredYards yd ft
-def inMetres : Term₀ := .convert hundredYards yd m
+def inMeters : Term₀ := .convert hundredYards yd m
 def viaFeet : Term₀ := .convert (.convert hundredYards yd ft) ft m
 
 #guard typeOf inFeet == some (.Q ft)
-#guard typeOf inMetres == some (.Q m)
+#guard typeOf inMeters == some (.Q m)
 #guard typeOf viaFeet == some (.Q m)
 
 /-- Run a closed term under the declared-conversion oracle `cfDecl`,
@@ -260,20 +263,20 @@ def reportDecl : String :=
   let fmt : Option Float → String := fun
     | some x => toString x
     | none => "<stuck>"
-  "declared conversions: yard = 3 foot, foot = 0.3048 metre\n"
+  "declared conversions: yard = 3 foot, foot = 0.3048 meter\n"
     ++ "  100 yd in ft          = " ++ fmt (runDecl inFeet) ++ " ft   (declared: 300)\n"
-    ++ "  100 yd in m, direct   = " ++ fmt (runDecl inMetres) ++ " m    (declared: 91.44)\n"
+    ++ "  100 yd in m, direct   = " ++ fmt (runDecl inMeters) ++ " m    (declared: 91.44)\n"
     ++ "  100 yd in m, via ft   = " ++ fmt (runDecl viaFeet) ++ " m    (same: paths agree)\n"
 
 #eval reportDecl
 
 /- The yard-demo numbers, checked at build time. All three comparisons are
 exact `Float` equalities and hold bit for bit: 100 yd converts to feet as
-exactly `300.0`, the direct conversion to metres equals the literal `91.44`,
+exactly `300.0`, the direct conversion to meters equals the literal `91.44`,
 and the route through feet produces the same `Float` as the direct route. -/
 #guard runDecl inFeet == some 300.0
-#guard runDecl inMetres == some 91.44
-#guard runDecl inMetres == runDecl viaFeet
+#guard runDecl inMeters == some 91.44
+#guard runDecl inMeters == runDecl viaFeet
 
 /- Both methods are exact on this integrand, so the checks are tight. -/
 #guard (run speedAt2).any (fun x => decide (Float.abs (x - 19.62) < 1e-9))

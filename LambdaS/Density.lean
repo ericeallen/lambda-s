@@ -50,7 +50,7 @@ an index shifts a unit by `d`. The invariant volume element then works out to
 
 Note the exponent. Rational weights are not a convenience here: `w = 1/2` for
 wavefunctions and `n/2` for volume elements in odd dimension both require them.
-That is now the *third* independent forcing of ℚ over ℤ, after volatility at
+That is the *third* independent forcing of ℚ over ℤ, after volatility at
 `Time^(-1/2)` and normalized wavefunctions at `m^(-3/2)`.
 -/
 

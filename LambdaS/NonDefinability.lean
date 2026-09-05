@@ -36,34 +36,38 @@ rational powers have to be given rather than derived.
 -/
 
 /-!
-## Would recursion rescue square root? (ported from the paper, in full)
+## From the paper's long form: Would recursion rescue square root?
+
+An earlier draft of the paper (the parent of tag `long-form`) carried this
+analysis in full; it is reproduced here, converted to Markdown, so the
+documentation develops what the paper now states in a sentence.
 
 We might think the result stands only because Λs lacks recursion:
 given a fixpoint construct, we could write the standard functional
 implementation of Newton's method and compute square roots. Where would it
-break? Not in the loop. The iteration x_n+1 = (x_n + a/x_n)/2 is
-unit-correct at every step: from x_n : `Q u` and a : `Q u²` we obtain
-a/x_n : `Q u`, and the mean of two quantities at `Q u` is again at
-`Q u`. The break is at the entry point. The iteration needs a seed
-x_0 : `Q u`, and within the arithmetic fragment the theorem governs, no
-term manufactures one from a : `Q u²`  that is the non-definability
+break? Not in the loop. The iteration x_(n+1) = (x_n + a/x_n)/2 is
+unit-correct at every step: from x_n : Q u and a : Q u² we obtain
+a/x_n : Q u, and the mean of two quantities at Q u is again at
+Q u. The break is at the entry point. The iteration needs a seed
+x₀ : Q u, and within the arithmetic fragment the theorem governs, no
+term manufactures one from a : Q u²; that is the non-definability
 theorem itself, and the artifact records this reading
-(`no_newton_seed  at the term grammar,
-`no_newton_seed_tm).
+(`no_newton_seed`; at the term grammar,
+`no_newton_seed_tm`).
 
 The full calculus, however, does offer a seed:
-`1_u` inhabits `Q u` in any context. Does the seed defeat the
-theorem? Run the seeded program on a = 4 m^2 and watch what the
-seed costs. Measured in meters, one step from `1_u` gives
+1_u inhabits Q u in any context. Does the seed defeat the
+theorem? Run the seeded program on a = 4 m² and watch what the
+seed costs. Measured in meters, one step from 1_u gives
 (1 + 4/1)/2 = 2.5. Measured in centimeters, the same quantity is
-40000 cm^2, and the same step gives 20000.5, which is
+40000 cm², and the same step gives 20000.5, which is
 200.005 meters. The ideal square root commutes with rescaling, since
-k^2 x = kx  iterates from a seed that itself rescaled
-would commute too. But `1_u` denotes 1 in every unit system
+√(k² x) = k√x; iterates from a seed that itself rescaled
+would commute too. But 1_u denotes 1 in every unit system
 (it names a unit, exactly what parametricity excludes,
-the semantics), so every finite run of the seeded program
+“The Price of Conversion” (`Fundamental.lean`)), so every finite run of the seeded program
 depends on the unit system. Nor does a cleverer constant help: any
-expressible seed q  1_u denotes the fixed number q
+expressible seed q · 1_u denotes the fixed number q
 everywhere, and what commuting with rescaling needs is not a better
 constant but a seed
 that transforms.
@@ -73,32 +77,32 @@ terminating runs of a recursive arithmetic program are piecewise rational
 in their inputs, and square root is not a rational function, so no
 definable program computes it exactly, whatever its seed strategy. The
 argument quantifies over the whole program, so it covers seeds tuned by
-hand, computed from a, or supplied as q  1_u for any
+hand, computed from a, or supplied as q · 1_u for any
 q.
 
 Sharper still: a scale-invariant f at this type satisfies
-f(k^2 x) = k f(x) for all k > 0, and setting x = 1 forces
-f(y) = f(1)y on the positives, so an exactly invariant definable
+f(k² x) = k f(x) for all k > 0, and setting x = 1 forces
+f(y) = f(1)√y on the positives, so an exactly invariant definable
 function, being piecewise rational, is identically zero. A relative
-stopping tolerance |x_n^2 - a|/a < , which is dimensionless
-and admissible, bounds the dependence by   an absolute
-tolerance |x_n^2 - a| <  is not even writable parametrically,
-since  : `Q u²` names a unit. That bound is the entire
-dependence. The drift analysis of the drift analysis declines terms
-containing `1_u` rather than certifying them, which is here the
+stopping tolerance |x_n² - a|/a < ε, which is dimensionless
+and admissible, bounds the dependence by ε; an absolute
+tolerance |x_n² - a| < ε is not even writable parametrically,
+since ε : Q u² names a unit. That bound is the entire
+dependence. The drift analysis of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`) declines terms
+containing 1_u rather than certifying them, which is here the
 correct answer.
 
 Alternatively the
-seed moves into the interface: at `Q u²`  `Q u`  `Q u` the method
-is definable, parametric, and invariant by the free abstraction theorem,
+seed moves into the interface: at Q u² → Q u → Q u the method
+is definable, parametric, and invariant by the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`),
 because a seed supplied as an argument rescales with everything else. So
-recursion would not invalidate the theorem  it sharpens its content.
+recursion would not invalidate the theorem; it sharpens its content.
 A constant-seeded program with a
 relative tolerance is a perfectly serviceable approximation in
-practice  its dependence on the unit system is bounded by the
- the programmer chose, the same class of dependence ordinary
+practice; its dependence on the unit system is bounded by the
+ε the programmer chose, the same class of dependence ordinary
 numerical error already imposes. The theorem's content is not that square
-roots cannot be computed but that the square root cannot be: what
+roots cannot be computed but that *the* square root cannot be: what
 the power primitive buys is exactness, a denotation that commutes
 with rescaling pointwise rather than up to tolerance.
 -/

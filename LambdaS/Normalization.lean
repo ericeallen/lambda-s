@@ -33,96 +33,89 @@ quantifier substitutes units, which leaves the skeleton alone.
 /-!
 ## From the paper's long form: Dynamics
 
-The paper's tag `long-form` carries this section in full; preserved here,
-lightly de-TeXed, so the documentation develops what the paper now
-summarizes.
-
- sectionDynamics]
-
+The paper's tag `long-form` carries this section in full; it is reproduced
+here, converted to Markdown, so the documentation develops what the paper
+now summarizes. Section references name the module that carries the
+section; theorem references name the declaration.
 
 In this section, we give Λs an operational semantics in which values
 carry their units, and we prove that the instrumentation is redundant. This
-is precisely the content of the slogan ``units are static,'' and it is a
-claim the erased semantics of Section [ref: sec:erasure] cannot state.
+is precisely the content of the slogan “units are static,” and it is a
+claim the erased semantics of “Adequacy and Erasure” (`Erasure.lean`) cannot state.
 
 The evaluator is a definitional interpreter over environments: a value
-environment for term variables, and (the only unusual part) a **unit
-environment]  eta and a **dimension environment]  rho mapping unit
+environment for term variables, and (the only unusual part) a *unit
+environment* η and a *dimension environment* δ mapping unit
 and dimension variables to ground units and dimensions. Unit application
-extends  eta; no type-level substitution occurs at run time. Values are
-measurements  langle m, u rangle (a magnitude with its unit), vectors and
+extends η; no type-level substitution occurs at run time. Values are
+measurements ⟨ m, u⟩ (a magnitude with its unit), vectors and
 matrices tagged with their spaces, and three forms of closure. The evaluator
-is partial in two ways. It is **checked]: addition of mismatched
+is partial in two ways. It is *checked*: addition of mismatched
 units, indexing outside a space, applying a map to a vector of the wrong
-space,  log of a dimensioned value, and conversion whose source annotation
+space, log of a dimensioned value, and conversion whose source annotation
 disagrees with the run-time unit all get stuck, and these stuck states are
 what the progress half of type soundness rules out. And it is
-**fuel-bounded]: closure bodies are not subterms of the applications that
-invoke them, so the interpreter consumes fuel at  beta-steps and answers
-none] when it runs out, as any definitional interpreter written in
+*fuel-bounded*: closure bodies are not subterms of the applications that
+invoke them, so the interpreter consumes fuel at β-steps and answers
+none when it runs out, as any definitional interpreter written in
 a total metalanguage such as Lean
-must [cite: aminrompf2017,owens2016,reynolds1972]. Note that fuel is spent
-**only] there: straight-line arithmetic evaluates at every bound,
+must [Amin and Rompf 2017; Owens et al. 2016; Reynolds 1972]. Note that fuel is spent
+*only* there: straight-line arithmetic evaluates at every bound,
 including zero. For example, the two-state quantum system in the artifact
 computes the expectation value of an energy operator
-H : Lin] [1,1] [J],J]] in a state
- psi : Vec] [1,1], where J] abbreviates the joule
-kg] m]^2/s]^2, as
- [
- psi.0  cdot (H  odot  psi).0  +   psi.1  cdot (H  odot  psi).1
- :   QJ]],
- ]
-with H and  psi supplied through the environment. Written first-order
+H : Lin [1,1] [J,J] in a state
+ψ : Vec [1,1], where J abbreviates the joule
+kg m²/s², as
+
+    ψ.0 · (H ⊙ ψ).0  +  ψ.1 · (H ⊙ ψ).1  :  Q J,
+
+with H and ψ supplied through the environment. Written first-order
 this way, the expectation evaluates at every bound, zero included;
-abstracted as  lambda H.  lambda  psi.  dots and applied back to the
+abstracted as λ H. λ ψ. … and applied back to the
 same two arguments, it evaluates at fuel one and is stuck at fuel zero.
-The artifact records this as `twoStateChecks] and its
-documentation develops the example in full (`LambdaS.QM]);
-Section [ref: sec:mechanization] explains where such checks run.
+The artifact records this as `twoStateChecks` and its
+documentation develops the example in full (`LambdaS.QM`);
+“Mechanization notes” (`LambdaS.lean`) explains where such checks run.
 
 Type soundness has its usual two halves, both proved. Preservation is a
-theorem about the interpreter (`eval_sound]): evaluation of a
+theorem about the interpreter (`eval_sound`): evaluation of a
 well-typed term, if it produces a value, produces one of the predicted
 type, with closures handled by a value-typing relation in the usual way.
 Progress arrives in a strengthened form: in a fueled interpreter a
-well-typed term's evaluation can return none] only by
+well-typed term's evaluation can return none only by
 exhausting its fuel, never by reaching a stuck state, and the
 normalization argument of this section shows a large enough fuel always
 exists, so a well-typed closed term does not merely avoid getting stuck,
 it terminates at a value of the predicted type
-(`eval_total]). At scalar type the normalization
+(`eval_total`). At scalar type the normalization
 argument alone suffices: that proof interprets each scalar type as
 a set of terminating terms already carrying the right unit. The
 specialization is the main theorem of this section:
 
-
-
-For every closed well-typed term e :  Qu] there exists a fuel bound n
+**Theorem (Unit soundness; `unit_soundness_total`).** For every closed well-typed term e : Q u there exists a fuel bound n
 and a magnitude m such that evaluation of e at fuel n yields exactly
- langle m, u rangle.
-
+⟨ m, u⟩.
 
 Two remarks. First, the unit in the conclusion is u itself: the run-time
 tag provably agrees with the static type, which is what makes the tag
-redundant and erasure (Section [ref: sec:erasure]) possible. Second, the fuel
-is **produced] by the theorem rather than assumed by it: strong
+redundant and erasure (“Adequacy and Erasure” (`Erasure.lean`)) possible. Second, the fuel
+is *produced* by the theorem rather than assumed by it: strong
 normalization supplies the bound, so partiality comes from the total
 metalanguage's termination checker and not from Λs, and a well-typed term
 cannot exhaust any sufficiently large bound.
 
-The normalization argument needs only Tait's method [cite: tait1967]:
+The normalization argument needs only Tait's method [Tait 1967]:
 interpret each type as a set of terminating terms and show by induction
 that every well-typed term inhabits its type's set. Girard's
-candidates [cite: girard1972] are required when quantifiers range
+candidates [Girard 1972] are required when quantifiers range
 over types themselves, as in System F. Although Λs has two
 binders' worth of polymorphism, its quantifiers range over
-**first-order algebraic data] (exponent vectors), not over types.
-Reducibility can therefore be defined by recursion on a type's **simply
-typed skeleton], the type with its unit and dimension indices erased, which
+*first-order algebraic data* (exponent vectors), not over types.
+Reducibility can therefore be defined by recursion on a type's *simply
+typed skeleton*, the type with its unit and dimension indices erased, which
 quantifier instantiation provably preserves, and the
 simply typed argument goes through unchanged. The proof is a single
 induction over terms.
-
 -/
 
 namespace LambdaS
@@ -708,10 +701,8 @@ theorem eval_total (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
 /-- **Unit soundness, unrestricted.** Every well-typed closed term of scalar type
 evaluates to a scalar carrying exactly the unit its type predicted.
 
-A since-deleted ancestor in `LambdaS.Dynamics` said this for the first-order
-arithmetic fragment, with the fuel assumed. Normalization removes both restrictions: the
-term may abstract over values, units and dimensions, and the fuel is produced by
-the proof. This is the statement that says the unit discipline has no runtime
+There is no fragment restriction and no fuel hypothesis: the term may abstract
+over values, units and dimensions, and the fuel is produced by the proof. This is the statement that says the unit discipline has no runtime
 escape hatch. -/
 theorem unit_soundness_total (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
     {u : UExp B 0} (ht : HasTy (DCtx.nil D) [] e (.Q u)) :

@@ -36,18 +36,16 @@ The theorems below are that argument, one class at a time.
 /-!
 ## From the paper's long form: Dimensioned Linear Algebra
 
-The paper's tag `long-form` carries this section in full; preserved here,
-lightly de-TeXed, so the documentation develops what the paper now
-summarizes.
-
- sectionDimensioned Linear Algebra]
-
+The paper's tag `long-form` carries this section in full; it is reproduced
+here, converted to Markdown, so the documentation develops what the paper
+now summarizes. Section references name the module that carries the
+section; theorem references name the declaration.
 
 In this section we present the unit algebra the artifact proves for the
-Vec] and Lin] types of Section [ref: sec:calculus],
-following [cite: hart1995], and the typing rule that carries it into the
+Vec and Lin types of “The Calculus” (`Typing.lean`),
+following Hart [1995], and the typing rule that carries it into the
 calculus. Hart observed that a matrix of dimensioned entries cannot
-carry arbitrary units: for (Ax)_j =  sum_i A_ji] x_i to be dimensionally
+carry arbitrary units: for (Ax)_j = ∑_i A_ji x_i to be dimensionally
 legal when x_i carries u_i and the result component carries w_j, entry
 (j,i) must carry w_j/u_i, so the array of entry units has rank one. From
 this condition he derived a taxonomy of dimensioned matrices; five of its
@@ -56,107 +54,101 @@ classes
 each license different operations. Hart worked with raw arrays, so rank
 one is a precondition his reader must verify. The artifact makes it the
 definition, and the calculus makes it a typing invariant. At the types,
-Lin]  vecu]  vecw] carries its two
+Lin u⃗ w⃗ carries its two
 spaces, and the unit of the (j,i) entry is
-defined to be w_j/u_i (`entry]). At the terms, the introduction
-rule  ftruleT-MCons] of Figure [ref: fig:typing] accepts a row only at the
-space w/ vecu], so no term constructs a matrix outside Hart's form;
-the artifact checks one-row maps (`toTime] accepted, the same
+defined to be w_j/u_i (`entry`). At the terms, the introduction
+rule T-MCons of Figure 2 of the paper (the constructors of `HasTy`) accepts a row only at the
+space w/u⃗, so no term constructs a matrix outside Hart's form;
+the artifact checks one-row maps (`toTime` accepted, the same
 map with a mistyped row rejected at build time). The operations the taxonomy governs
 (trace, determinant, factorization) belong to a numerical library above
 the calculus; what the calculus contributes is that every matrix reaching
 them, written as a literal or received as an argument, is in Hart's form.
 
-
-
-The unit of entry (j,i) of a map of type Lin]  vecu]  vecw]
-factors as w_j  cdot u_i^-1]. There is no hypothesis: every well-typed
+**Theorem (Rank-one units; `entry_rank_one`).** The unit of entry (j,i) of a map of type Lin u⃗ w⃗
+factors as w_j · u_i⁻¹. There is no hypothesis: every well-typed
 map is in Hart's rank-one form.
-
 
 Each class is then a type, and the operations it licenses are the operations
 well-typed at that type. Composition is the first class entire: the summand
-A_kj] B_ji] carries (w_k/v_j)(v_j/u_i) = w_k/u_i, independent of the
+A_kj B_ji carries (w_k/v_j)(v_j/u_i) = w_k/u_i, independent of the
 summation index and equal to the composite's entry unit
-(`entry_comp]); ``multipliable'' is not a condition to check but the
+(`entry_comp`); “multipliable” is not a condition to check but the
 only composition writable. In an endomorphism type
-Lin]  vecu]  vecu], every diagonal entry is dimensionless
-(`entry_id_diag]) and every permutation product
- prod_i A_ sigma(i) i] is dimensionless (`entry_perm_prod]), so
+Lin u⃗ u⃗, every diagonal entry is dimensionless
+(`entry_id_diag`) and every permutation product
+∏_i A_(σ(i) i) is dimensionless (`entry_perm_prod`), so
 trace and determinant need no side condition. For example, on the artifact's
-state space  vecu] = [m],  kg] cdotm]/s]]
+state space u⃗ = [m, kg·m/s]
 of position and momentum, an endomorphism has entry units
- left(1 & s]/kg]  
-kg]/s] & 1 right), and both permutation
-products, 1  cdot 1 and (s]/kg])(kg]/s]),
+with rows (1, s/kg) and (kg/s, 1), and both permutation
+products, 1 · 1 and (s/kg)(kg/s),
 equal the dimensionless 1: the determinant is a number.
 
-Hart's ``squarable'' matrices are the types
-Lin]  vecu] ( vecu] cdot w), where  vecu] cdot w scales
+Hart's “squarable” matrices are the types
+Lin u⃗ (u⃗· w), where u⃗· w scales
 every component unit by w: endomorphisms up to a scalar unit. In the
-eigenvalue equation Av =  lambda v the two sides carry u_i  cdot w and
- lambda  cdot u_i, so every eigenvalue carries w; the artifact records
-the unit identity this reading rests on, (u_i  cdot w)/u_i = w uniformly
-in the component (`eigenvalue_uom]): a continuous-time dynamics matrix in
- dotx] = Ax has type Lin]  vecu] ( vecu] cdots]^-1]),
+eigenvalue equation Av = λ v the two sides carry u_i · w and
+λ · u_i, so every eigenvalue carries w; the artifact records
+the unit identity this reading rests on, (u_i · w)/u_i = w uniformly
+in the component (`eigenvalue_uom`): a continuous-time dynamics matrix in
+ẋ = Ax has type Lin u⃗ (u⃗·s⁻¹),
 and the modes of a linear system are frequencies, by typing alone.
 
-The fourth class is maps into the **dual], the space that pairs with
-Vec]  vecu] to give plain numbers. Write  vecu]^-1] for the
+The fourth class is maps into the *dual*, the space that pairs with
+Vec u⃗ to give plain numbers. Write u⃗⁻¹ for the
 space with componentwise reciprocal units; its components carry reciprocal
-units exactly so that the pairing x^ top] y is dimensionless. A map M :
-Lin]  vecu]  vecu]^-1] has entry unit (u_j u_i)^-1],
-symmetric in its indices (`entry_dual_symm]), and the weighted norm
-x^ top] M x is dimensionless, since
-u_j  cdot (u_j u_i)^-1]  cdot u_i = 1
-(`weighted_norm_dimensionless]). If such an M factors as
-R^ top]  circ R with R : Lin]  vecu]  vecy], composability
-forces  vecy] =  vecy]^-1], and a self-dual space is
-dimensionless (`cholesky_factor_dimensionless]: the unit group is
+units exactly so that the pairing xᵀ y is dimensionless. A map M : Lin u⃗ u⃗⁻¹ has entry unit (u_j u_i)⁻¹,
+symmetric in its indices (`entry_dual_symm`), and the weighted norm
+xᵀ M x is dimensionless, since
+u_j · (u_j u_i)⁻¹ · u_i = 1
+(`weighted_norm_dimensionless`). If such an M factors as
+Rᵀ ∘ R with R : Lin u⃗ y⃗, composability
+forces y⃗ = y⃗⁻¹, and a self-dual space is
+dimensionless (`cholesky_factor_dimensionless`: the unit group is
 a ℚ-vector space,
-Section [ref: sec:units], hence torsion-free, so y_i^2 = 1 forces
+“Units and Dimensions” (`Typing.lean`), hence torsion-free, so y_i² = 1 forces
 y_i = 1). The Cholesky factor is therefore a whitening transform, a map
 carrying
 dimensioned data into dimensionless coordinates, derived rather
 than asserted.
 
-The fifth class is maps between **uniform] spaces, in
+The fifth class is maps between *uniform* spaces, in
 which every component carries one unit. A uniform space is equal, not merely
 isomorphic, to the dimensionless space scaled by its unit
-(`Space.uniform_iff_scale_triv]), and every entry of a map between
-uniform spaces carries the same unit w/u (`svd_entry_const]).
+(`Space.uniform_iff_scale_triv`), and every entry of a map between
+uniform spaces carries the same unit w/u (`svd_entry_const`).
 The singular value decomposition factors a matrix through a diagonal of
 nonnegative scale factors; sorting and truncating those factors requires
 that they share a unit, so a
 non-uniform argument to SVD is a type error, not a failed side condition.
 
-Hart lists ``left uniform'' as a separate requirement for the Moore--Penrose
+Hart lists “left uniform” as a separate requirement for the Moore–Penrose
 pseudo-inverse (the least-squares inverse of a rectangular matrix); it is
-not. Forming A^ top]  circ A, for
-A : Lin]  vecu]  vecw], asks the codomain space to be its own
+not. Forming Aᵀ ∘ A, for
+A : Lin u⃗ w⃗, asks the codomain space to be its own
 dual, and a self-dual space is dimensionless
-(`transpose_comp_direct_iff]). In general the normal
-equations, the equations A^ top] !A x = A^ top]b that least squares
-solves, need a metric g : Lin]  vecw]  vecw]^-1]: an inner
+(`transpose_comp_direct_iff`). In general the normal
+equations, the equations AᵀA x = Aᵀb that least squares
+solves, need a metric g : Lin w⃗ w⃗⁻¹: an inner
 product on the codomain, which is to say a choice of weights. A
-uniform space carries a canonical one, with constant entry u^-2]
-(`uniform_canonical_metric]): residuals all measured in meters get
-the metric with entries m]^-2], and the weighted norm of a
+uniform space carries a canonical one, with constant entry u⁻²
+(`uniform_canonical_metric`): residuals all measured in meters get
+the metric with entries m⁻², and the weighted norm of a
 residual vector is a plain number. A non-uniform space carries no canonical
 metric, and
-rightly so: least squares over components of differing units **is]
+rightly so: least squares over components of differing units *is*
 weighted least squares, and the weighting is a modeling choice.
 
-Note that Theorem [ref: thm:hart-rank-one] is also a compilation
+Note that the theorem “Rank-one units” (`entry_rank_one`) is also a compilation
 observation: the two spaces determine every entry unit, so a run-time array
 of bare magnitudes loses nothing, and the compiled evaluator hands vectors
 and matrices to BLAS as unboxed arrays. The formal license for the flat
-representation is the erasure theorem of Section [ref: sec:erasure], whose
+representation is the erasure theorem of “Adequacy and Erasure” (`Erasure.lean`), whose
 run-time matrix values carry magnitudes and a space tag only; the rank-one
 structure is why the tag suffices. Type soundness covers the literals:
 evaluating a well-typed matrix literal yields a matrix value at the
-declared spaces (`lin_soundness_total]).
-
+declared spaces (`lin_soundness_total`).
 -/
 
 namespace LambdaS

@@ -38,8 +38,9 @@ it has nothing to cancel against.
 
 Kennedy's **syntactic** route to the isomorphism (applying primitive
 isomorphisms corresponding to row and column operations until the matrix is in
-normal form) is not taken, because its witnesses need a term-level rational
-power of a value, which Λs does not have, and positivity to make it meaningful.
+normal form) is not taken, because its witnesses need positivity of the values
+they raise to rational powers (`Tm.pow` exists; a sign does not) to make them
+meaningful.
 `LambdaS.PiTheorem` proves the isomorphism (`piEquiv`) by the *semantic* route
 instead: the scaling law plus the exponent-matrix linear algebra of this file.
 So the computational content is mechanized here, and the isomorphism there.
@@ -160,8 +161,8 @@ theorem pendulum_period_independent_of_mass
 /-- The witness the pendulum system admits: the exponent vector `(0, 1, -1, 0)`,
 which is `T^2 = l / g`, solves `pendulum.mulVec X = ![0, 0, 2]`. This exhibits a
 solution of the linear system, so the hypothesis of
-`pendulum_period_independent_of_mass` (and of `pendulum_mass_absent` in
-`LambdaS.PiTheorem`) is satisfied by an actual vector rather than assumed. -/
+`pendulum_period_independent_of_mass` (the first half of `pendulum_mass_absent`
+in `LambdaS.PiTheorem`) is satisfied by an actual vector rather than assumed. -/
 theorem pendulum_period_solution : pendulum.mulVec ![0, 1, -1, 0] = ![0, 0, 2] := by
   funext v
   fin_cases v <;> simp [pendulum, Matrix.mulVec, dotProduct, Fin.sum_univ_four]

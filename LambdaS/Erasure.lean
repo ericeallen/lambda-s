@@ -10,9 +10,8 @@ import LambdaS.Adequacy
 # Erasure, at the whole language
 
 Unit elimination is a compiler optimization, not part of the semantics, and its
-burden is to preserve the semantics. An ancestor in `LambdaS.Dynamics`, since
-deleted, discharged that burden for the first-order arithmetic fragment; this
-file discharges it for the whole of Λs.
+burden is to preserve the semantics. This file discharges that burden for the
+whole of Λs, not for an arithmetic fragment.
 
 ## The erased evaluator
 
@@ -61,71 +60,65 @@ alive in the types.
 /-!
 ## From the paper's long form: Adequacy and Erasure
 
-The paper's tag `long-form` carries this section in full; it is preserved
-here, lightly de-TeXed, so the documentation develops what the paper now
-summarizes.
-
- sectionAdequacy and Erasure]
-
+The paper's tag `long-form` carries this section in full; it is reproduced
+here, converted to Markdown, so the documentation develops what the paper
+now summarizes. Section references name the module that carries the
+section; theorem references name the declaration.
 
 Two theorems remain to close the system end to end: that the
-evaluator of Section [ref: sec:dynamics] computes the denotation of
-Section [ref: sec:semantics] **at the declared conversion factors], and
+evaluator of “Dynamics” (`Normalization.lean`) computes the denotation of
+“The Price of Conversion” (`Fundamental.lean`) *at the declared conversion factors*, and
 that the units it carries at run time can be erased. The first connects the
 declarations to the compiled evaluator; the second discharges the obligation
 that an instrumented semantics incurs.
 
- subsectionAdequacy at the Declared Factors]
+### Adequacy at the Declared Factors
 
 The evaluator takes its conversion factors from an oracle (an arbitrary
 function from pairs of ground units to magnitudes), because it should not fix
 a unit system. Adequacy pins the oracle down: take it to be
-conv]_V for a valuation V, and evaluation agrees with
+conv_V for a valuation V, and evaluation agrees with
 denotation, magnitude and unit both, at every type and scope
-(`eval_adeq]). The proof relates closures behaviorally: two closures
+(`eval_adeq`). The proof relates closures behaviorally: two closures
 are related when they send related arguments to related results at every
 fuel bound, so the relation absorbs the fuel and no induction on it
 is needed. Composing
-adequacy with the declaration theory of Section [ref: sec:declarations] closes
+adequacy with the declaration theory of “Unit Declarations” (`Declare.lean`) closes
 the chain from source text to evaluator:
 
+**Theorem (Declared factors reach the compiled evaluator;
+`evalC_convert_declared`).** Let V satisfy a declaration unit b = q w relating units of
+one dimension. Then converting a well-typed e : Q b to w, evaluated
+with oracle conv_V, multiplies e's value by q.
 
-Let V satisfy a declaration unit] b = q w relating units of
-one dimension. Then converting a well-typed e :  Qb] to w, evaluated
-with oracle conv]_V, multiplies e's value by q.
-
-
-The number the evaluator multiplies by **is] the number the declaration
+The number the evaluator multiplies by *is* the number the declaration
 names, not a number equal to it up to a chain of intermediate steps. In the
 artifact the yard example runs both routes: one yard converts to three feet
-by the declared 3 (`one_yard_is_three_feet]) and to 0.9144
-meters by the forced redundant factor (`one_yard_in_metres]). The
+by the declared 3 (`one_yard_is_three_feet`) and to 0.9144
+meters by the forced redundant factor (`one_yard_in_meters`). The
 compiled binary prints 100 yards as 300 feet, as 91.44 meters by the
 direct declaration, and as 91.44 meters again through feet: path
 independence made observable.
 
- subsectionErasure, with Nothing Left to Check]
+### Erasure, with Nothing Left to Check
 
 Instrumenting run-time values with units invites the objection that it makes
 soundness trivial: the checking has merely moved to run time. The objection
 dissolves when erasure is a theorem. We define a second evaluator,
-eeval], the one a compiler would emit: values carry no unit tags,
-and **the checks are gone with the tags]. Addition does
+eeval, the one a compiler would emit: values carry no unit tags,
+and *the checks are gone with the tags*. Addition does
 not compare units, application does not compare spaces, and conversion does
 not verify its source, because there is nothing left to compare against.
 
-
-
-Whenever the instrumented evaluator produces a value, the erased evaluator,
+**Theorem (Erasure; `eeval_erase`).** Whenever the instrumented evaluator produces a value, the erased evaluator,
 on the erased environment at the same fuel, produces its erasure.
-Consequently every closed well-typed e :  Qu] evaluates under both
+Consequently every closed well-typed e : Q u evaluates under both
 evaluators to the same magnitude, at the unit u the type predicts.
 
-
-The simulation needs **no typing hypothesis]: the instrumented
+The simulation needs *no typing hypothesis*: the instrumented
 evaluator's success already witnesses that every skipped check would have
-passed. Typing enters only in the corollary (`erasure_correct]), where
-Theorem [ref: thm:unit-soundness] supplies termination and the predicted unit.
+passed. Typing enters only in the corollary (`erasure_correct`), where
+the theorem “Unit soundness” (`unit_soundness_total`, `Normalization.lean`) supplies termination and the predicted unit.
 
 Two things deliberately survive erasure, and neither is a unit tag on a
 value. The array extents survive: a matrix keeps its column count, because
@@ -133,24 +126,23 @@ a matrix
 with zero rows has no entries from which to recover its width, and
 composition past it would otherwise be undefined. No compiler erases such
 extents. (The syntax makes the same choice: the rowless matrix literal
- langle rangle_ vecu]] of Section [ref: sec:syntax] carries its domain
-space.) And the unit **environments]
+⟨⟩_(u⃗) of “Types and Terms” (`Typing.lean`) carries its domain
+space.) And the unit *environments*
 survive, because a polymorphic conversion takes its factor from a unit
 supplied at run time: the erased evaluator keeps the ground unit each
 binder received, substitutes it into the conversion's annotation, and asks
 the oracle for the factor. What remains is data the size of the scope, not
 of the payload, passed the way compilers pass
-dictionaries [cite: wadlerblott1989].
+dictionaries [Wadler and Blott 1989].
 This is the residue of conversion: units are static except at
 the finitely many scope entries polymorphic conversion must consult.
 
-Composing Theorem [ref: thm:erasure] with adequacy, the erased evaluator
-computes the denotation (`eeval_den]): at the real-number instance
+Composing the theorem “Erasure” (`eeval_erase`) with adequacy, the erased evaluator
+computes the denotation (`eeval_den`): at the real-number instance
 of the semantics,
 the compiled program's output is the mathematical meaning, with units gone
-from the values and present in the types. Section [ref: sec:mechanization]
+from the values and present in the types. “Mechanization notes” (`LambdaS.lean`)
 states what the floating-point instance adds to the trusted base.
-
 -/
 
 namespace LambdaS
@@ -476,9 +468,8 @@ the erased one to exactly that measurement's magnitude.
 
 Everything the erased evaluator no longer carries, the type system knew
 statically. This is "units are static", proved rather than asserted, with unit
-polymorphism, higher-order structure, spaces and conversion all included;
-the fragment restriction of the old statement is gone, and so is its fuel
-hypothesis, which normalization now discharges. -/
+polymorphism, higher-order structure, spaces and conversion all included, and
+with no fuel hypothesis: normalization supplies the fuel. -/
 theorem erasure_correct (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
     {u : UExp B 0} (d : HasTy (DCtx.nil D) ([] : Ctx B D 0 0) e (.Q u)) :
     ∃ (n : ℕ) (m : R),

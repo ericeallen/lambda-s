@@ -344,7 +344,7 @@ abbrev DExp (D : Type) (j : ℕ) := UExp D j
 
 /-- A **unit system**: the dimension each base unit measures.
 
-`dim` need not be injective: `metre` and `foot` share a dimension, which is what
+`dim` need not be injective: `meter` and `foot` share a dimension, which is what
 lets Λs avoid restricting compound units to one named unit per dimension. Nor
 need it land on a generator: `joule` can be declared directly at
 `Mass·Length²·Time⁻²` rather than needing a base dimension of its own, which is

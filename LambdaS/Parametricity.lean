@@ -94,7 +94,7 @@ body does, because dimensions have no magnitudes to carry.
 
 A **unit** abstraction is different, and this is where `convert` shows its cost.
 `Λu:δ. e` denotes a *family* `ℝ → Ty.den τ`, indexed by the log-magnitude the
-instantiating unit is declared to have. It has to: `Λu:Length. convert x u metre`
+instantiating unit is declared to have. It has to: `Λu:Length. convert x u meter`
 means something different depending on how big `u` is, and `conv` is what reads
 that. For convert-free terms the family is constant, which is Kennedy's theorem
 rather than our definition, and is the better place for it to live.

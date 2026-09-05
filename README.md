@@ -1,4 +1,4 @@
-# Λs: a calculus of units of measure with conversion
+# Λs: a calculus for units of measure with conversion
 
 [![CI](https://github.com/ericeallen/lambda-s/actions/workflows/ci.yml/badge.svg)](https://github.com/ericeallen/lambda-s/actions/workflows/ci.yml)
 [![Docs](https://github.com/ericeallen/lambda-s/actions/workflows/docs.yml/badge.svg)](https://ericeallen.github.io/lambda-s/)
@@ -22,11 +22,12 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is about fourteen thousand lines and stays that small because of
-one representational decision: units and dimensions are exponent vectors over
-ℚ, so substitution is a linear map, every substitution lemma is a
-reordering of finite sums, and no normalization pass over unit syntax exists
-anywhere in the system.
+The development is about eight thousand lines of definitions and proofs,
+with five and a half thousand more in documentation, and stays that small
+because of one representational decision: units and dimensions are exponent
+vectors over ℚ, so substitution is a linear map, every substitution lemma is
+a reordering of finite sums, and no normalization pass over unit syntax
+exists anywhere in the system.
 
 ## Status
 
@@ -35,14 +36,15 @@ anywhere in the system.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| theorem and lemma declarations | 406 |
+| theorem and lemma declarations | 435 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
 drift analysis, and the evaluator **at build time** through `#guard`; if a
 stated result were different, the library would not compile. The two
-numerical demonstrations whose arithmetic reaches the FFI are checked by
-the compiled binary instead, and CI asserts its output.
+demonstrations whose arithmetic reaches the BLAS stubs (the particle in a
+box and the two-state system, both in `QM.lean`) cannot run at build time,
+so the compiled binary checks them instead, and CI asserts its output.
 
 ## Build
 
@@ -57,10 +59,11 @@ lake exe lambdas       # print the worked reports with their numeric self-checks
 
 `lake exe cache get` is the slow step; with the cache in place, a full
 build of this library takes a few minutes on a laptop. The BLAS shim in
-`c/` links against Accelerate on macOS (via the Command Line Tools SDK; if
-your Mac has only Xcode, adjust `moreLinkArgs` in `lakefile.lean`) and
-falls back to portable C loops elsewhere; no separate BLAS installation is
-required.
+`c/` links against Accelerate's cblas on macOS (through the Command Line
+Tools SDK's `libblas`, since Lean's bundled linker has no framework search
+path; if your Mac has only Xcode, adjust `moreLinkArgs` in `lakefile.lean`)
+and falls back to portable C loops elsewhere; no separate BLAS installation
+is required, and the binary reports which backend it is running.
 
 ## What is in here
 
@@ -99,10 +102,10 @@ its decision procedure.
 as a corollary of parametricity, including the bridge from the term-level
 multiplicative scaling law to the log-coordinate Pi theorem (positivity is
 the hypothesis the logarithm needs). `Definability` and `NonDefinability`
-prove that roots must be primitive.
+prove that rational powers must be primitive.
 
 **Programs.** `Examples`, `QM`, and `Algorithms` are the worked examples,
-including the yard/foot/metre declarations end to end and the pendulum.
+including the yard/foot/meter declarations end to end and the pendulum.
 
 Each module carries a header docstring explaining what it is for and why it
 exists; those are the intended entry points for a reader, and the groups
@@ -121,11 +124,23 @@ sources by `scripts/verify_theorems_index.py` (CI fails on drift;
 lake env lean scripts/Audit.lean
 ```
 
-prints the axiom dependencies of every theorem the paper cites. CI builds
-the library, greps the sources for `sorry`, fails if any audited theorem
-depends on more than the three standard axioms, and runs the compiled
-binary, asserting its numeric self-checks and the declared-conversion
-report.
+prints the axiom dependencies of every declaration `THEOREMS.md` indexes
+(`scripts/verify_theorems_index.py` fails if any indexed declaration is
+missing from the audit). CI builds the library, greps the sources for
+`sorry`, fails if any audited theorem depends on more than the three
+standard axioms, and runs the compiled binary, asserting its numeric
+self-checks and the declared-conversion report.
+
+### Trusted base
+
+A reader who believes a theorem trusts the Lean kernel and the three
+axioms above. A reader who believes a number the binary prints trusts, in
+addition, Lean's compiler and runtime, the `Float` carrier, and the three C
+functions in `c/lambdas_blas.c` (`lambdas_ddot`, `lambdas_dgemv`,
+`lambdas_blas_backend`) that reach BLAS. The theorems are stated at carrier
+ℝ; nothing proved here constrains the compiled arithmetic at the points
+where IEEE arithmetic and the classical operations part ways (division by
+zero, the logarithm of a nonpositive).
 
 ## License
 

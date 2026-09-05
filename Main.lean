@@ -8,7 +8,7 @@ import LambdaS.Algorithms
 
 /-!
 The compiled entry point. `lake build lambdas` runs Lean's code generator over
-`LambdaS.Dynamics.eval` at the `Float` instance, emits C, and links a native
+`LambdaS.eval` (from `LambdaS.Dynamics`) at the `Float` instance, emits C, and links a native
 binary, so the evaluator that `unit_soundness_total` and `erasure_correct` are
 proved about is the one that executes. The exit status carries the run-time
 verdict: a failed numeric check exits nonzero, so the binary can fail a CI

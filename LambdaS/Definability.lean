@@ -19,8 +19,8 @@ the conversions that do something.
 The tempting statement ("invariant under all scalings implies definable") is
 false, and not for any interesting reason. Take `f x = π · x` at type
 `Q u → Q u`. It satisfies the scaling law for every `ψ`, since `f (k·x) = k·f x`.
-No term denotes it: literals are rational, and the arithmetic of Λs over
-rationals and the input cannot produce `π`. Definability results of that shape fail in System F
+No parametric, convert-free term denotes it: literals are rational, and the
+arithmetic of Λs over rationals and the input cannot produce `π`. Definability results of that shape fail in System F
 too, and units have nothing to do with it.
 
 So the right target is not definability in general but a completeness result for
@@ -393,7 +393,7 @@ to go but zero. Compare `Pi.eq_zero_of_appears_once`, which says the same thing
 about exponent matrices.
 
 It is also the one-variable special case of the solvability dichotomy
-(`Pi.mulScaleLaw_eq_zero_of_unsolvable`): a base unit missing from every
+(`Pi.mulScaleLaw_eq_zero_of_unsolvable`, in `LambdaS.PiTheorem`): a base unit missing from every
 argument but present in the result makes `A X = b` unsolvable with the
 annihilator being that base unit's coordinate direction, and the general
 collapse specializes to this one. -/

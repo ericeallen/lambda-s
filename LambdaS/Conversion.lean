@@ -13,8 +13,7 @@ import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 # Conversion, and why paths cannot disagree
 
 Λs has a conversion operator (`convert`, a core term constructor), and
-`design/open-questions.md` records why conversion is the right place to be
-careful: with units nameable and definable in terms of combinations of other
+conversion is the place to be careful: with units nameable and definable in terms of combinations of other
 units, a system that defines conversion by *walking a declared structure* can
 offer more than one route between two units, with no guarantee the routes
 agree.
@@ -252,7 +251,7 @@ theorem exists_linearMap_of_dependencies {K M V : Type*} [Field K]
 /-! ## Coherence: which scalings are physically meaningful
 
 Parametricity quantifies over **all** scalings, including ones that scale
-`metre` and `foot` independently. That is physical nonsense (rescale the metre
+`meter` and `foot` independently. That is physical nonsense (rescale the meter
 and the foot must follow), but it is exactly the freedom that lets Λs treat
 same-dimension units as independent generators, and so avoid restricting
 compound units to one named unit per dimension.

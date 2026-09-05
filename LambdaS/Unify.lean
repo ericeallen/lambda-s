@@ -60,9 +60,10 @@ Proved here:
 Not proved here: the **constructor**. Forward elimination and back-substitution
 are each verified, but they are not yet composed into a function
 `System B V → Option (Assign B V)` returning a most general unifier, with a
-proof that it does. Every ingredient is in place; the assembly is not. Until it
-lands, `LambdaS.Map`'s results rest on an algebra whose solver is verified in
-pieces rather than end to end.
+proof that it does. Every ingredient is in place; the assembly is not. The rest
+of the development takes from this file only `Term`, the representation of unit
+expressions (`UExp` in `LambdaS.Syntax` abbreviates `Term B (Fin k)`); no result
+elsewhere rests on the solver.
 -/
 
 namespace LambdaS

@@ -9,7 +9,7 @@ import LambdaS.Typing
 # Surface syntax
 
 Programs have so far been written as abstract syntax: `.div (.mul (.mul pi pi)
-(.mul hbar hbar)) (.mul (.mul (num 2) mass) (.mul width width))`. That is a
+(.mul hbar hbar)) (.mul (.mul (lit 2) mass) (.mul width width))`. That is a
 faithful way to describe a calculus and a terrible way to write physics.
 
 This file adds a bracket `⟪ … ⟫` with the usual arithmetic notation inside, so
@@ -46,7 +46,7 @@ syntax:max "(" lamS ")" : lamS
 syntax:max ident : lamS
 syntax:max num : lamS
 syntax:max scientific : lamS
-/-- A unit constant, as in `‹metre›`. Guillemets rather than a prefix marker
+/-- A unit constant, as in `‹meter›`. Guillemets rather than a prefix marker
 because `!` is a legal identifier character in Lean, so `u!m` would lex as one
 name. -/
 syntax:max "‹" term "›" : lamS
@@ -100,8 +100,8 @@ variable [UnitSys B D]
 
 /-- **Insert a conversion's source annotation by type inference.**
 
-The surface writes `e in v`; the core needs `convert e u v` with `u` the unit of
-`e`. This runs the verified checker to find it, so the annotation is derived
+The paper abbreviates a conversion to `e in v`; the core needs `convert e u v`
+with `u` the unit of `e`. This runs the verified checker to find it, so the annotation is derived
 rather than trusted, and `convert`'s own typing rule still checks it. -/
 def elabConvert {j k : ℕ} (Δ : DCtx D j k) (Γ : Ctx B D j k) (e : Tm B D j k)
     (v : UExp B k) : Option (Σ e' : Tm B D j k, HasTy Δ Γ e' (.Q v)) :=

@@ -76,7 +76,7 @@ that otherwise looks arbitrary.
 
 `ucon m : Q m` denotes the number `1`. The relation at `Q m` demands the two
 readings differ by `ψ(m)`, so self-relatedness would need `1 = ψ(m) · 1`, false
-for any scaling that actually moves the metre. A term that can *name* a unit can
+for any scaling that actually moves the meter. A term that can *name* a unit can
 detect a rescaling.
 
 This is why Λu has no unit constants, and why Kennedy's own "converting kg into
@@ -99,7 +99,7 @@ factor distributes over `rpow` for every real base (`mul_rpow_of_pos_left`): on
 a negative base, `rpow` is the real part of the principal complex power, and
 the cosine factor is common to both sides. The caveat carries over unchanged:
 on a negative argument the primitive's value is not a root at all
-(`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, a value the `Float` carrier now
+(`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, a value the `Float` carrier
 reproduces by the same branch), so the theorems certify covariance of that
 total function.
 -/
@@ -107,208 +107,199 @@ total function.
 /-!
 ## From the paper's long form: The Price of Conversion
 
-The paper's tag `long-form` carries this section in full; it is preserved
-here, lightly de-TeXed, so the documentation develops what the paper now
-summarizes.
-
- sectionThe Price of Conversion]
-
+The paper's tag `long-form` carries this section in full; it is reproduced
+here, converted to Markdown, so the documentation develops what the paper
+now summarizes. Section references name the module that carries the
+section; theorem references name the declaration.
 
 In this section, we develop the denotational semantics of Λs and prove
 two abstraction theorems. The first says that a parametric, convert-free
-term is invariant under **every] rescaling of the units
-(Theorem [ref: thm:abs-free]). The second says that a parametric term is
-invariant, conversions included, under the **coherent] rescalings, those
-that respect dimension (Theorem [ref: thm:abs-coherent]). The gap between the
+term is invariant under *every* rescaling of the units
+(the theorem “Abstraction, convert-free” (`fundamental_free`)). The second says that a parametric term is
+invariant, conversions included, under the *coherent* rescalings, those
+that respect dimension (the theorem “Abstraction, coherent” (`fundamental`)). The gap between the
 two is the price of conversion, and for the canonical one-conversion
 program it closes to an equivalence. Conversion is the only construct that
 reads the declared magnitude of a unit, so it is the only construct that
-loses invariance, and Theorem [ref: thm:price-exact] identifies exactly the
+loses invariance, and the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) identifies exactly the
 rescalings under which it keeps it. Note that multiplication cannot
 substitute, although conversion's semantics is multiplication by the
 magnitude ratio V(u)/V(v): a literal denotes the number the programmer
-wrote and 1]_u denotes the number 1, so every product
+wrote and 1_u denotes the number 1, so every product
 multiplies by a valuation-independent number, and no convert-free term
-denotes the factor (`convert_not_definable]). The artifact runs
-the sharpest instance: 1]_yd]]/1]_ft]]
-evaluates to the magnitude 1, at unit yd]/ft], under
-every declaration table; ask for it in] one] and the
+denotes the factor (`convert_not_definable`). The artifact runs
+the sharpest instance: 1_yd/1_ft
+evaluates to the magnitude 1, at unit yd/ft, under
+every declaration table; ask for it in one and the
 declared 3 appears, by the one construct allowed to fetch it
-(`ydPerFt], `ydPerFtIn1]). [footnote: one] is
-the SI's name: quantities of dimension one carry ``the unit one, symbol
-1,'' which the brochure calls the neutral element of any system of
-units [cite: sibrochure2019]; here it is the empty exponent vector. The
-object-oriented design [cite: allen2004] named it  textsfUnity].] The engine of all three results is
-the family semantics of Section [ref: sec:semantics].1: unit abstraction
+(`ydPerFt`, `ydPerFtIn1`) (see note 1). The engine of all three results is
+the family semantics of “Denotation over Derivations” below: unit abstraction
 denotes a family indexed by magnitude, and conversion is what makes the
 family vary.
 
- subsectionDenotation over Derivations]
+> **Note 1.** one is
+> the SI's name: quantities of dimension one carry “the unit one, symbol
+> 1,” which the brochure calls the neutral element of any system of
+> units [BIPM 2019]; here it is the empty exponent vector. The
+> object-oriented design [Allen et al. 2004] named it `Unity`.
+
+### Denotation over Derivations
 
 Units are erased from the semantic universe: a quantity denotes a real
 number, a vector a function from indices to reals, and a unit abstraction
- Lambdau]:]d. e denotes a **family] ℝ  to
- den tau]], indexed by the log-magnitude the bound unit is declared to
-have (here  tau ranges over the types of Figure [ref: fig:syntax], and
- den tau]] is its set of denotations). The family is the case that did
+Λu:d. e denotes a *family* ℝ → ⟦τ⟧, indexed by the log-magnitude the bound unit is declared to
+have (here τ ranges over the types of Figure 1 of the paper (the `UExp`, `DExp`, `Ty`, and `Tm` inductives of `Syntax.lean`), and
+⟦τ⟧ is its set of denotations). The family is the case that did
 not exist in prior mechanizations. It must exist:
- Lambdau]:]Length].  cvtx]u]]meter]]
-means something different depending on how big u] is, and in a
+Λu:Length. convert x u meter
+means something different depending on how big u is, and in a
 calculus without conversion there is nothing for the family to depend on.
-That is why the mechanized semantics of [cite: kennedy2008], which discards
-units entirely (``units ignored''), could interpret a unit abstraction as
+That is why the mechanized semantics of Kennedy [2008], which discards
+units entirely (“units ignored”), could interpret a unit abstraction as
 just its body, and ours cannot: the body's meaning depends on the bound
 unit's magnitude. We index
-by the **log]-magnitude because taking logs turns the multiplicative
+by the *log*-magnitude because taking logs turns the multiplicative
 rescaling action into translation: unit abstraction then denotes a family
 over an additive parameter, the invariance theory becomes linear algebra,
-and the Pi theorem of Section [ref: sec:pi] consumes it in this
+and the Pi theorem of “Dimensional Analysis” (`PiTheorem.lean`) consumes it in this
 form.
 
-The denotation  den mathcalD]]V] is defined by recursion on typing
-derivations  mathcalD] (which Theorem [ref: thm:completeness] makes a
+The denotation ⟦𝒟⟧_V is defined by recursion on typing
+derivations 𝒟 (which the theorem “Completeness” (`check_eq`, `Typing.lean`) makes a
 recursion on terms), parameterized by a
 valuation V giving each base unit its declared magnitude. Valuations,
 like
 rescalings, are represented logarithmically, so family indices live in log
 space. Exactly two clauses consult V: conversion multiplies by
-conv]_V(u,v), and unit application samples a family at the
+conv_V(u,v), and unit application samples a family at the
 log-magnitude V assigns the instantiating unit; only conversion reads V
 as a number that reaches the computed value. Hence a closed convert-free
 term of quantity type denotes the same number
-under every valuation (`den_eq_of_convertFree]; at higher types,
-`den_indep]). A program
+under every valuation (`den_eq_of_convertFree`; at higher types,
+`den_indep`). A program
 that does not convert cannot tell you how big a meter is.
 
- subsectionThe Two Abstraction Theorems]
+### The Two Abstraction Theorems
 
-A **rescaling]  psi assigns each base unit and each unit variable a
+A *rescaling* ψ assigns each base unit and each unit variable a
 positive factor, extended homomorphically; it acts on quantity types by
-x  mapsto  psi(u) cdot x. For example, let  psi send meter]
-to 0.9144  cdot meter] and fix every other base unit (the yard
+x ↦ ψ(u)· x. For example, let ψ send meter
+to 0.9144 · meter and fix every other base unit (the yard
 rescaling: 0.9144 is the artifact's declared magnitude for the yard).
-Then  psi multiplies every value of type  Qmeter]] by
-0.9144, every value of type  Qmeter]/second]] by
-0.9144 as well, and every value of type  Qmeter]^2] by
-0.9144^2: the factor for a composite unit is the base factor raised to
-the unit's exponent. The invariance proofs use a logical relation  Rel,
-which relates each value of type  Qu] to its rescaling
-by  psi(u); it is standard at first order. At
- uallu]]d] tau it relates two families at every factor the bound
+Then ψ multiplies every value of type Q meter by
+0.9144, every value of type Q meter/second by
+0.9144 as well, and every value of type Q meter² by
+0.9144²: the factor for a composite unit is the base factor raised to
+the unit's exponent. The invariance proofs use a logical relation ℛ,
+which relates each value of type Q u to its rescaling
+by ψ(u); it is standard at first order. At
+∀u:d. τ it relates two families at every factor the bound
 variable might receive, with the rescaled side read at a shifted index:
 families are indexed by log-magnitude, and rescaling the instantiating unit
-by k translates that index by  log k. The relation therefore compares
+by k translates that index by log k. The relation therefore compares
 one
-family at a with the other at a +  log psi(u]). We say a
-term is **parametric] when it contains no unit constant
-1]_u.
+family at a with the other at a + logψ(u). We say a
+term is *parametric* when it contains no unit constant
+1_u.
 
-
-
-Every parametric, convert-free term is  Rel-related to itself under every
-rescaling  psi: rescaling the inputs by their units' factors rescales the
+**Theorem (Abstraction, convert-free; `fundamental_free`).** Every parametric, convert-free term is ℛ-related to itself under every
+rescaling ψ: rescaling the inputs by their units' factors rescales the
 output by its unit's factor.
 
-
-This is Kennedy's theorem  citeyearparkennedy1997], here at a calculus with
+This is Kennedy's theorem [1997], here at a calculus with
 vectors, linear maps, and both quantifiers. We call the theorem's equation,
-rescaled inputs to rescaled output, a term's **scaling law]. The side
+rescaled inputs to rescaled output, a term's *scaling law*. The side
 condition
-**parametric] excludes exactly one construct. Unit constants are
+*parametric* excludes exactly one construct. Unit constants are
 excluded because
-1]_u :  Qu] denotes the number 1, and self-relatedness would
-demand 1 =  psi(u): a term that can **name] a unit can detect a
+1_u : Q u denotes the number 1, and self-relatedness would
+demand 1 = ψ(u): a term that can *name* a unit can detect a
 rescaling! This is why Kennedy's calculus has no unit constants, and why his
 own kilograms-to-pounds example rewrites the program's literals rather than
 its environment; Λs keeps the construct because a language needs it,
-and the side condition is the cost. Zero alone is scale-invariant, [footnote: Whether there is one zero or many is
-the subject of Russell's Chapter XXII  citep[ S S175--176]russell1903].
-Treating magnitudes that are distances, he observes that zero admits a
-per-class definition (identity with a member of the class the distances
-relate), so that each kind of magnitude gets its own zero. He judges the
-definition clear and rejects it anyway: zero has a meaning common to all
-classes, and a zero distance is not really the concept of identity. The limit
-construction he prefers instead makes zero single and, in his phrase, ``not
-one among the magnitudes whose zero it is.'' Λs takes both sides, and
-the seam is exactly the one between types and semantics: 0 :  Qm]]
-and 0 :  Qs]] are distinct terms at distinct types, but they
-denote the same real number, the unique fixed point of every rescaling. The
-action is free on the nonzero reals and trivial at 0; this is Russell's
-remark in algebraic form. That is why
-Theorem [ref: thm:price-exact] must assume a nonzero denotation: at zero the
-conversion factor is unobservable, so a converting program and a parametric
-one agree. The affine scales [cite: allen2004] (temperatures, timestamps,
-where zero is not preserved) are the case in which Russell's per-class
-answer is the right one; see Section [ref: sec:conclusion]. His zero
-quantities require 0 of any unit to equal them, and [cite: atkey2013]'s
-relational interpretation acquires an explicit x = 0 disjunct for
-polymorphic zero.] and we meet the exception again in
-Theorem [ref: thm:price-exact] and throughout Section [ref: sec:twist].
+and the side condition is the cost. Zero alone is scale-invariant (see note 2), and we meet the exception again in
+the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) and throughout “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`).
+
+> **Note 2.** Whether there is one zero or many is
+> the subject of Russell's Chapter XXII [§§175–176, Russell 1903].
+> Treating magnitudes that are distances, he observes that zero admits a
+> per-class definition (identity with a member of the class the distances
+> relate), so that each kind of magnitude gets its own zero. He judges the
+> definition clear and rejects it anyway: zero has a meaning common to all
+> classes, and a zero distance is not really the concept of identity. The limit
+> construction he prefers instead makes zero single and, in his phrase, “not
+> one among the magnitudes whose zero it is.” Λs takes both sides, and
+> the seam is exactly the one between types and semantics: 0 : Q m
+> and 0 : Q s are distinct terms at distinct types, but they
+> denote the same real number, the unique fixed point of every rescaling. The
+> action is free on the nonzero reals and trivial at 0; this is Russell's
+> remark in algebraic form. That is why
+> the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) must assume a nonzero denotation: at zero the
+> conversion factor is unobservable, so a converting program and a parametric
+> one agree. The affine scales [Allen et al. 2004] (temperatures, timestamps,
+> where zero is not preserved) are the case in which Russell's per-class
+> answer is the right one; see the paper's conclusion. His zero
+> quantities require 0 of any unit to equal them, and Atkey et al. [2013]'s
+> relational interpretation acquires an explicit x = 0 disjunct for
+> polymorphic zero.
 
 Powers, which Kennedy's standing positivity assumption existed to police,
 need no exclusion. For a positive factor k, the identity
-(k cdot x)^q] = k^q] cdot x^q] holds at **every] real x
+(k· x)^q = k^q· x^q holds at *every* real x
 under the artifact's semantics
-(`mul_rpow_of_pos_left]), where a power of a negative argument
+(`mul_rpow_of_pos_left`), where a power of a negative argument
 denotes the real part of the principal complex power,
-|x|^q] cos(q pi). On negative
-arguments that value is not a root: (-8)^1/3] denotes 1. The theorem
+|x|^qcos(qπ). On negative
+arguments that value is not a root: (-8)^(1/3) denotes 1. The theorem
 therefore certifies covariance of the total function, not root-ness. The
 two concerns are separable: covariance is what abstraction theorems trade
 in, and no real semantics ever offered root-ness on negatives. And
 the artifact instantiates the strengthened statement at
- lambda x:] Qu  cdot u].  sqrtx] (`sqrt_scales]).
+λ x:Q u · u. √x (`sqrt_scales`).
 
-For terms that **do] convert, invariance under all rescalings is false
+For terms that *do* convert, invariance under all rescalings is false
 and should be: converting meters to feet multiplies by a specific declared
 number, and a rescaling that moves the meter but not the foot changes the
 answer. The right class is the rescalings that cannot separate
 interchangeable units. Recall that a rescaling is coherent when it factors
 through dimension; the artifact carries the factoring as data: a
-coherent rescaling of units **is] a rescaling  Phi of dimensions, read
-back through  dimOf. The two readings agree: a rescaling that cannot
-separate interchangeable units factors through some  Phi, and conversely
-(`coherent_iff_factors]). The relation for coherent rescalings,  RelCo_ Phi,
-is  Rel with one change, at the quantifier: the factor the bound unit
-receives is not quantified over but **determined], namely  Phi(d)
-under  Lambdau]:]d. Coherence is not an assumption imposed at
+coherent rescaling of units *is* a rescaling Φ of dimensions, read
+back through dim. The two readings agree: a rescaling that cannot
+separate interchangeable units factors through some Φ, and conversely
+(`coherent_iff_factors`). The relation for coherent rescalings, ℛᶜᵒ_Φ,
+is ℛ with one change, at the quantifier: the factor the bound unit
+receives is not quantified over but *determined*, namely Φ(d)
+under Λu:d. Coherence is not an assumption imposed at
 the binder: the binder's dimension annotation determines the factor. The
 two relations agree at quantifier-free types.
 
-
-
-Every parametric term, conversions included, is  RelCo_ Phi-related to
-itself for every dimension rescaling  Phi.
-
+**Theorem (Abstraction, coherent; `fundamental`).** Every parametric term, conversions included, is ℛᶜᵒ_Φ-related to
+itself for every dimension rescaling Φ.
 
 The artifact exercises the theorem at a rescaling that doubles every
 length, applied to a meters-to-feet conversion, the case in which
-coherence has content (`fundamental_at_moving_rescale]).
+coherence has content (`fundamental_at_moving_rescale`).
 
-Theorems [ref: thm:abs-free] and [ref: thm:abs-coherent] bound the cost of
+The theorems “Abstraction, convert-free” (`fundamental_free`) and the theorem “Abstraction, coherent” (`fundamental`) bound the cost of
 conversion from above. A converse is needed to show the bound is tight, and
 the converse holds per term and per rescaling rather than in aggregate. It
-is stated over  Rel, since the program's type is quantifier-free, where
+is stated over ℛ, since the program's type is quantifier-free, where
 the two relations agree:
 
-
-
-For the one-conversion program  cvtx]u]v], its sole free variable
-x:] Qu] given any nonzero value by the environment, and any rescaling
- psi: the relation holds at  psi if and only if  psi(u) =  psi(v).
-
+**Theorem (Single-conversion invariance; `cvt_rel_iff_coherent`).** For the one-conversion program convert x u v, its sole free variable
+x:Q u given any nonzero value by the environment, and any rescaling
+ψ: the relation holds at ψ if and only if ψ(u) = ψ(v).
 
 Note that the nonzero hypothesis is necessary: it is the zero exception
 again. Beyond it there is no slack. A conversion that actually converts is
 detectable, in that some rescaling changes what the program computes; a
 rescaling that agrees on the converted pair is exactly one under which
 nothing changes. Conversion is not definable from the parametric constructs
-(no convert-free term denotes it: `convert_not_definable]), and the
-coherence hypothesis of Theorem [ref: thm:abs-coherent] is forced by the
+(no convert-free term denotes it: `convert_not_definable`), and the
+coherence hypothesis of the theorem “Abstraction, coherent” (`fundamental`) is forced by the
 term rather than by the proof: the rescalings under which a conversion is
-invariant are exactly those with  psi(u) =  psi(v), which is the equation
+invariant are exactly those with ψ(u) = ψ(v), which is the equation
 every coherent rescaling satisfies at a same-dimension pair.
-
 -/
 
 namespace LambdaS
@@ -416,8 +407,8 @@ def RelEnv : (Γ : Ctx B D j k) → Scaling B k → Env Γ → Env Γ → Prop
 
 `Rel` at `∀u:δ. τ` quantifies over *every* scaling of the bound variable. That is
 right for convert-free terms, which cannot observe one, and wrong as soon as
-conversion is admitted: `Λu:Length. convert x u metre` is related to itself only
-when the bound unit is rescaled the way `metre` is.
+conversion is admitted: `Λu:Length. convert x u meter` is related to itself only
+when the bound unit is rescaled the way `meter` is.
 
 `RelCo` is that relation. It is indexed by a scaling of **dimensions**, which is
 what a coherent rescaling really is, and then the `∀` case needs no side
@@ -751,7 +742,7 @@ theorem relEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ψ : Scaling B k) (ρ ρ' : E
 
 /-! ## Independence of the valuation
 
-A convert-free term cannot read how big a metre is. Stating that as *"it denotes
+A convert-free term cannot read how big a meter is. Stating that as *"it denotes
 the same thing under `V` and `V'`"* is too naive once unit abstraction is in the
 language: at `e[μ]` the two readings consult the family at `V μ` and at `V' μ`,
 which are different points. For a `Λu` body the family is constant and nothing
@@ -925,7 +916,7 @@ theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
 
 omit [Fintype D] in
 /-- **The valuation is invisible to closed convert-free terms.** A program that
-does not convert cannot tell you how big a metre is.
+does not convert cannot tell you how big a meter is.
 
 This is the precise sense in which units are static, and it is stated for closed
 terms because that is where it is true: an open term may have a free variable of
@@ -1301,7 +1292,7 @@ theorem.
 
 Rescaling every argument by the scale factor of its unit rescales the result by
 the scale factor of *its* unit. This is the hypothesis the Pi theorem consumes,
-now supplied by an actual well-typed term rather than assumed.
+supplied by an actual well-typed term rather than assumed.
 
 Stated for **convert-free** terms, and that restriction is what makes the Pi
 theorem's unrestricted quantification over scalings legitimate: a term that
@@ -1396,14 +1387,14 @@ decision.
 
 A term that names a unit is not scale-invariant, and it *should not be*. `1.3 m`
 is a definite physical quantity, but the number `1.3` is its magnitude *in
-metres*. Rescale the metre and the same quantity has a different magnitude, so
+meters*. Rescale the meter and the same quantity has a different magnitude, so
 the numeral must change with it, which is exactly why Kennedy's kg-to-lb
 example rewrites `1.0<kg>` as `2.2<lb>` rather than leaving the program alone.
 
 The fix is to stop treating unit constants as *term* constructors and treat them
 as **environment entries**: precisely Kennedy's "pervasive environment", now
-with a reason rather than a convention. A program mentioning metres is a program
-with a free variable standing for *one metre*, and it is scale-invariant
+with a reason rather than a convention. A program mentioning meters is a program
+with a free variable standing for *one meter*, and it is scale-invariant
 relative to environments that scale that variable along with everything else.
 
 Nothing new is needed: `ucon u` compiles to a variable in a context prefixed by

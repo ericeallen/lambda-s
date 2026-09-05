@@ -10,17 +10,17 @@ import LambdaS.Notation
 /-!
 # A real computation: quantum mechanics, end to end
 
-This module is the paper's worked example, developed in full where the
-paper keeps the ideas: the particle in a box exercises the scalar
-fragment and forces the rational exponents, the two-state system
-exercises spaces, linear maps, and the compiled path down to BLAS, and
-one example thus crosses four layers of the development: rational
-exponents in the statics, fuel in the dynamics, parametricity at the
-interface, and erasure on the path to the machine.
+This module runs quantum mechanics through the calculus (the paper cites
+its `twoStateChecks` as the fuel example and leaves the rest here): the
+particle in a box exercises the scalar fragment and forces the rational
+exponents, the two-state system exercises spaces, linear maps, and the
+compiled path down to BLAS, and one example thus crosses four layers of the
+development: rational exponents in the statics, fuel in the dynamics,
+parametricity at the interface, and erasure on the path to the machine.
 
 ## The particle in a box
 
-Λs was argued for; this file runs it. The evaluator from `LambdaS.Dynamics` is
+The evaluator from `LambdaS.Dynamics` is
 generic in its numeric carrier, so the *same* definition that
 `unit_soundness_total` and `erasure_correct` are proved about is instantiated
 here at `Float` and
@@ -138,7 +138,7 @@ def amplitude : Term₀ := ⟪ √2 (2 / width) ⟫
 directly, at any rational exponent the unit grammar can absorb. -/
 #guard typeOf ⟪ (2 / width) ^ (1/2 : ℚ) ⟫ == some (.Q (Term.rpow (Term.div 1 m) (1 / 2)))
 #guard typeOf ⟪ width ^ (3/2 : ℚ) ⟫ == some (.Q (Term.rpow m (3/2)))
-#guard (Term.rpow (Term.div (1 : UExp Base 0) m) (1 / 2)).base .metre == (-1 / 2 : ℚ)
+#guard (Term.rpow (Term.div (1 : UExp Base 0) m) (1 / 2)).base .meter == (-1 / 2 : ℚ)
 
 /-- `|ψ|²` is a probability **density**, at `m⁻¹`. -/
 def density : Term₀ := ⟪ amplitude * amplitude ⟫

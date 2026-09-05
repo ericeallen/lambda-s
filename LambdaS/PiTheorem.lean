@@ -52,14 +52,12 @@ shelf). The rational-exponent decision keeps paying in places it was not made fo
 /-!
 ## From the paper's long form: Dimensional Analysis
 
-The paper's tag `long-form` carries this section in full; preserved here,
-lightly de-TeXed, so the documentation develops what the paper now
-summarizes.
+The paper's tag `long-form` carries this section in full; it is reproduced
+here, converted to Markdown, so the documentation develops what the paper
+now summarizes. Section references name the module that carries the
+section; theorem references name the declaration.
 
- sectionDimensional Analysis]
-
-
-The abstraction theorems of Section [ref: sec:semantics] have two further
+The abstraction theorems of “The Price of Conversion” (`Fundamental.lean`) have two further
 consequences, which the programmer never asks for but a numerical
 library wants: a non-definability theorem and the Pi theorem of dimensional
 analysis.
@@ -68,170 +66,166 @@ First, non-definability. For any nontrivial u
 (some base exponent nonzero), no term of Λs built
 from
 variables, rational literals, and the field operations computes square root
-at type  Qu^2]  to  Qu]
-(`sqrt_not_definable_tm]), so the powers of
-Section [ref: sec:calculus] must be primitive. (The full calculus does
+at type Q u² → Q u
+(`sqrt_not_definable_tm`), so the powers of
+“The Calculus” (`Typing.lean`) must be primitive. (The full calculus does
 inhabit the type, by naming a unit,
- lambda x. 1]_u; the Newton paragraph below prices that seed.) Note that the scaling law
+λ x. 1_u; the Newton paragraph below prices that seed.) Note that the scaling law
 alone cannot deliver this. Applied to a hypothetical
-f :  Qu^2]  to  Qu], Theorem [ref: thm:abs-free] gives
-f(k^2 x) = k  cdot f(x), an equation square root satisfies; parametricity
+f : Q u² → Q u, the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) gives
+f(k² x) = k · f(x), an equation square root satisfies; parametricity
 says that any such f is a constant multiple of square root, not that none
 exists. What excludes the function is a span argument on the syntax. From an
-argument at u^2 and dimensionless literals, closure under the field
-operations reaches exactly the integer powers of u^2: multiplication and
+argument at u² and dimensionless literals, closure under the field
+operations reaches exactly the integer powers of u²: multiplication and
 division add and subtract exponent vectors, so the reachable units form the
- mathbbZ]-span of the argument's unit, and u = (u^2)^1/2] requires the
+ℤ-span of the argument's unit, and u = (u²)^(1/2) requires the
 ℚ-span. For such u, the type
- Qu^2]  to  Qu] is therefore uninhabited by arithmetic terms, a
+Q u² → Q u is therefore uninhabited by arithmetic terms, a
 conclusion stronger than uncomputability
-(`sqrt_not_definable], over a self-contained arithmetic grammar;
-`arith_of_hasTy] lifts the statement to the
+(`sqrt_not_definable`, over a self-contained arithmetic grammar;
+`arith_of_hasTy` lifts the statement to the
 calculus's own typing derivations). The primitive is also a permitted one:
-powers are parametric, so Theorem [ref: thm:abs-free] covers them
-(`sqrt_scales], instantiated at  lambda x.  sqrtx]). [cite: atkey2013]
+powers are parametric, so the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) covers them
+(`sqrt_scales`, instantiated at λ x. √x). Atkey et al. [2013]
 prove stronger results of this kind (cube root remains undefinable even
 given square root); we include ours because the exponent-vector
 representation makes it a two-line span argument, and because it justifies
 a constructor of Λs.
 
 Recursion would not rescue definability. Newton's iteration
-x_n+1] = (x_n + a/x_n)/2 is unit-correct at every step; what it lacks
-is the seed x_0 :  Qu], and manufacturing one from a :  Qu^2] is
-the non-definability theorem itself (`no_newton_seed]; at the
-term grammar, `no_newton_seed_tm]). The full calculus offers
-the seed 1]_u, at a price the theory names: every finite run
+x_(n+1) = (x_n + a/x_n)/2 is unit-correct at every step; what it lacks
+is the seed x₀ : Q u, and manufacturing one from a : Q u² is
+the non-definability theorem itself (`no_newton_seed`; at the
+term grammar, `no_newton_seed_tm`). The full calculus offers
+the seed 1_u, at a price the theory names: every finite run
 of the constant-seeded program depends on the unit system, boundedly
 under a relative tolerance (an absolute one is not even writable
 parametrically), while a seed passed as an argument rescales with
 everything else and restores parametricity wholesale. The artifact's
 documentation develops the full analysis, seeds, tolerances, and the
 piecewise-rational argument that no recursive program computes square
-root exactly (module `LambdaS.NonDefinability]). Its content
-is that **the] square root cannot be computed: what the power
+root exactly (module `LambdaS.NonDefinability`). Its content
+is that *the* square root cannot be computed: what the power
 primitive buys is exactness, a denotation that commutes with rescaling
 pointwise rather than up to tolerance.
 
 Second, the Pi theorem, which we motivate with its classical example before
 stating it. What determines the period of a pendulum? List everything the
 period could plausibly depend on: the mass m of the bob, the length
- ell of the arm, the gravitational acceleration g, and the release
-amplitude  theta, so that T = f(m,  ell, g,  theta) for some unknown
+ℓ of the arm, the gravitational acceleration g, and the release
+amplitude θ, so that T = f(m, ℓ, g, θ) for some unknown
 f. Dimensional analysis extracts the form of f from the units alone,
 before any mechanics. Record the exponents of each argument's unit over the
 base units of mass, length, and time as the columns of a matrix (g is an
-acceleration, at L]/T]^2; the amplitude is an angle,
+acceleration, at L/T²; the amplitude is an angle,
 dimensionless, hence a zero column):
- [
-A  =   bordermatrix
-           & m &  ell & g  &  theta  cr
-M] & 1 & 0    & 0  & 0       cr
-L] & 0 & 1    & 1  & 0       cr
-T] & 0 & 0    & -2 & 0       cr
-]
- ]
+
+|   | m | ℓ | g | θ |
+|---|---|---|---|---|
+| M | 1 | 0 | 0 | 0 |
+| L | 0 | 1 | 1 | 0 |
+| T | 0 | 0 | -2 | 0 |
+
 The matrix has rank 3, so the dimensionless power products
-m^c_1] ell^c_2]g^c_3] theta^c_4] of the arguments, whose exponent
+m^c₁ℓ^c₂g^c₃θ^c₄ of the arguments, whose exponent
 vectors form the kernel of A, make up a space of dimension 4 - 3 = 1;
-solving Ac = 0 forces c_1 = c_2 = c_3 = 0 and leaves c_4 free, so the
+solving Ac = 0 forces c₁ = c₂ = c₃ = 0 and leaves c₄ free, so the
 amplitude is the only dimensionless combination of the arguments. The
 output T has exponent vector b = (0, 0, 1), and AX = b has the
-solution X = (0,  tfrac1]2], - tfrac1]2], 0): the power product
- ell^1/2] g^-1/2] =  sqrt ell/g]. The Pi theorem says that these two
+solution X = (0, 1/2, -1/2, 0): the power product
+ℓ^(1/2) g^(-1/2) = √(ℓ/g). The Pi theorem says that these two
 computations determine f up to one unknown function of one variable:
- [
-T  =   sqrt ell/g]  cdot G( theta).
- ]
-Equivalently, the ratio T sqrtg/ ell] is the problem's single
+
+    T  =  √(ℓ/g) · G(θ).
+
+Equivalently, the ratio T√(g/ℓ) is the problem's single
 dimensionless invariant. Note what the mass row has already decided: mass
 occurs in exactly one argument and not in the output, so every solution of
 AX = b has zero in the mass coordinate, and so does every kernel vector;
 f cannot depend on the bob's mass. The period's independence from
 mass, a fact usually credited to the mechanics, follows from the type of
 f. Mechanics contributes only the function G, with
-G( theta)  to 2 pi in the small-amplitude limit.
+G(θ) → 2π in the small-amplitude limit.
 
-The general statement is the scaling law of Theorem [ref: thm:abs-free]
+The general statement is the scaling law of the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`)
 handed to linear algebra, and the artifact carries the handoff as theorems.
 For a first-order program (n scalar arguments, one scalar result),
 instantiating the scaling law at every rescaling of the unit symbols in
 scope, base units and unit variables alike, says that
 multiplying each argument by its unit's power product of factors multiplies
-the result by its own (`den_mulScaleLaw]). The program's
+the result by its own (`den_mulScaleLaw`). The program's
 dependence on the unit system is then governed by the
 exponent matrix A (one row per unit symbol, one column per argument)
 together with the output's exponent vector b; we call the pair (A, b)
-the program's **signature]. Taking logarithms turns
+the program's *signature*. Taking logarithms turns
 the multiplicative action into translation
-(`scaleLaw_of_mulScaleLaw]); the logarithm of the output needs
+(`scaleLaw_of_mulScaleLaw`); the logarithm of the output needs
 positivity, but the positivity belongs to that presentation, not to the
 theorem, and the factorization below is stated without it. The invariance theory becomes linear
 algebra: the invariants of the
 translation action are exactly the dimensionless power products of the
-arguments, a space of dimension n - rank] A, and every function
+arguments, a space of dimension n - rank A, and every function
 obeying the scaling law factors through them.
 
-
-Let (A, b) be a signature whose output's exponents are solvable from the
+**Theorem (Pi; `pi_theorem`).** Let (A, b) be a signature whose output's exponents are solvable from the
 arguments (AX = b for some X). A function obeying its scaling law
 factors as an explicit power product times a function invariant under every
 rescaling; the invariant monomials form a space of dimension
-n - rank] A, and the factorization is an equivalence.
-
+n - rank A, and the factorization is an equivalence.
 
 The artifact states the clauses separately:
-`invariant_iff_dimensionless] characterizes the invariant
-monomials, `pi_count] counts them,
-`mulScaleLaw_factorization] gives the factorization in
+`invariant_iff_dimensionless` characterizes the invariant
+monomials, `pi_count` counts them,
+`mulScaleLaw_factorization` gives the factorization in
 multiplicative coordinates with an invariant factor of arbitrary sign
 (the zero function is the factorization at H = 0), and
-`piEquiv] with `piEquivSigned] package the
+`piEquiv` with `piEquivSigned` package the
 equivalences, in additive and in signed multiplicative form.
 Solvability of AX = b is half of a dichotomy
-(`mulScaleLaw_dichotomy]): when no X solves it, some
+(`mulScaleLaw_dichotomy`): when no X solves it, some
 combination of rescalings fixes every argument while moving the output,
 so the only function obeying the scaling law is identically zero
-(`mulScaleLaw_eq_zero_of_unsolvable]; at the term level, its
-one-variable case is `scaleLaw_forces_zero]). An
+(`mulScaleLaw_eq_zero_of_unsolvable`; at the term level, its
+one-variable case is `scaleLaw_forces_zero`). An
 unsolvable signature is dimensional inconsistency.
 
-For the pendulum, the power product is  sqrt ell/g], the invariant space
+For the pendulum, the power product is √(ℓ/g), the invariant space
 is spanned by the amplitude, and the factorization is the displayed
-equation above. The artifact runs this instance: `pendulum]
-is the 3  times 4 matrix above, stated for the squared period (output
+equation above. The artifact runs this instance: `pendulum`
+is the 3 × 4 matrix above, stated for the squared period (output
 exponents (0, 0, 2), solution (0, 1, -1, 0)), and
-the mass conclusion follows (`pendulum_mass_absent]): a base unit
+the mass conclusion follows (`pendulum_mass_absent`): a base unit
 occurring in
 exactly one argument and absent from the output forces that argument's
 exponent to zero in every solution
-(`solution_eq_zero_of_appears_once])
-and in every invariant (`eq_zero_of_appears_once]). Note also what the
+(`solution_eq_zero_of_appears_once`)
+and in every invariant (`eq_zero_of_appears_once`). Note also what the
 theorem offers a programmer: it bounds what any unit-polymorphic
 first-order function can depend on, an interface-narrowing result that
 costs nothing. Whatever a function of the pendulum's signature computes, it
-can depend on its four arguments only through  sqrt ell/g] and  theta.
+can depend on its four arguments only through √(ℓ/g) and θ.
 
-The counting is Buckingham's  citeyearparbuckingham1914], in the modern
+The counting is Buckingham's [1914], in the modern
 rank formulation, obtained here as a
 corollary of parametricity: the reading Kennedy
-proposed [cite: kennedy1997] and, for one variable, [cite: atkey2013]
+proposed [Kennedy 1997] and, for one variable, Atkey et al. [2013]
 mechanized. Ours is the general n-variable statement with the rank
 condition, mechanized and connected to the calculus; we claim the
 mechanization, not the mathematics. The
-standing hypotheses are Theorem [ref: thm:abs-free]'s: the
+standing hypotheses are the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`)'s: the
 program must be parametric (no unit constants) and convert-free;
 solvability's failure is the dichotomy's other half, settled above. Neither
 syntactic hypothesis is redundant. A program that converts obeys the
 scaling law only for coherent rescalings, and the Pi argument quantifies
-over all rescalings; the drift analysis of Section [ref: sec:twist]
+over all rescalings; the drift analysis of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`)
 suggests the sharper hypothesis, drift-free rather than convert-free,
 and we leave that weakening to future work
-(Section [ref: sec:conclusion]). Parametricity cannot be dropped even for
+(the paper's conclusion). Parametricity cannot be dropped even for
 convert-free
-terms:  lambda x. (x/1]_u) cdot1]_v is convert-free,
-denotes the identity at  Qu]  to  Qv], and violates the unrestricted
+terms: λ x. (x/1_u)·1_v is convert-free,
+denotes the identity at Q u → Q v, and violates the unrestricted
 law.
-
 -/
 
 namespace LambdaS.Pi
@@ -823,17 +817,17 @@ end TermBridge
 
 /-! ## The pendulum, again
 
-The mass conclusion, restated here so the full pipeline can see it: the
-statement and proof are those of `Pi.pendulum_period_independent_of_mass`,
-verbatim. The mass exponent is zero in the solution, so the power-product
-`∏ xᵢ^{Xᵢ}` does not
-mention the mass, and by `eq_zero_of_appears_once` neither does any dimensionless
-group. So `G` cannot mention it either: the period is independent of the mass,
-and both halves of the theorem say so. -/
+The mass conclusion, stated here so the full pipeline can see it, in both
+halves. The mass exponent is zero in every solution
+(`Pi.pendulum_period_independent_of_mass`), so the power product `∏ xᵢ^{Xᵢ}`
+does not mention the mass; and it is zero in every dimensionless group
+(`Pi.pendulum_mass_drops_out`), so `G` cannot mention it either. The period is
+independent of the mass, and both factors of the factorization say so. -/
 
-theorem pendulum_mass_absent {X : Fin 4 → ℚ}
-    (hX : pendulum.mulVec X = ![0, 0, 2]) : X 0 = 0 :=
-  solution_eq_zero_of_appears_once pendulum ![0, 0, 2] 0 0
-    pendulum_mass_only.1 pendulum_mass_only.2 rfl hX
+theorem pendulum_mass_absent :
+    (∀ {X : Fin 4 → ℚ}, pendulum.mulVec X = ![0, 0, 2] → X 0 = 0) ∧
+    (∀ {x : Fin 4 → ℚ}, x ∈ Dimensionless pendulum → x 0 = 0) :=
+  ⟨fun hX => pendulum_period_independent_of_mass hX,
+   fun hx => pendulum_mass_drops_out hx⟩
 
 end LambdaS.Pi
