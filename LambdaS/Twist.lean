@@ -51,6 +51,318 @@ appears once more at `mcons`, where a row's space is a `map` over the column
 space and `List.length_map` is likewise a theorem.
 -/
 
+/-!
+## From the paper's long form: Accumulated Ratios, and a Decidable Diagnostic
+
+The paper's tag `long-form` carries this section in full; it is preserved
+here, lightly de-TeXed, so the documentation develops what the paper now
+summarizes.
+
+ sectionAccumulated Ratios, and a Decidable Diagnostic]
+
+
+With the abstraction theorems in hand, we now ask what many conversions
+accumulate to. Theorem [ref: thm:price-exact] characterizes one conversion,
+but programs convert many times: a meter-to-feet round trip is harmless, a
+one-way conversion is not. In this section we assign every program its **accumulated
+conversion ratio], prove that the ratio measures the program's
+departure from scale-invariance, and show that the resulting condition is
+decidable, which turns the abstraction theory into a compiler diagnostic.
+
+ subsectionRatios as Syntax]
+
+The ratio of a first-order program is an element of the unit group:
+multiplication multiplies ratios, division divides them, a conversion from
+u to v contributes u/v, and addition forces its branches to agree,
+which is what makes the ratio a property of a program rather than of a path
+through it. At higher type the ratio of a function must be a function:
+ lambda x. x  cdot x squares its argument's ratio while
+ lambda x. x + x preserves it, and nothing in their common type
+distinguishes them. Our first formulation represented these function ratios
+as metalanguage functions, and a metalanguage function can be applied but
+neither traversed nor inspected: unit instantiation, which is a
+substitution, had nowhere to send the ratio of a polymorphic term, and
+triviality of a ratio could be defined but not decided. We therefore make
+ratios first-order syntax.
+
+
+ [
+@]l@ quad]r@ ]c@ ]l@ qquad]l@]]
+ textshapes] & s & ::= & scalar] &  texta quantity: the ratio is a unit expression]  
+& &  mid & s  to s &  texta function: the ratio maps ratios to ratios]  
+& &  mid & vec] n &  texta vector: a vector of ratios, one per component]  
+& &  mid & mat] n m &  texta linear map: a matrix of ratios, one per entry]  
+& &  mid & bind] s &  textunder a unit binder: a family of ratios]  [4pt]
+ textratios] & t & ::= & x]_n &  textthe ratio of term variable ] n  
+& &  mid &  langle u  rangle &  texta constant ratio; ]  langle 1  rangle  text is the trivial one]  
+& &  mid & t  cdot t  mid t / t &  textmultiplication; division]  
+& &  mid &  lambda t  mid t t &  textabstraction; application (arrow shapes)]  
+& &  mid & t^q] &  textconstant rational power]  
+& &  mid &  langle rangle  mid t  mathbin::] t  mid t.i &  textratio vectors: empty; cons; component ] i  
+& &  mid & [ ]  mid t  mathbin::] t  mid t.j &  textratio matrices: rowless; row cons; row ] j  
+& &  mid &  Lambda t &  textthe body's ratio, at the enlarged unit scope]  
+& &  mid & t [u] &  textinstantiation: **recorded], not performed]  
+
+ ]
+ [
+
+ denscalar]]] = ℝ_>0]  qquad
+ dens_1  to s_2]] =  dens_1]]  to  dens_2]]  qquad
+ denbind] s]] = ℝ  to  dens]]  
+ denvec] n]] = ℝ_>0]^ n]  qquad
+ denmat] n m]] = ℝ_>0]^ m  times n]
+
+ ]
+ [
+@]r@ ]c@ ]l@ qquad]r@ ]c@ ]l@]]
+ denx]_n] psi, rho] & = &  rho(n) &
+   dent_1 t_2] psi, rho] & = &  dent_1] psi, rho]  dent_2] psi, rho]  
+ den langle u  rangle] psi, rho] & = &  psi(u) &
+   dent^q]] psi, rho] & = &  dent] psi, rho]^ q]  
+ dent_1  cdot t_2] psi, rho] & = &  dent_1] psi, rho]  cdot  dent_2] psi, rho] &
+   den Lambda t] psi, rho] & = & a  mapsto  dent]( psi,a), rho]  
+ dent_1 / t_2] psi, rho] & = &  dent_1] psi, rho]  /   dent_2] psi, rho] &
+   dent [u]] psi, rho] & = &  dent] psi, rho] ( log  psi(u))  
+ den lambda t] psi, rho] & = & a  mapsto  dent] psi,(a, rho)] & & &   
+
+ ]
+ captionThe ratio calculus Tw] (top), the semantic ratios at each
+shape (middle), and evaluation (bottom), transcribed from the artifact's
+ textttShape],  textttTw],  textttSemTw], and  textttTw.eval]. A ratio
+is indexed by a unit scope, a context of shapes (one ratio variable, a
+de Bruijn index, per term variable), and a shape; the shape of  Qu] is
+scalar], the shape of a unit quantifier is bind] applied
+to its body's shape, and a dimension binder leaves the shape unchanged.
+Evaluation reads a ratio under a rescaling  psi and an environment  rho
+of semantic ratios; (a, rho) extends the environment, and ( psi,a)
+extends the rescaling, assigning log-factor a to the newly bound unit
+variable. The clause for t [u] performs the recorded instantiation
+semantically, reading the family at  log psi(u). The two conses and two
+projections are distinguished by their shapes, and the vector and matrix
+formers evaluate componentwise. Semantic ratios are **positive] reals:
+every ratio denotes a product of scale factors, and positivity is what
+makes cancellation across the fraction bar sound ( textttTw.scalarEq]).]
+
+
+
+Figure [ref: fig:tw] presents the resulting calculus Tw] of ratio
+expressions and its interpretation, transcribed from the artifact. Ratios
+are indexed not by the program's type but by its **shape]: the type's
+skeleton, which records where the ratio is a unit expression
+(scalar]), where it maps ratios to ratios (an arrow), where it
+is a vector or matrix of ratios (vec] and mat]: the
+ratio of a vector is a vector of ratios, one per component, and likewise
+per entry for a matrix), and where a unit binder was
+crossed (bind]). Only the lengths of the spaces survive into
+the shape, so shape stays blind to units: instantiating a
+quantifier preserves it, so a ratio indexed by a type equally indexes every
+instantiation of that type, and no transport is needed. Unit instantiation
+is then **recorded] by the syntax rather than performed: t [u]
+stores the instantiating unit, and the interpretation reads the ratio
+family at that unit's log-factor. No substitution lemma for ratios
+exists.
+
+A judgment Twist] relates a typing derivation to its ratio, and
+the scaling law generalizes Theorem [ref: thm:abs-free] with the ratio as the measured
+defect:
+
+
+
+Under any rescaling  psi, which now moves both the program's inputs and
+the valuation its conversion factors are drawn from, a program of type
+ Qu] whose conversions accumulate to ratio t rescales by
+ psi(u) cdot psi(t)^2; we write
+ psi(t) for the ratio's value  dent] psi, rho] with every ratio
+variable held at the constant ratio  langle 1  rangle.
+
+
+Each conversion pays the factor twice: once because the converted value
+rescales with its source unit rather than the target its type advertises,
+and once because the conversion factor itself rescales with the units it
+mediates. The ratio therefore appears squared. For example, doubling the
+meter while fixing the foot multiplies x in] ft] by
+four: the input x, a length in meters, doubles, and the conversion factor
+V(m])/V(ft]) doubles with it, while the result type
+ Qft]] promises only  psi(ft]) = 1; the excess 2^2
+is  psi(m]/ft])^2. At trivial ratio this is
+Theorem [ref: thm:abs-free]; the extra factor is visible to every rescaling,
+not only the incoherent ones. The converse direction gives the
+characterization: for a first-order program with nonzero denotation,
+invariance under **all] rescalings holds exactly when its ratio
+evaluates to 1 under every rescaling (`Twist.invariant_iff]).
+The nonzero hypothesis is the standing zero exception, in the same place
+[cite: atkey2013] patch their relational interpretation for polymorphic
+zero.
+
+ subsectionDeciding Triviality]
+
+The condition ``evaluates to 1 under every rescaling'' is semantic. It is
+also decidable, and rational exponents are what make the decision clean. A
+ratio normalizes to a single unit-group element. The normalizer is a
+standard environment-passing evaluator: it interprets Tw] into a
+symbolic model whose scalar case is the unit group itself, reading the
+program's unit variables through an environment into one fixed scope;
+Section [ref: sec:mechanization] reports why this avoids indexing the model
+by scopes.
+Rescalings separate units: two group elements scale alike under every
+rescaling only if they are equal. Since the group is a
+ℚ-vector space, triviality of the normal form is one
+coordinatewise comparison of rationals.
+
+The decision is one a compiler can act on: a build system can refuse to
+link a routine whose conversions do not cancel (its result depends on
+whether lengths were declared in feet or in meters), or warn at its call
+sites, wherever declaration-independence is part of the interface. The
+diagnostic certifies declaration-independence the way a purity analysis
+certifies effect-freedom, at the cost of one group computation per
+derivation and one equality of exponent vectors.
+
+
+
+A ratio evaluates to 1 under every rescaling, its ratio variables held at
+the trivial ratio, iff its normal form is the
+group unit 1;
+consequently, for a first-order program with nonzero denotation whose ratio
+the analysis computes, scale-invariance is decided by one equality of
+exponent vectors.
+
+
+We package the analysis as a function unitDrift] from typing
+derivations to normal ratios (its specification is
+`unitDrift_spec]) and call its output the program's **drift].
+For example, for x :  Qm]] consider three programs, written here with
+the in] form of Section [ref: sec:syntax]; their core
+elaborations are checked at build time in the artifact:
+ [
+(x in] ft]) in] m],  qquad quad
+x in] ft],  qquad quad
+(x in] ft]) + (x in] ft]).
+ ]
+The round trip has drift 1: its two factors cancel, whatever magnitudes
+the declarations assign m] and ft]. The one-way
+conversion has drift m]/ft], and the diagnostic names it.
+The sum also has drift m]/ft]: both branches carry the
+same variable's ratio times m]/ft], so the agreement
+demanded at + holds and the branches' shared drift is the program's.
+
+At +, and at map application and composition per output component, the
+analysis compares ratio terms up to the unit
+algebra (`Tw.scalarEq]). Each scalar ratio flattens to an
+exponent vector holding all of its unit constants, merged by the group
+operations, together with a finitely supported assignment of rational
+exponents to **atoms], opaque subratios the flattening cannot
+evaluate; the
+comparison is vector against vector and assignment against assignment.
+Reordered, reassociated, and differently placed conversions are therefore
+accepted: the artifact's `addAssoc] converts a product of meters
+once at m]^2 in one branch and factor by factor in the other,
+and the analysis reports the drift the branches share. An atom also
+cancels against itself across the fraction bar, and soundly: semantic
+ratios are positive reals, so x/x = 1 holds, and the atoms, like the
+units, form a free ℚ-vector space, with t^q] scaling their
+exponents.
+
+How exact is the comparison? A program's free variables are its inputs,
+and inputs are measurements: they rescale exactly with their units, so
+the analysis assigns them the trivial ratio, and `unitDriftLam]
+extends the same reading to a program's leading  lambda-binders, which
+are inputs spelled with a binder. The trivial ratio is not an assumption
+about callers; it is the hypothesis of the property the diagnostic
+decides, since the scaling law rescales each input by its unit's factor
+by definition of the question. Nor does a caller that passes an
+already-converted value escape: at a visible application the argument's
+actual ratio flows into the body's family, so a conversion is charged
+where it is visible, and the input reading applies only at the program's
+own boundary. Atoms therefore arise only at variables bound inside the
+term under analysis, whose future arguments may genuinely drift. A ratio
+variable stands for the accumulated ratio of whatever term an
+application site will supply, and accumulated ratios are products of
+scale factors, so the positive carrier excludes nothing the scaling law
+can instantiate. A first-order program's ratios consequently carry no
+atoms, and there the comparison is exact in both directions: for
+atom-free ratios, syntactic agreement coincides with equal evaluation
+under every rescaling (`Tw.scalarEq_iff_eval_eq]), so a
+first-order sum is declined precisely when its branches genuinely
+disagree. The artifact checks both sides of the line:
+(x in] ft]) + (y in] ft]) over two
+meter inputs is accepted at drift m]/ft]
+(`addTwoVars]), while (x in] ft]) + y
+against a foot input is declined (`addMixed]), and that program
+is sensitive to the declarations.
+
+Under binders the analysis
+reduces every ratio redex it can see, so a visible application analyzes
+as its redex (`betaShared]); what remains is a boundary.
+Two distinct bound atoms are never identified, because whether two
+arguments will drift alike is a fact about call sites, which a
+compositional analysis refuses to consult, and a higher-order redex
+created by substitution stays opaque.
+
+The analysis declines one term form unconditionally:
+1]_u, which Theorem [ref: thm:abs-free] places outside the
+invariance theory. The decline also keeps the report single-voiced. A unit constant's defect is a failure of covariance, not
+a dependence on the declarations: 1]_u/1]_u depends
+on nothing, and x  cdot 1]_u never consults the valuation.
+Tracking it is possible (the relation forces the ratio u^-1/2]: the
+defect is incurred once where conversion's is incurred twice, hence the
+half exponent), but it would make the
+exhibited ratio mean two different things. With 1]_u declined, conversion remains
+the only analyzed construct that reads the valuation, so a reported
+drift names dependence on the declared magnitudes and nothing else.  log and  exp accept an argument whose ratio is
+trivial, since a drift-free value is unmoved by every rescaling and so
+is its logarithm; the artifact accepts  log of a round-trip ratio at
+drift 1 (`logRoundTrip]) and declines  log of a drifting
+one (`logDrifting]). Beyond drift-free arguments the defect
+leaves the multiplicative group.  exp's would depend on the value, not
+only the rescaling.  log's, though value-independent, is additive,
+turning a ratio into a shift. An additive drift slot would not survive
+multiplication, so tracking  log further would only move the decline
+to  cdot. Every other form has a rule. A power lifts its argument's ratio to the
+exponent. The introduction forms of Section [ref: sec:syntax] build ratio
+vectors and matrices componentwise, with no side condition, and indexing
+projects. Map application and composition are accepted under the same
+agreement condition as +, stated per output component: the summands of
+(M  odot x)_j must share one ratio, and the shared ratio is the
+component's drift.
+
+The diagnostic scales past one-liners. The artifact's ballistics kernel
+(`Ballistics] in `Examples.lean]) takes a distance in feet
+and a time in seconds, converts to meters, and computes the kinetic
+energy per unit mass v^2/2, in four reporting variants, each verdict
+decided at build time. Reporting back in ft]^2/s]^2 is
+certified drift-free: the input conversion cancels against the output
+conversion through the square. Reporting in metric carries drift exactly
+ft]^2/m]^2, the one foot-to-meter conversion squared
+through v^2, and the diagnostic names it. Computing the energy two ways
+in one sum, convert-then-square against square-then-convert, is accepted
+with the shared drift. And recovering the speed by a square root carries
+drift ft]/m]: the energy's ft]^2/m]^2
+through the root, which halves the drift's exponent along with the
+unit's.
+
+The diagnostic also works through the quantifiers. The generic caster of
+Section [ref: sec:calculus] has, before any instantiation, the open drift
+u]/v]: an exponent vector with unit-variable
+coordinates, read off the ratio family its binders denote
+(`caster]). Instantiated at meters and feet it is
+m]/ft]; at meters twice, 1. And the polymorphic
+round trip, converting out to v] and back to u], is
+certified drift-free **without] instantiation
+(`casterRound]): the variable coordinates cancel in the free
+ℚ-vector space, so one certificate covers every future
+instantiation at once.
+
+Programs with drift 1 satisfy a strong guarantee. A closed dimensionless
+program with drift 1 denotes the same number under **every] valuation
+of the base units: its output provably does not depend on how the units it
+converts through are declared. By the adequacy theorem of
+Section [ref: sec:erasure], the same holds of its compiled output
+(`evalC_indep_of_driftFree]). The declared factors along any closed
+conversion loop cancel, which restates Section [ref: sec:declarations]'s
+consistency criterion as a theorem about programs.
+
+-/
+
 namespace LambdaS
 
 variable {B D : Type} [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D]
