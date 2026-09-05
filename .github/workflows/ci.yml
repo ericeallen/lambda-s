@@ -31,6 +31,9 @@ jobs:
       - name: Theorem index points at live declarations
         run: python3 scripts/verify_theorems_index.py
 
+      - name: README states the measured size
+        run: python3 scripts/count_lines.py --check
+
       - name: Audit the trust base
         run: |
           # `shell: bash` above sets pipefail, so a failing `lean` fails the step

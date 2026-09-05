@@ -99,9 +99,12 @@ factor distributes over `rpow` for every real base (`mul_rpow_of_pos_left`): on
 a negative base, `rpow` is the real part of the principal complex power, and
 the cosine factor is common to both sides. The caveat carries over unchanged:
 on a negative argument the primitive's value is not a root at all
-(`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`, a value the `Float` carrier
-reproduces by the same branch), so the theorems certify covariance of that
-total function.
+(`(-8) ^ (1/3 : ℝ)` denotes `1` under `rpow`; the `Float` carrier returns
+`NaN` there, treating the point as it treats division by zero, see
+`LambdaS.Num`), so the theorems certify covariance of Mathlib's total
+extension. Kennedy's model avoids the point by taking every magnitude
+positive, at the price of excluding signed quantities; Λs admits them and
+pays with the undefined point.
 -/
 
 /-!
@@ -250,12 +253,13 @@ under the artifact's semantics
 (`mul_rpow_of_pos_left`), where a power of a negative argument
 denotes the real part of the principal complex power,
 |x|^qcos(qπ). On negative
-arguments that value is not a root: (-8)^(1/3) denotes 1. The theorem
+arguments that value is not a root: (-8)^(1/3) denotes 1, and the binary
+returns NaN there, as it does at division by zero. The theorem
 therefore certifies covariance of the total function, not root-ness. The
 two concerns are separable: covariance is what abstraction theorems trade
-in, and no real semantics ever offered root-ness on negatives. And
-the artifact instantiates the strengthened statement at
-λ x:Q u · u. √x (`sqrt_scales`).
+in, and a non-integer power of a negative argument is an undefined point
+of the classical operation. And the artifact instantiates the strengthened
+statement at λ x:Q u · u. √x (`sqrt_scales`).
 
 For terms that *do* convert, invariance under all rescalings is false
 and should be: converting meters to feet multiplies by a specific declared
@@ -651,8 +655,8 @@ invariance theory, and this predicate is where that is recorded.
 condition on the value: the scale factor is positive, and a positive factor
 distributes over `rpow` for every real base (`mul_rpow_of_pos_left`). On a
 negative argument the primitive does not compute a root (under `rpow` it is
-the real part of the principal complex power), and the fundamental theorem
-certifies covariance of that total function. -/
+the real part of the principal complex power; at `Float` it is `NaN`), and
+the fundamental theorem certifies covariance of that total function. -/
 def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .var _ => True
   | _, _, .lam _ b => b.Parametric

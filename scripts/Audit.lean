@@ -159,3 +159,4 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.QM.twoStateChecks
 #print axioms LambdaS.Algorithms.ydPerFt
 #print axioms LambdaS.Algorithms.ydPerFtIn1
+#print axioms LambdaS.Algorithms.ydPerFtViaFt

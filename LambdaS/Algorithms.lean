@@ -259,6 +259,17 @@ def ydPerFtIn1 : Term₀ :=
 -- Exactly 3 at the real carrier, by `evalC_convert_declared`; the Float
 -- oracle divides 0.9144 by 0.3048 in binary and lands within an ulp.
 
+/-- The other route to the same number: convert one operand before dividing,
+`(1_yd in ft) / 1_ft`. The quotient is at unit `ft/ft = 1` with no conversion
+of its own, and the `3` again enters through the one conversion in the
+term. -/
+def ydPerFtViaFt : Term₀ :=
+  .div (.convert (.ucon (Term.ofBase .yard)) (Term.ofBase .yard) (Term.ofBase .foot))
+       (.ucon (Term.ofBase .foot))
+
+#guard typeOf ydPerFtViaFt == some (.Q 1)
+#guard (runDecl ydPerFtViaFt).any (fun x => Float.abs (x - 3.0) < 1e-12)
+
 def reportDecl : String :=
   let fmt : Option Float → String := fun
     | some x => toString x

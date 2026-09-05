@@ -39,6 +39,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | The mistyped yard set is refuted | `LambdaS.Examples.yard_conflict` | [`LambdaS/Examples.lean:480`](LambdaS/Examples.lean#L480) |
 | One yard per foot denotes 1, at yd/ft | `LambdaS.Algorithms.ydPerFt` | [`LambdaS/Algorithms.lean:245`](LambdaS/Algorithms.lean#L245) |
 | Converted to unit 1, the declared 3 appears | `LambdaS.Algorithms.ydPerFtIn1` | [`LambdaS/Algorithms.lean:254`](LambdaS/Algorithms.lean#L254) |
+| Converting one operand first, the same 3 | `LambdaS.Algorithms.ydPerFtViaFt` | [`LambdaS/Algorithms.lean:266`](LambdaS/Algorithms.lean#L266) |
 | The redundant factor is forced | `LambdaS.Examples.yard_forced` | [`LambdaS/Examples.lean:468`](LambdaS/Examples.lean#L468) |
 
 ## Dynamics
@@ -49,20 +50,20 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:707`](LambdaS/Normalization.lean#L707) |
 | Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:720`](LambdaS/Normalization.lean#L720) |
 | Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:692`](LambdaS/Normalization.lean#L692) |
-| Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:378`](LambdaS/QM.lean#L378) |
+| Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:382`](LambdaS/QM.lean#L382) |
 
 ## Denotational semantics and abstraction
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:925`](LambdaS/Fundamental.lean#L925) |
-| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:847`](LambdaS/Fundamental.lean#L847) |
-| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:1077`](LambdaS/Fundamental.lean#L1077) |
-| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:944`](LambdaS/Fundamental.lean#L944) |
+| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:929`](LambdaS/Fundamental.lean#L929) |
+| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:851`](LambdaS/Fundamental.lean#L851) |
+| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:1081`](LambdaS/Fundamental.lean#L1081) |
+| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:948`](LambdaS/Fundamental.lean#L948) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:1141`](LambdaS/Examples.lean#L1141) |
-| The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:364`](LambdaS/Parametricity.lean#L364) |
-| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1374`](LambdaS/Fundamental.lean#L1374) |
-| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1219`](LambdaS/Fundamental.lean#L1219) |
+| The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:365`](LambdaS/Parametricity.lean#L365) |
+| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1378`](LambdaS/Fundamental.lean#L1378) |
+| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1223`](LambdaS/Fundamental.lean#L1223) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:449`](LambdaS/Conversion.lean#L449) |
 
 ## Accumulated ratios and the drift diagnostic
@@ -161,11 +162,11 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | The amplitude carries m^(-1/2) | `LambdaS.QM.amplitude` | [`LambdaS/QM.lean:132`](LambdaS/QM.lean#L132) |
 | The squared amplitude is a density | `LambdaS.QM.density` | [`LambdaS/QM.lean:144`](LambdaS/QM.lean#L144) |
 | Density times length is dimensionless | `LambdaS.QM.probability` | [`LambdaS/QM.lean:150`](LambdaS/QM.lean#L150) |
-| The expectation of the Hamiltonian is an energy | `LambdaS.QM.expectH` | [`LambdaS/QM.lean:247`](LambdaS/QM.lean#L247) |
-| The state literal, parametric | `LambdaS.QM.statePlusTm` | [`LambdaS/QM.lean:291`](LambdaS/QM.lean#L291) |
-| The Hamiltonian literal, not parametric | `LambdaS.QM.hamiltonianTm` | [`LambdaS/QM.lean:300`](LambdaS/QM.lean#L300) |
-| The phase is dimensionless; `exp` accepts it | `LambdaS.QM.phase` | [`LambdaS/QM.lean:343`](LambdaS/QM.lean#L343) |
-| The expectation as a curried function | `LambdaS.QM.expectation` | [`LambdaS/QM.lean:360`](LambdaS/QM.lean#L360) |
+| The expectation of the Hamiltonian is an energy | `LambdaS.QM.expectH` | [`LambdaS/QM.lean:251`](LambdaS/QM.lean#L251) |
+| The state literal, parametric | `LambdaS.QM.statePlusTm` | [`LambdaS/QM.lean:295`](LambdaS/QM.lean#L295) |
+| The Hamiltonian literal, not parametric | `LambdaS.QM.hamiltonianTm` | [`LambdaS/QM.lean:304`](LambdaS/QM.lean#L304) |
+| The phase is dimensionless; `exp` accepts it | `LambdaS.QM.phase` | [`LambdaS/QM.lean:347`](LambdaS/QM.lean#L347) |
+| The expectation as a curried function | `LambdaS.QM.expectation` | [`LambdaS/QM.lean:364`](LambdaS/QM.lean#L364) |
 
 ## Reproducing the worked examples
 

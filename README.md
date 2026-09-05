@@ -22,8 +22,9 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is about eight thousand lines of definitions and proofs,
-with five and a half thousand more in documentation, and stays that small
+The development is 8,300 lines of definitions and proofs and 5,500 lines
+of documentation (15,900 lines of source in all; `scripts/count_lines.py`
+is the method, and CI checks the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
 vectors over ℚ, so substitution is a linear map, every substitution lemma is
 a reordering of finite sums, and no normalization pass over unit syntax
@@ -36,6 +37,8 @@ exists anywhere in the system.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
+| lines of definitions and proofs | 8,300 |
+| lines of documentation | 5,500 |
 | theorem and lemma declarations | 435 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
@@ -116,7 +119,9 @@ above are the intended reading order.
 `THEOREMS.md` maps every artifact identifier the accompanying paper cites
 to its Lean name, file, and line. Line numbers are re-derived from the
 sources by `scripts/verify_theorems_index.py` (CI fails on drift;
-`--fix` repairs the index in place).
+`--fix` repairs the index in place). `scripts/count_lines.py` is the
+method behind the size figures above (`--check` fails CI when the status
+table stops matching the sources; `--fix` rewrites it).
 
 ## Auditing the trust base
 
@@ -140,7 +145,9 @@ functions in `c/lambdas_blas.c` (`lambdas_ddot`, `lambdas_dgemv`,
 `lambdas_blas_backend`) that reach BLAS. The theorems are stated at carrier
 ℝ; nothing proved here constrains the compiled arithmetic at the points
 where IEEE arithmetic and the classical operations part ways (division by
-zero, the logarithm of a nonpositive).
+zero, the logarithm of a nonpositive, a non-integer power of a negative
+argument), and at those points the binary gives IEEE's answer (an infinity
+or `NaN`), never a conventional number.
 
 ## License
 
