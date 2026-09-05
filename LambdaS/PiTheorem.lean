@@ -193,8 +193,8 @@ unsolvable signature is dimensional inconsistency.
 For the pendulum, the power product is √(ℓ/g), the invariant space
 is spanned by the amplitude, and the factorization is the displayed
 equation above. The artifact runs this instance: `pendulum`
-is the 3 × 4 matrix above, stated for the squared period (output
-exponents (0, 0, 2), solution (0, 1, -1, 0)), and
+is the 3 × 4 matrix above, with output exponents (0, 0, 1) and the
+exhibited solution (0, 1/2, -1/2, 0) (`pendulum_period_solution`), and
 the mass conclusion follows (`pendulum_mass_absent`): a base unit
 occurring in
 exactly one argument and absent from the output forces that argument's
@@ -825,7 +825,7 @@ does not mention the mass; and it is zero in every dimensionless group
 independent of the mass, and both factors of the factorization say so. -/
 
 theorem pendulum_mass_absent :
-    (∀ {X : Fin 4 → ℚ}, pendulum.mulVec X = ![0, 0, 2] → X 0 = 0) ∧
+    (∀ {X : Fin 4 → ℚ}, pendulum.mulVec X = ![0, 0, 1] → X 0 = 0) ∧
     (∀ {x : Fin 4 → ℚ}, x ∈ Dimensionless pendulum → x 0 = 0) :=
   ⟨fun hX => pendulum_period_independent_of_mass hX,
    fun hx => pendulum_mass_drops_out hx⟩

@@ -125,7 +125,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Buckingham's counting (Theorem 8.1) | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:322`](LambdaS/PiTheorem.lean#L322) |
 | The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:362`](LambdaS/PiTheorem.lean#L362) |
 | The pendulum signature | `LambdaS.Pi.pendulum` | [`LambdaS/Pi.lean:138`](LambdaS/Pi.lean#L138) |
-| The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:166`](LambdaS/Pi.lean#L166) |
+| The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:167`](LambdaS/Pi.lean#L167) |
 | The pendulum ignores its mass, both halves | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:827`](LambdaS/PiTheorem.lean#L827) |
 | Mass is absent from every solution | `LambdaS.Pi.pendulum_period_independent_of_mass` | [`LambdaS/Pi.lean:156`](LambdaS/Pi.lean#L156) |
 | Mass is absent from every dimensionless group | `LambdaS.Pi.pendulum_mass_drops_out` | [`LambdaS/Pi.lean:150`](LambdaS/Pi.lean#L150) |

@@ -152,29 +152,30 @@ theorem pendulum_mass_drops_out {x : Fin 4 → ℚ} (hx : x ∈ Dimensionless pe
   eq_zero_of_appears_once pendulum 0 0 pendulum_mass_only.1 pendulum_mass_only.2 hx
 
 /-- And mass does not appear in the answer either: the period, whose unit is
-`T²`, has no `M` exponent. -/
+`T`, has no `M` exponent. -/
 theorem pendulum_period_independent_of_mass
-    {X : Fin 4 → ℚ} (hX : pendulum.mulVec X = ![0, 0, 2]) : X 0 = 0 :=
-  solution_eq_zero_of_appears_once pendulum ![0, 0, 2] 0 0
+    {X : Fin 4 → ℚ} (hX : pendulum.mulVec X = ![0, 0, 1]) : X 0 = 0 :=
+  solution_eq_zero_of_appears_once pendulum ![0, 0, 1] 0 0
     pendulum_mass_only.1 pendulum_mass_only.2 rfl hX
 
-/-- The witness the pendulum system admits: the exponent vector `(0, 1, -1, 0)`,
-which is `T^2 = l / g`, solves `pendulum.mulVec X = ![0, 0, 2]`. This exhibits a
-solution of the linear system, so the hypothesis of
+/-- The witness the pendulum system admits: the exponent vector
+`(0, 1/2, -1/2, 0)`, which is `T = √(l / g)`, solves
+`pendulum.mulVec X = ![0, 0, 1]`; rational exponents are why the unit group is
+over `ℚ`. This exhibits a solution of the linear system, so the hypothesis of
 `pendulum_period_independent_of_mass` (the first half of `pendulum_mass_absent`
 in `LambdaS.PiTheorem`) is satisfied by an actual vector rather than assumed. -/
-theorem pendulum_period_solution : pendulum.mulVec ![0, 1, -1, 0] = ![0, 0, 2] := by
+theorem pendulum_period_solution : pendulum.mulVec ![0, 1/2, -1/2, 0] = ![0, 0, 1] := by
   funext v
-  fin_cases v <;> simp [pendulum, Matrix.mulVec, dotProduct, Fin.sum_univ_four]
+  fin_cases v <;> simp [pendulum, Matrix.mulVec, dotProduct, Fin.sum_univ_four] <;> norm_num
 
-/-- The system `pendulum.mulVec X = ![0, 0, 2]` is solvable, so the conclusion
+/-- The system `pendulum.mulVec X = ![0, 0, 1]` is solvable, so the conclusion
 that mass drops out of every solution is a statement about a nonempty set. -/
-theorem pendulum_period_solvable : ∃ X : Fin 4 → ℚ, pendulum.mulVec X = ![0, 0, 2] :=
-  ⟨![0, 1, -1, 0], pendulum_period_solution⟩
+theorem pendulum_period_solvable : ∃ X : Fin 4 → ℚ, pendulum.mulVec X = ![0, 0, 1] :=
+  ⟨![0, 1/2, -1/2, 0], pendulum_period_solution⟩
 
 /-- The mass exponent of the exhibited solution is zero, as
 `pendulum_period_independent_of_mass` requires of every solution. -/
-example : (![0, 1, -1, 0] : Fin 4 → ℚ) 0 = 0 :=
+example : (![0, 1/2, -1/2, 0] : Fin 4 → ℚ) 0 = 0 :=
   pendulum_period_independent_of_mass pendulum_period_solution
 
 end LambdaS.Pi
