@@ -111,7 +111,9 @@ above are the intended reading order.
 ## Theorem index
 
 `THEOREMS.md` maps every artifact identifier the accompanying paper cites
-to its Lean name, file, and line.
+to its Lean name, file, and line. Line numbers are re-derived from the
+sources by `scripts/verify_theorems_index.py` (CI fails on drift;
+`--fix` repairs the index in place).
 
 ## Auditing the trust base
 

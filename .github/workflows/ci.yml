@@ -22,6 +22,9 @@ jobs:
             exit 1
           fi
 
+      - name: Theorem index points at live declarations
+        run: python3 scripts/verify_theorems_index.py
+
       - name: Audit the trust base
         run: |
           lake env lean scripts/Audit.lean | tee axioms.txt
