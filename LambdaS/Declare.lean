@@ -375,7 +375,7 @@ dimension declaration introduces a fresh name for a vector over the base
 dimensions, so the only check it needs is scoping: the name must be new,
 and the right-hand side may mention only base dimensions and earlier
 abbreviations. Under that discipline a cyclic pair such as
-`Speed = Length/Time; Length = Speed/Time` is rejected at its second
+`Velocity = Length/Time; Length = Velocity/Time` is rejected at its second
 line, for rebinding a generator, before any question of consistency can
 arise; a forward reference is rejected because an undefined name does not
 denote. Cycles are not detected but unrepresentable. -/

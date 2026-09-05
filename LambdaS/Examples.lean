@@ -487,7 +487,7 @@ theorem yard_conflict :
 Unit declarations constrain; dimension declarations abbreviate, and the
 only check they need is scoping (`LambdaS.DimAbbrev`). The chain below
 elaborates, with `Accel` landing at the vector `length·time⁻²`. The
-cyclic pair `Speed = Length/Time; Length = Speed/Time` is rejected at its
+cyclic pair `Velocity = Length/Time; Length = Velocity/Time` is rejected at its
 second line for rebinding the generator `Length`, and a forward
 reference is rejected because an undefined name does not denote. -/
 
@@ -498,16 +498,16 @@ def dimName : String → Option Dim
   | "Time" => some .time
   | _ => none
 
-def speedDef : String × List (DimAbbrev.Ref Dim) :=
-  ("Speed", [(.inl .length, 1), (.inl .time, -1)])
+def velocityDef : String × List (DimAbbrev.Ref Dim) :=
+  ("Velocity", [(.inl .length, 1), (.inl .time, -1)])
 
-/-- `Speed = Length/Time; Accel = Speed/Time`. -/
+/-- `Velocity = Length/Time; Accel = Velocity/Time`. -/
 def dimChain : List (String × List (DimAbbrev.Ref Dim)) :=
-  [speedDef, ("Accel", [(.inr "Speed", 1), (.inl .time, -1)])]
+  [velocityDef, ("Accel", [(.inr "Velocity", 1), (.inl .time, -1)])]
 
-/-- `Speed = Length/Time; Length = Speed/Time`: rebinds a generator. -/
+/-- `Velocity = Length/Time; Length = Velocity/Time`: rebinds a generator. -/
 def dimCycle : List (String × List (DimAbbrev.Ref Dim)) :=
-  [speedDef, ("Length", [(.inr "Speed", 1), (.inl .time, -1)])]
+  [velocityDef, ("Length", [(.inr "Velocity", 1), (.inl .time, -1)])]
 
 #guard (DimAbbrev.elabDimDefs dimName dimChain).isSome
 #guard ((DimAbbrev.elabDimDefs dimName dimChain).bind (·.lookup "Accel"))
@@ -515,7 +515,7 @@ def dimCycle : List (String × List (DimAbbrev.Ref Dim)) :=
         (Term.mul (Term.ofBase Dim.time) (Term.ofBase Dim.time)))
 #guard (DimAbbrev.elabDimDefs dimName dimCycle).isNone
 #guard (DimAbbrev.elabDimDefs dimName
-    [("Accel", [(.inr "Speed", 1), (.inl .time, -1)])]).isNone
+    [("Accel", [(.inr "Velocity", 1), (.inl .time, -1)])]).isNone
 
 /-- Primary-unit declarations: `unit meter : Length; unit second : Time;
 unit hertz : Frequency` with `Frequency` an abbreviation. Elaborates; the
