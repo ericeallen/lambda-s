@@ -242,8 +242,14 @@ reads it. -/
 def ydPerFt : Term₀ :=
   .div (.ucon (Term.ofBase .yard)) (.ucon (Term.ofBase .foot))
 
+/-- The unit one: the SI's name for the unit of dimension-one quantities
+(9th SI Brochure, 5.4.7), which the brochure calls the neutral element of
+any system of units. Here it is the empty exponent vector. The surface
+reading of the conversion below is `(1 yd / 1 ft) in one`. -/
+abbrev one : UExp Base 0 := 1
+
 def ydPerFtIn1 : Term₀ :=
-  .convert ydPerFt (Term.div (Term.ofBase .yard) (Term.ofBase .foot)) 1
+  .convert ydPerFt (Term.div (Term.ofBase .yard) (Term.ofBase .foot)) one
 
 #guard runDecl ydPerFt == some 1.0
 #guard (runDecl ydPerFtIn1).any (fun x => Float.abs (x - 3.0) < 1e-12)
