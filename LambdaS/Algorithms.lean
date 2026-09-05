@@ -230,6 +230,26 @@ def runDecl (e : Term₀) : Option Float :=
   | some (.scalar x) => some x.mag
   | _ => none
 
+/-! ### One yard per foot
+
+`1_yd / 1_ft` denotes the magnitude `1`, at unit `yd/ft`: unit constants
+denote the number one, so the quotient is convert-free and, by
+`den_indep`, cannot see the declared magnitudes. The number `3` is one
+conversion away, `(1_yd / 1_ft) in 1`, and it must be: the `3` is data
+from the declaration table, and conversion is the only construct that
+reads it. -/
+
+def ydPerFt : Term₀ :=
+  .div (.ucon (Term.ofBase .yard)) (.ucon (Term.ofBase .foot))
+
+def ydPerFtIn1 : Term₀ :=
+  .convert ydPerFt (Term.div (Term.ofBase .yard) (Term.ofBase .foot)) 1
+
+#guard runDecl ydPerFt == some 1.0
+#guard (runDecl ydPerFtIn1).any (fun x => Float.abs (x - 3.0) < 1e-12)
+-- Exactly 3 at the real carrier, by `evalC_convert_declared`; the Float
+-- oracle divides 0.9144 by 0.3048 in binary and lands within an ulp.
+
 def reportDecl : String :=
   let fmt : Option Float → String := fun
     | some x => toString x
