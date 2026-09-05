@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,7 +21,9 @@ jobs:
 
       - name: No sorry in the sources
         run: |
-          if grep -rnE '^[[:space:]]*(sorry|admit)\b' LambdaS/ Main.lean; then
+          # Word matches anywhere on a line, outside backticks (documentation
+          # names the placeholder); the axiom audit below is the semantic check.
+          if grep -rnwE 'sorry|admit' LambdaS/ Main.lean LambdaS.lean | grep -vE '`(sorry|admit)`'; then
             echo "::error::sorry or admit found in the development"
             exit 1
           fi
@@ -27,6 +33,8 @@ jobs:
 
       - name: Audit the trust base
         run: |
+          # `shell: bash` above sets pipefail, so a failing `lean` fails the step
+          # instead of leaving an empty axioms.txt that the greps would pass.
           lake env lean scripts/Audit.lean | tee axioms.txt
           if grep -q sorryAx axioms.txt; then
             echo "::error::a headline theorem depends on sorryAx"
@@ -36,7 +44,15 @@ jobs:
             echo "::error::a theorem depends on axioms beyond the standard three"
             exit 1
           fi
-          cat axioms.txt
+          # Every `#print axioms` must have reported: a renamed declaration would
+          # otherwise be an error message the greps above do not see. A
+          # declaration with no axioms reports "does not depend on any axioms".
+          expected=$(grep -c '^#print axioms' scripts/Audit.lean)
+          reported=$(grep -cE 'depends on axioms|does not depend on any axioms' axioms.txt || true)
+          if [ "$expected" != "$reported" ]; then
+            echo "::error::Audit.lean lists $expected declarations but $reported reported"
+            exit 1
+          fi
 
       - name: Run the compiled binary and assert its numeric checks
         run: |

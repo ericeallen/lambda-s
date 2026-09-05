@@ -8,17 +8,22 @@ import LambdaS
 /-!
 # Trust base audit
 
-Prints the axiom dependencies of every theorem the paper cites, plus the
-worked examples and taxonomy results backing them, grouped by module. The
-intended
-output mentions only `propext`, `Classical.choice`, and `Quot.sound`; any
-occurrence of `sorryAx` is a failure, and CI greps for it.
+Prints the axiom dependencies of every declaration `THEOREMS.md` indexes
+(every artifact identifier the paper cites, and the supporting results behind
+them), grouped by module. The intended output mentions only `propext`,
+`Classical.choice`, and `Quot.sound`; any occurrence of `sorryAx` is a
+failure, and CI greps for it. `scripts/verify_theorems_index.py` fails when an
+indexed declaration is missing from this file, so the list cannot drift from
+the index.
 
 Run with `lake env lean scripts/Audit.lean`.
 -/
 
 -- Typing
 #print axioms LambdaS.check_eq
+#print axioms LambdaS.HasTy
+#print axioms LambdaS.elabConvert
+#print axioms LambdaS.elabConvert_isSome
 
 -- Conversion
 #print axioms LambdaS.Scaling.coherent_iff_factors
@@ -30,10 +35,15 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.consistent_iff_dependencies
 #print axioms LambdaS.consistent_iff_dependencies_mul
 #print axioms LambdaS.factor_chain_consistent
+#print axioms LambdaS.Decl.Sound
+#print axioms LambdaS.DimAbbrev.elabDimDefs
+#print axioms LambdaS.DimAbbrev.elabPrimary
 
 -- Normalization
 #print axioms LambdaS.unit_soundness_total
 #print axioms LambdaS.eval_total
+#print axioms LambdaS.lin_soundness_total
+#print axioms LambdaS.eval_sound
 
 -- Fundamental
 #print axioms LambdaS.fundamental_free
@@ -42,6 +52,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.den_eq_of_convertFree
 #print axioms LambdaS.den_indep
 #print axioms LambdaS.sqrt_scales
+#print axioms LambdaS.mul_rpow_of_pos_left
 
 -- Twist
 #print axioms LambdaS.Twist.scaling
@@ -49,6 +60,13 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Tw.nfOne_eq_one_iff
 #print axioms LambdaS.unitDrift_spec
 #print axioms LambdaS.evalC_indep_of_driftFree
+#print axioms LambdaS.Shape
+#print axioms LambdaS.Tw
+#print axioms LambdaS.SemTw
+#print axioms LambdaS.Tw.eval
+#print axioms LambdaS.Tw.scalarEq
+#print axioms LambdaS.Tw.scalarEq_iff_eval_eq
+#print axioms LambdaS.unitDriftLam
 
 -- Adequacy and Erasure
 #print axioms LambdaS.eval_adeq
@@ -80,6 +98,12 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.den_mulScaleLaw
 #print axioms LambdaS.Pi.pendulum_mass_absent
 #print axioms LambdaS.Pi.solution_eq_zero_of_appears_once
+#print axioms LambdaS.Pi.MulScaleLaw
+#print axioms LambdaS.Pi.pendulum
+#print axioms LambdaS.Pi.pendulum_period_solution
+#print axioms LambdaS.Pi.eq_zero_of_appears_once
+#print axioms LambdaS.Pi.pendulum_mass_drops_out
+#print axioms LambdaS.Pi.pendulum_period_independent_of_mass
 
 -- Space and Map (Hart's taxonomy)
 #print axioms LambdaS.Space.uniform_iff_scale_triv
@@ -94,11 +118,44 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.svd_entry_const
 #print axioms LambdaS.transpose_comp_direct_iff
 #print axioms LambdaS.uniform_canonical_metric
+#print axioms LambdaS.entry
 
 -- Examples
 #print axioms LambdaS.Examples.yard_satisfiable
 #print axioms LambdaS.Examples.yard_conflict
 #print axioms LambdaS.Examples.yard_forced
 #print axioms LambdaS.Examples.one_yard_is_three_feet
-#print axioms LambdaS.Examples.one_yard_in_metres
+#print axioms LambdaS.Examples.one_yard_in_meters
 #print axioms LambdaS.Examples.fundamental_at_moving_rescale
+#print axioms LambdaS.Examples.one_yard_in_meters_via_feet
+#print axioms LambdaS.Examples.yard_routes_agree
+#print axioms LambdaS.Examples.cycle_satisfiable
+#print axioms LambdaS.Examples.cycle_conflict
+#print axioms LambdaS.Examples.dimCycle
+#print axioms LambdaS.Examples.caster
+#print axioms LambdaS.Examples.casterRound
+#print axioms LambdaS.Examples.velocity
+#print axioms LambdaS.Examples.stateVec
+#print axioms LambdaS.Examples.toTime
+#print axioms LambdaS.Examples.addAssoc
+#print axioms LambdaS.Examples.addTwoVars
+#print axioms LambdaS.Examples.addMixed
+#print axioms LambdaS.Examples.hoSum
+#print axioms LambdaS.Examples.betaShared
+#print axioms LambdaS.Examples.logRoundTrip
+#print axioms LambdaS.Examples.logDrifting
+
+-- QM and Algorithms (the worked programs)
+#print axioms LambdaS.QM.groundEnergy
+#print axioms LambdaS.QM.uncertainty
+#print axioms LambdaS.QM.amplitude
+#print axioms LambdaS.QM.density
+#print axioms LambdaS.QM.probability
+#print axioms LambdaS.QM.expectH
+#print axioms LambdaS.QM.statePlusTm
+#print axioms LambdaS.QM.hamiltonianTm
+#print axioms LambdaS.QM.phase
+#print axioms LambdaS.QM.expectation
+#print axioms LambdaS.QM.twoStateChecks
+#print axioms LambdaS.Algorithms.ydPerFt
+#print axioms LambdaS.Algorithms.ydPerFtIn1
