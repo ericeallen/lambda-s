@@ -17,6 +17,7 @@ Authors: Eric Allen
    dependency. */
 
 #include <lean/lean.h>
+#include <limits.h>
 
 #ifdef __APPLE__
 /* Opt in to the non-deprecated CBLAS interface (macOS 13.3+). Without
@@ -27,11 +28,24 @@ Authors: Eric Allen
 #define LAMBDAS_HAVE_BLAS 1
 #endif
 
-/* y = A x, with A row-major m-by-n. One call per matrix-vector product. */
+/* y = A x, with A row-major m-by-n. One call per matrix-vector product.
+
+   Precondition, checked here rather than assumed: A holds at least m*n
+   doubles and x at least n. The Lean body (LambdaS.Num.dgemv) reads out of
+   range through `get!`, which reports a panic and continues with zeros; C
+   would read past the buffer, so a violation aborts instead. The checked
+   evaluator never violates it for a well-typed term (rows of a matrix
+   literal are typed at the domain space), but `Val.matrix` admits ragged
+   rows, and an environment value is not a term the checker saw. */
 LEAN_EXPORT lean_object * lambdas_dgemv(b_lean_obj_arg m_, b_lean_obj_arg n_,
                                         b_lean_obj_arg a, b_lean_obj_arg x) {
     size_t m = lean_usize_of_nat(m_);
     size_t n = lean_usize_of_nat(n_);
+    if (m > (size_t)INT_MAX || n > (size_t)INT_MAX ||
+        (n != 0 && m > SIZE_MAX / n) ||
+        lean_sarray_size(a) < m * n || lean_sarray_size(x) < n) {
+        lean_internal_panic("lambdas_dgemv: array shorter than its declared shape");
+    }
     const double * A = lean_float_array_cptr(a);
     const double * X = lean_float_array_cptr(x);
     lean_object * res = lean_alloc_sarray(sizeof(double), m, m);
@@ -50,13 +64,18 @@ LEAN_EXPORT lean_object * lambdas_dgemv(b_lean_obj_arg m_, b_lean_obj_arg n_,
     return res;
 }
 
-/* Inner product of two flat vectors. */
+/* Inner product of two flat vectors, over the shorter length: the same
+   truncation the Lean body performs (`min a.size x.size`), so the two agree
+   on every input rather than only on well-formed ones. */
 LEAN_EXPORT double lambdas_ddot(b_lean_obj_arg a, b_lean_obj_arg x) {
     const double * A = lean_float_array_cptr(a);
     const double * X = lean_float_array_cptr(x);
     size_t na = lean_sarray_size(a);
     size_t nx = lean_sarray_size(x);
     size_t n = na < nx ? na : nx;
+    if (n > (size_t)INT_MAX) {
+        lean_internal_panic("lambdas_ddot: vector longer than the BLAS index type");
+    }
 #ifdef LAMBDAS_HAVE_BLAS
     return cblas_ddot((int)n, A, 1, X, 1);
 #else

@@ -49,13 +49,17 @@ discharged every dimensional obligation and the payload is a flat array of
 doubles: no tagging, no strides, no per-entry metadata.
 
 That is the substantive claim, and these two declarations test it. Both are
-`@[extern]`, so the compiled binary calls C; the Lean bodies are the fallbacks
-the interpreter uses and the definitions the theorems see. Swapping the C loops
-for `cblas_ddot` and `cblas_dgemv` is a one-line change in `c/lambdas_blas.c`;
-they are written out only so the build has no external dependency.
+`@[extern]`, so the compiled binary calls C (`c/lambdas_blas.c`); the Lean
+bodies are the fallbacks the interpreter uses and the definitions the theorems
+see. On Apple platforms the C calls Accelerate's `cblas_ddot` and
+`cblas_dgemv`; elsewhere it runs portable loops, so the build has no external
+dependency. `blasBackend` reports which was compiled in.
 
 The trust boundary is the usual FFI one: the C is assumed to agree with the Lean
-body, and the compiled checks in `LambdaS.QM` exercise it on real data. -/
+body, and the compiled checks in `LambdaS.QM` exercise it on real data. The
+agreement has one precondition, that the flat array holds `m × n` doubles; the
+Lean body reads out of range through `get!` and the C checks the sizes and
+aborts. `ddot` truncates to the shorter vector in both. -/
 
 /-- Inner product of two flat vectors. -/
 @[extern "lambdas_ddot"]
