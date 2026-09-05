@@ -8,7 +8,17 @@ import LambdaS.Dynamics
 import LambdaS.Notation
 
 /-!
-# A real computation: the particle in a box
+# A real computation: quantum mechanics, end to end
+
+This module is the paper's worked example, developed in full where the
+paper keeps the ideas: the particle in a box exercises the scalar
+fragment and forces the rational exponents, the two-state system
+exercises spaces, linear maps, and the compiled path down to BLAS, and
+one example thus crosses four layers of the development: rational
+exponents in the statics, fuel in the dynamics, parametricity at the
+interface, and erasure on the path to the machine.
+
+## The particle in a box
 
 Λs was argued for; this file runs it. The evaluator from `LambdaS.Dynamics` is
 generic in its numeric carrier, so the *same* definition that
