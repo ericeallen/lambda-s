@@ -305,6 +305,54 @@ def weaken {k} (V : Sp B k) : Sp B (k + 1) := V.map UExp.weaken
 
 end Sp
 
+/-! ## The bridge to the model
+
+Hart's classification (`LambdaS.Map`) is developed over units of the model,
+`Uom B`, and spaces of the model, `Space B I`. A closed unit expression is a
+unit of the model outright (the same exponent vector), a closed space is a
+space of the model indexed by position, and the unit the row at codomain unit
+`w` carries at component `i` under T-MCons is the model's `entry`. -/
+
+namespace UExp
+
+/-- A closed unit expression as a unit of the model: its exponent vector. -/
+def toUom (t : UExp B 0) : Uom B := Uom.ofExp t.base
+
+@[simp] theorem exp_toUom (t : UExp B 0) (b : B) : (toUom t).exp b = t.base b := rfl
+
+/-- The embedding is injective: with no unit variables in scope, a unit
+expression is its exponent vector. -/
+theorem toUom_injective : Function.Injective (toUom (B := B)) := fun _ _ h =>
+  Term.ext' (funext fun b => congrArg (fun u => Uom.exp u b) h) (funext fun v => v.elim0)
+
+@[simp] theorem toUom_one : toUom (1 : UExp B 0) = 1 := Uom.ext fun b => by simp
+@[simp] theorem toUom_mul (s t : UExp B 0) : toUom (Term.mul s t) = toUom s * toUom t :=
+  Uom.ext fun b => by simp
+@[simp] theorem toUom_inv (t : UExp B 0) : toUom (Term.inv t) = (toUom t)⁻¹ :=
+  Uom.ext fun b => by simp
+@[simp] theorem toUom_div (s t : UExp B 0) : toUom (Term.div s t) = toUom s / toUom t :=
+  Uom.ext fun b => by simp
+@[simp] theorem toUom_rpow (t : UExp B 0) (q : ℚ) : toUom (Term.rpow t q) = toUom t ^ q :=
+  Uom.ext fun b => by simp
+
+end UExp
+
+/-- A closed space as a space of the model, indexed by position. -/
+def Sp.toSpace (V : Sp B 0) : Space B (Fin V.length) := fun i => (V.get i).toUom
+
+/-- The unit of entry `(j, i)` of a matrix at `Lin V W`, read off the two
+spaces: `W_j / V_i`. -/
+def linEntry {k} (V W : Sp B k) (j : Fin W.length) (i : Fin V.length) : UExp B k :=
+  Term.div (W.get j) (V.get i)
+
+/-- **The calculus's entry units are the model's.** The unit `Lin V W`
+assigns entry `(j, i)` is `entry` of `LambdaS.Map` at the two spaces, so
+Hart's classification, developed in the model, is about the matrices the
+calculus types. -/
+theorem entry_toSpace (V W : Sp B 0) (j : Fin W.length) (i : Fin V.length) :
+    entry V.toSpace W.toSpace j i = (linEntry V W j i).toUom := by
+  simp [Sp.toSpace, linEntry]
+
 /-! ## Dimensions
 
 A dimension expression has exactly the structure a unit expression does: the

@@ -132,6 +132,11 @@ add, like everything else. -/
   simp only [comp, cons, Scaling.mk.injEq, true_and]
   exact funext fun i => Fin.cases rfl (fun _ => rfl) i
 
+omit [Fintype B] in
+/-- The trivial scaling is the unit of composition. -/
+@[simp] theorem Scaling.comp_zero (V : Scaling B k) : V.comp Scaling.zero = V := by
+  cases V with | mk b v => simp [comp, Scaling.zero]
+
 theorem Scaling.logScale_comp (V ψ : Scaling B k) (u : UExp B k) :
     (V.comp ψ).logScale u = V.logScale u + ψ.logScale u := by
   have h1 : ∀ b : B, (u.base b : ℝ) * (V.base b + ψ.base b)

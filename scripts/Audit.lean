@@ -66,7 +66,18 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Tw.eval
 #print axioms LambdaS.Tw.scalarEq
 #print axioms LambdaS.Tw.scalarEq_iff_eval_eq
+#print axioms LambdaS.Tw.norm
+#print axioms LambdaS.Tw.eval_norm
+#print axioms LambdaS.Tw.normEq
+#print axioms LambdaS.Tw.normEq_iff_eval_eq
 #print axioms LambdaS.unitDriftLam
+#print axioms LambdaS.unitDriftLam_eq_unitDrift
+#print axioms LambdaS.unitDriftLam_spec
+#print axioms LambdaS.Twist.law
+#print axioms LambdaS.unitDrift_law
+#print axioms LambdaS.den_comp_of_drift
+#print axioms LambdaS.den_indep_of_driftFree
+#print axioms LambdaS.scaleLaw_of_driftFree
 
 -- Adequacy and Erasure
 #print axioms LambdaS.eval_adeq
@@ -96,6 +107,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.mulScaleLaw_eq_zero_of_unsolvable
 #print axioms LambdaS.Pi.mulScaleLaw_dichotomy
 #print axioms LambdaS.Pi.den_mulScaleLaw
+#print axioms LambdaS.Pi.den_mulScaleLaw_driftFree
 #print axioms LambdaS.Pi.pendulum_mass_absent
 #print axioms LambdaS.Pi.solution_eq_zero_of_appears_once
 #print axioms LambdaS.Pi.MulScaleLaw
@@ -119,6 +131,8 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.transpose_comp_direct_iff
 #print axioms LambdaS.uniform_canonical_metric
 #print axioms LambdaS.entry
+#print axioms LambdaS.entry_toSpace
+#print axioms LambdaS.HasTy.mcons_entry
 
 -- Examples
 #print axioms LambdaS.Examples.yard_satisfiable

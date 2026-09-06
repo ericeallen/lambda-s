@@ -166,20 +166,28 @@ theorem inSpan_single {w v : UExp B k} (h : InSpan [w] v) :
 /-- **The square root of a unit is unreachable.**
 
 If `u` is nontrivial, then `u` is not in the span of `u²`: it would have to be
-`u^(2n)` for an integer `n`, forcing `1 = 2n` in ℚ. -/
-theorem not_inSpan_sq {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
+`u^(2n)` for an integer `n`, and `1 - 2n` is a nonzero integer, so every
+exponent of `u` (base or variable) would be zero. The hypothesis is exactly
+`u ≠ 1`: a bare unit variable, the `∀u. Q u² → Q u` reading, is covered. -/
+theorem not_inSpan_sq {u : UExp B k} (hu : u ≠ 1) :
     ¬ InSpan [Term.mul u u] u := by
   intro h
   obtain ⟨n, hn⟩ := inSpan_single h
-  have hbase : u.base b = (n : ℚ) * (u.base b + u.base b) := by
-    have := congrArg (fun t => Term.base t b) hn
-    simpa using this
-  have h2 : ((2 * n : ℤ) : ℚ) = 1 := by
-    field_simp at hbase
-    push_cast
-    nlinarith [hbase, sq_nonneg (u.base b)]
-  have : (2 * n) = 1 := by exact_mod_cast h2
-  omega
+  have h2n : (1 : ℚ) - 2 * n ≠ 0 := by
+    intro h0
+    have h1 : ((2 * n : ℤ) : ℚ) = 1 := by push_cast; linarith
+    have : 2 * n = 1 := by exact_mod_cast h1
+    omega
+  apply hu
+  refine Term.ext' (funext fun b => ?_) (funext fun v => ?_)
+  · have hb := congrArg (fun t => Term.base t b) hn
+    simp only [Term.rpow_base, Term.mul_base] at hb
+    have : (1 - 2 * (n : ℚ)) * u.base b = 0 := by linarith
+    simpa using (mul_eq_zero.mp this).resolve_left h2n
+  · have hv := congrArg (fun t => Term.vars t v) hn
+    simp only [Term.rpow_vars, Term.mul_vars] at hv
+    have : (1 - 2 * (n : ℚ)) * u.vars v = 0 := by linarith
+    simpa using (mul_eq_zero.mp this).resolve_left h2n
 
 /-! ## The arithmetic fragment, intrinsically typed by its unit -/
 
@@ -216,18 +224,18 @@ result pins down is that arithmetic alone never reaches the unit.) Together with
 the admissibility criterion (a primitive may take any type whose denotation is
 scale-invariant, and `√` is) this says `pow` is both **necessary** and
 **permitted**. -/
-theorem sqrt_not_definable {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
+theorem sqrt_not_definable {u : UExp B k} (hu : u ≠ 1) :
     IsEmpty (Arith [Term.mul u u] u) :=
-  ⟨fun e => not_inSpan_sq hb (arith_inSpan e)⟩
+  ⟨fun e => not_inSpan_sq hu (arith_inSpan e)⟩
 
 /-- The same statement for Newton's iteration, which is where the intuition
 usually goes. The iteration itself is well-typed (`(x + a/x)/2` has unit `u`
 whenever `x` does), but no *seed* of unit `u` exists to start it, so the whole
 construction is unavailable. Kennedy's Exercise 14 hint in miniature. -/
-theorem no_newton_seed {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
+theorem no_newton_seed {u : UExp B k} (hu : u ≠ 1) :
     ¬ Nonempty (Arith [Term.mul u u] u) := by
   rw [← not_isEmpty_iff]
-  simp [sqrt_not_definable hb]
+  simp [sqrt_not_definable hu]
 
 /-! ## Lifting to the term grammar of Λs itself
 
@@ -314,21 +322,21 @@ built from variables, rational literals, and the field operations has type
 `Q u`. This is `sqrt_not_definable` lifted from the self-contained `Arith`
 grammar to `Tm` via the reflection, and the `ucon` caveat is gone because
 `ArithOnly` excludes `ucon`. -/
-theorem sqrt_not_definable_tm {u : UExp B k} {b : B} (hb : u.base b ≠ 0) :
+theorem sqrt_not_definable_tm {u : UExp B k} (hu : u ≠ 1) :
     ¬ ∃ (e : Tm B D j k) (_ : HasTy Δ (scalarCtx [Term.mul u u]) e (.Q u)),
       e.ArithOnly := by
   rintro ⟨e, d, ha⟩
   obtain ⟨a⟩ := arith_of_hasTy d ha
-  exact not_inSpan_sq hb (arith_inSpan a)
+  exact not_inSpan_sq hu (arith_inSpan a)
 
 /-- The Newton-iteration reading at the term level: any well-typed Λs candidate
 for a seed of unit `u` from an argument at `u²` must step outside the field
 operations. The iteration body `(x + a/x)/2` is well-typed at `Q u`; the seed
 is what cannot be written. -/
-theorem no_newton_seed_tm {u : UExp B k} {b : B} (hb : u.base b ≠ 0)
+theorem no_newton_seed_tm {u : UExp B k} (hu : u ≠ 1)
     {e : Tm B D j k} (d : HasTy Δ (scalarCtx [Term.mul u u]) e (.Q u)) :
     ¬ e.ArithOnly :=
-  fun ha => sqrt_not_definable_tm hb ⟨e, d, ha⟩
+  fun ha => sqrt_not_definable_tm hu ⟨e, d, ha⟩
 
 end TermLevel
 

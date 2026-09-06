@@ -75,6 +75,18 @@ noncomputable def scale (ψ : Scaling B k) (t : UExp B k) : ℝ :=
 theorem scale_pos (ψ : Scaling B k) (t : UExp B k) : 0 < ψ.scale t :=
   Real.exp_pos _
 
+/-- The **trivial scaling**: every factor `1`, every logarithm `0`. The unit
+of composition (`Scaling.comp_zero`), and the scaling that fixes every value
+(`scaleEnv_zero`); holding one parameter of the twisted scaling law at `zero`
+specializes it to moving the valuation alone or the values alone. -/
+def zero : Scaling B k := ⟨fun _ => 0, fun _ => 0⟩
+
+@[simp] theorem logScale_zero (t : UExp B k) : (zero : Scaling B k).logScale t = 0 := by
+  simp [logScale, zero]
+
+@[simp] theorem scale_zero (t : UExp B k) : (zero : Scaling B k).scale t = 1 := by
+  simp [scale]
+
 /-! ## The homomorphism laws -/
 
 @[simp] theorem logScale_one (ψ : Scaling B k) : ψ.logScale (1 : UExp B k) = 0 := by

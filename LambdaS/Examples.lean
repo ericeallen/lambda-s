@@ -830,9 +830,9 @@ def addTwoVarsDeriv : HasTy Δ₀ (scalarCtx [m, m]) addTwoVars (.Q ft) :=
 `x in ft + y` with `x : Q m` and `y : Q ft` converts one branch and not the
 other, so the branch drifts are `m/ft` and `1`, distinct exponent vectors,
 and the sum has no uniform drift; indeed the program is not scale-invariant.
-By `Tw.scalarEq_iff_eval_eq` such disagreements are the *only* declines at
-`add` between atom-free ratios, which is what a first-order program without
-abstractions of its own produces (`hoSum` below shows the boundary). -/
+By `Tw.normEq_iff_eval_eq` such disagreements are the *only* declines at
+`add` between atom-free ratios, which is what a first-order program produces
+once its internal applications are normalized away (`hoSum` below). -/
 def addMixed : Term₀ := .add (.convert (.var 0) m ft) (.var 1)
 
 def addMixedDeriv : HasTy Δ₀ (scalarCtx [m, ft]) addMixed (.Q ft) :=
@@ -851,13 +851,14 @@ declared conversion factor. Two constant conversion oracles, one environment
         | some (.scalar x), some (.scalar y) => x.mag != y.mag
         | _, _ => false)
 
-/-- **The boundary of the branch comparison.** An abstraction applied inside
-a first-order program leaves a residue: `(λf. f x) (λy. y in ft)` has the
+/-- **A residue of internal abstraction.** An abstraction applied inside a
+first-order program leaves a redex behind: `(λf. f x) (λy. y in ft)` has the
 ratio `m/ft` under every scaling, and `unitDrift` names it, because deciding
 triviality normalizes the ratio fully (`Tw.nfOne`). But `twistOf` reduces one
-β-step at a time, and the redex the outer application creates, `(λy. ...) 1`,
-survives as a node that `Tw.flat` treats as an opaque atom. So the ratio is
-not atom-free, and `Tw.scalarEq_iff_eval_eq` does not apply to it. -/
+β-step at construction, and the redex the outer application creates,
+`(λy. ...) 1`, survives in the ratio as an `app` node, which `Tw.flat` treats
+as an opaque atom. The ratio as built is not atom-free; its normal form is,
+and the branch comparison runs on normal forms (`Tw.normEq`). -/
 def hoApp : Term₀ :=
   .app (.lam (.arrow (.Q m) (.Q ft)) (.app (.var 0) (.var 1)))
        (.lam (.Q m) (.convert (.var 0) m ft))
@@ -866,23 +867,25 @@ def hoAppDeriv : HasTy Δ₀ (scalarCtx [m]) hoApp (.Q ft) :=
   .app (.lam (.app (.var rfl) (.var rfl)))
        (.lam (.convert (.var rfl) sameDim_m_ft))
 
-/- The drift is named correctly, but the ratio carries one atom. -/
+/- The drift is named correctly; the ratio as built carries one atom, and its
+normal form carries none. -/
 #guard (unitDrift hoAppDeriv).map (· == Term.div m ft) == some true
 #guard (twistOf 0 [Shape.scalar] rfl hoAppDeriv).map (fun p => p.1.flat.2.length)
   == some 1
+#guard (twistOf 0 [Shape.scalar] rfl hoAppDeriv).map (fun p => p.1.norm.flat.2.length)
+  == some 0
 
-/-- The consequence: summing `hoApp` with `x in ft`, two branches worth `m/ft`
-under every scaling, is declined, because the comparison sees an atom against
-a unit. This is a spurious decline (the program is not scale-invariant, but
-its branches agree), and it is the residual incompleteness the analysis has:
-completeness of the comparison is proved for atom-free ratios only. Reducing
-substitution-created redexes (hereditary substitution) would remove it. -/
+/-- Summing `hoApp` with `x in ft`, two branches worth `m/ft` under every
+scaling, is accepted at that drift: the comparison normalizes both branches
+first, so the residue is reduced away and two unit expressions are compared.
+Before the comparison ran on normal forms this sum was declined, an atom
+against a unit. -/
 def hoSum : Term₀ := .add hoApp (.convert (.var 0) m ft)
 
 def hoSumDeriv : HasTy Δ₀ (scalarCtx [m]) hoSum (.Q ft) :=
   .add hoAppDeriv (.convert (.var rfl) sameDim_m_ft)
 
-#guard (unitDrift hoSumDeriv).isNone
+#guard (unitDrift hoSumDeriv).map (· == Term.div m ft) == some true
 
 /-- Division of a unit by itself is the trivial unit: exponent vectors
 subtract to zero. -/
@@ -934,7 +937,9 @@ def betaSharedDeriv : HasTy Δ₀ (scalarCtx [m]) betaShared (.Q ft) :=
 /-- The λ-wrapped kernel: `λx:Q m. λy:Q m. (x in ft) + (y in ft)`. Closed,
 so `unitDrift` has no context to pin; `unitDriftLam` strips the two leading
 binders, treats `x` and `y` as inputs, and reports the kernel's drift, the
-same verdict `addTwoVars` receives as an open term. -/
+same verdict `addTwoVars` receives as an open term: by
+`unitDriftLam_eq_unitDrift` the two spellings' verdicts are one computation,
+and `unitDriftLam_spec` makes the verdict exact for the applied kernel. -/
 def lamKernel : Term₀ :=
   .lam (.Q m) (.lam (.Q m)
     (.add (.convert (.var 1) m ft) (.convert (.var 0) m ft)))
@@ -951,7 +956,7 @@ branches below convert the same product of meters to feet, placed differently:
 the first converts the product once at `m·m`, the second converts each factor
 at `m`. Their ratio terms differ syntactically (the syntactic check `Tw.beq`
 rejects exactly
-this pair), but `Tw.scalarEq` flattens both to the unit vector `m²/ft²` with
+this pair), but `Tw.normEq` flattens both to the unit vector `m²/ft²` with
 atom exponent `1` on each of `x` and `y`, so the analysis answers, and the
 answer is the drift the branches share. -/
 def addAssoc : Term₀ :=
@@ -1357,7 +1362,7 @@ reporting variants, four verdicts, all decided at build time:
 * `kernelMixedPaths` computes `v²` twice in one sum: once by converting the
   input and squaring the metric velocity, once by squaring the imperial
   velocity and converting the square at `ft²/s²`. The branch ratios differ
-  syntactically (`Tw.beq` rejects the pair), but `Tw.scalarEq` flattens both
+  syntactically (`Tw.beq` rejects the pair), but `Tw.normEq` flattens both
   to the exponent vector `ft²/m²` with atom exponents `x² / t²`, so the
   sum is accepted and carries the branches' shared drift.
 * `kernelRoot` takes the speed back out of the energy with a square root,

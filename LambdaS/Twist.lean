@@ -119,24 +119,32 @@ A judgment Twist relates a typing derivation to its ratio, and
 the scaling law generalizes the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) with the ratio as the measured
 defect:
 
-**Theorem (The scaling law, twisted; `Twist.scaling`).** Under any rescaling ψ, which now moves both the program's inputs and
-the valuation its conversion factors are drawn from, a program of type
+**Theorem (The scaling law, twisted; `Twist.scaling`).** The law has two
+parameters. Under a rescaling φ of the valuation the conversion factors are
+drawn from and a rescaling ψ of the program's inputs, a program of type
 Q u whose conversions accumulate to ratio t rescales by
-ψ(u)·ψ(t)²; we write
+ψ(u)·φ(t)·ψ(t); we write
 ψ(t) for the ratio's value ⟦t⟧_(ψ,ρ) with every ratio
 variable held at the constant ratio ⟨ 1 ⟩.
 
-Each conversion pays the factor twice: once because the converted value
-rescales with its source unit rather than the target its type advertises,
-and once because the conversion factor itself rescales with the units it
-mediates. The ratio therefore appears squared. For example, doubling the
-meter while fixing the foot multiplies x in ft by
+Each conversion pays the factor once to each parameter: once under ψ because
+the converted value rescales with its source unit rather than the target its
+type advertises, and once under φ because the conversion factor itself
+rescales with the valuation. At φ = ψ the ratio appears squared. For
+example, doubling the meter while fixing the foot, in both the values and the
+valuation, multiplies x in ft by
 four: the input x, a length in meters, doubles, and the conversion factor
 V(m)/V(ft) doubles with it, while the result type
 Q ft promises only ψ(ft) = 1; the excess 2²
 is ψ(m/ft)². At trivial ratio this is
 the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`); the extra factor is visible to every rescaling,
-not only the incoherent ones. The converse direction gives the
+not only the incoherent ones. Holding one parameter trivial in turn gives
+the two statements a drift diagnosis is for (`unitDrift_law`): with the
+values fixed, a program of drift w is multiplied by φ(w) when the
+valuation is rescaled by φ (`den_comp_of_drift`), so drift 1 is
+declaration independence (`den_indep_of_driftFree`); with the valuation
+fixed, a program of drift 1 obeys the unrestricted scaling law
+(`scaleLaw_of_driftFree`). The converse direction gives the
 characterization: for a first-order program with nonzero denotation,
 invariance under *all* rescalings holds exactly when its ratio
 evaluates to 1 under every rescaling (`Twist.invariant_iff`).
@@ -191,8 +199,10 @@ same variable's ratio times m/ft, so the agreement
 demanded at + holds and the branches' shared drift is the program's.
 
 At +, and at map application and composition per output component, the
-analysis compares ratio terms up to the unit
-algebra (`Tw.scalarEq`). Each scalar ratio flattens to an
+analysis compares ratio terms up to β-reduction and the unit
+algebra (`Tw.normEq`): each ratio is first normalized (`Tw.norm`, a fueled
+β-normalizer that preserves evaluation, `Tw.eval_norm`), and each scalar
+normal form flattens to an
 exponent vector holding all of its unit constants, merged by the group
 operations, together with a finitely supported assignment of rational
 exponents to *atoms*, opaque subratios the flattening cannot
@@ -226,7 +236,7 @@ scale factors, so the positive carrier excludes nothing the scaling law
 can instantiate. A first-order program's ratios consequently carry no
 atoms, and there the comparison is exact in both directions: for
 atom-free ratios, syntactic agreement coincides with equal evaluation
-under every rescaling (`Tw.scalarEq_iff_eval_eq`), so a
+under every rescaling (`Tw.normEq_iff_eval_eq`), so a
 first-order sum is declined precisely when its branches genuinely
 disagree. The artifact checks both sides of the line:
 (x in ft) + (y in ft) over two
@@ -237,11 +247,12 @@ is sensitive to the declarations.
 
 Under binders the analysis
 reduces every ratio redex it can see, so a visible application analyzes
-as its redex (`betaShared`); what remains is a boundary.
-Two distinct bound atoms are never identified, because whether two
+as its redex (`betaShared`), and the comparison normalizes the ratios it
+compares, so a redex that substitution creates is reduced as well
+(`hoSum`). What remains is a boundary:
+two distinct bound atoms are never identified, because whether two
 arguments will drift alike is a fact about call sites, which a
-compositional analysis refuses to consult, and a higher-order redex
-created by substitution stays opaque.
+compositional analysis refuses to consult.
 
 The analysis declines one term form unconditionally:
 1_u, which the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) places outside the
@@ -297,14 +308,19 @@ certified drift-free *without* instantiation
 ℚ-vector space, so one certificate covers every future
 instantiation at once.
 
-Programs with drift 1 satisfy a strong guarantee. A closed dimensionless
-program with drift 1 denotes the same number under *every* valuation
-of the base units: its output provably does not depend on how the units it
-converts through are declared. By the adequacy theorem of
-“Adequacy and Erasure” (`Erasure.lean`), the same holds of its compiled output
-(`evalC_indep_of_driftFree`). The declared factors along any closed
-conversion loop cancel, which restates “Unit Declarations” (`Declare.lean`)'s
-consistency criterion as a theorem about programs.
+Programs with drift 1 satisfy a strong guarantee. A program with drift 1,
+open or closed and at any unit, denotes at every environment the same number
+under *every* valuation of the base units (`den_indep_of_driftFree`): its
+output provably does not depend on how the units it converts through are
+declared. By the adequacy theorem of
+“Adequacy and Erasure” (`Erasure.lean`), the same holds of a closed program's
+compiled output (`evalC_indep_of_driftFree`). The declared factors along any
+closed conversion loop cancel, which restates “Unit Declarations”
+(`Declare.lean`)'s consistency criterion as a theorem about programs. With
+the valuation held fixed instead, the same program obeys the unrestricted
+scaling law (`scaleLaw_of_driftFree`), which is the hypothesis the Pi theorem
+consumes (`den_mulScaleLaw_driftFree`, `PiTheorem.lean`), now supplied by the
+drift analysis rather than by the absence of conversion.
 -/
 
 namespace LambdaS
@@ -480,30 +496,34 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
 
 /-! ## The scaling law with a twist -/
 
-/-- Environments related at given ratios, pointwise. The `cons` rule carries an
-equation of shapes rather than demanding a definitional match, because under
-`ulam` the context is `Γ.weaken` and `Ty.shape (Ty.weaken τ) = Ty.shape τ` is a
-theorem. Localizing the transport here keeps it out of every other rule. -/
-inductive TwRelEnv {j k : ℕ} (ψ : Scaling B k) :
-    (Γ : Ctx B D j k) → (Θ : List Shape) → TwEnv Θ → Env Γ → Env Γ → Prop where
-  | nil {θρ : TwEnv []} {ρ ρ' : Env ([] : Ctx B D j k)} :
-      TwRelEnv ψ [] [] θρ ρ ρ'
+/-- Environments related at given ratios, pointwise, under a valuation
+rescaling `φ` and a value rescaling `ψ`, with one ratio environment per
+reading. The `cons` rule carries an equation of shapes rather than demanding a
+definitional match, because under `ulam` the context is `Γ.weaken` and
+`Ty.shape (Ty.weaken τ) = Ty.shape τ` is a theorem. Localizing the transport
+here keeps it out of every other rule. -/
+inductive TwRelEnv {j k : ℕ} (φ ψ : Scaling B k) :
+    (Γ : Ctx B D j k) → (Θ : List Shape) → TwEnv Θ → TwEnv Θ → Env Γ → Env Γ → Prop where
+  | nil {θρ θρ' : TwEnv []} {ρ ρ' : Env ([] : Ctx B D j k)} :
+      TwRelEnv φ ψ [] [] θρ θρ' ρ ρ'
   | cons {τ : Ty B D j k} {Γ : Ctx B D j k} {s : Shape} {Θ : List Shape}
-      {θρ : TwEnv (s :: Θ)} {ρ ρ' : Env (τ :: Γ)}
+      {θρ θρ' : TwEnv (s :: Θ)} {ρ ρ' : Env (τ :: Γ)}
       (hs : s = Ty.shape τ) :
-      TwRel τ (hs ▸ θρ.1) ψ ρ.1 ρ'.1 → TwRelEnv ψ Γ Θ θρ.2 ρ.2 ρ'.2 →
-      TwRelEnv ψ (τ :: Γ) (s :: Θ) θρ ρ ρ'
+      TwRel τ (hs ▸ θρ.1) (hs ▸ θρ'.1) φ ψ ρ.1 ρ'.1 →
+      TwRelEnv φ ψ Γ Θ θρ.2 θρ'.2 ρ.2 ρ'.2 →
+      TwRelEnv φ ψ (τ :: Γ) (s :: Θ) θρ θρ' ρ ρ'
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- Looking up related environments. -/
-theorem twRelEnv_lookup {j k : ℕ} {ψ : Scaling B k} : ∀ {Γ : Ctx B D j k}
-    {Θ : List Shape} {θρ : TwEnv Θ} {ρ ρ' : Env Γ}, TwRelEnv ψ Γ Θ θρ ρ ρ' →
+theorem twRelEnv_lookup {j k : ℕ} {φ ψ : Scaling B k} : ∀ {Γ : Ctx B D j k}
+    {Θ : List Shape} {θρ θρ' : TwEnv Θ} {ρ ρ' : Env Γ}, TwRelEnv φ ψ Γ Θ θρ θρ' ρ ρ' →
     ∀ {τ : Ty B D j k} (n : ℕ) (h : Γ[n]? = some τ) (h' : Θ[n]? = some (Ty.shape τ)),
-    TwRel τ (TwEnv.lookup n h' θρ) ψ (Env.lookup n h ρ) (Env.lookup n h ρ') := by
-  intro Γ Θ θρ ρ ρ' henv
+    TwRel τ (TwEnv.lookup n h' θρ) (TwEnv.lookup n h' θρ') φ ψ
+      (Env.lookup n h ρ) (Env.lookup n h ρ') := by
+  intro Γ Θ θρ θρ' ρ ρ' henv
   induction henv with
   | nil => intro τ n h; exact absurd h (by simp)
-  | @cons τ Γ s Θ θρ ρ ρ' hs hw hrest ih =>
+  | @cons τ Γ s Θ θρ θρ' ρ ρ' hs hw hrest ih =>
     intro σ n h h'
     cases n with
     | zero =>
@@ -514,57 +534,61 @@ theorem twRelEnv_lookup {j k : ℕ} {ψ : Scaling B k} : ∀ {Γ : Ctx B D j k}
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- **Weakening related environments under a unit binder.** The value
-environments are retyped by `Env.weaken`; the ratio environment is untouched,
+environments are retyped by `Env.weaken`; the ratio environments are untouched,
 because shape is blind to units, which is the entire design working as
 intended. -/
-theorem twRelEnv_weaken {j k : ℕ} {ψ : Scaling B k} (s : ℝ) :
-    ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ : TwEnv Θ} {ρ ρ' : Env Γ},
-    TwRelEnv ψ Γ Θ θρ ρ ρ' →
-    TwRelEnv (ψ.cons s) Γ.weaken Θ θρ (Env.weaken ρ) (Env.weaken ρ') := by
-  intro Γ Θ θρ ρ ρ' h
+theorem twRelEnv_weaken {j k : ℕ} {φ ψ : Scaling B k} (s s' : ℝ) :
+    ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ θρ' : TwEnv Θ} {ρ ρ' : Env Γ},
+    TwRelEnv φ ψ Γ Θ θρ θρ' ρ ρ' →
+    TwRelEnv (φ.cons s) (ψ.cons s') Γ.weaken Θ θρ θρ' (Env.weaken ρ) (Env.weaken ρ') := by
+  intro Γ Θ θρ θρ' ρ ρ' h
   induction h with
   | nil => exact TwRelEnv.nil
-  | @cons τ Γ sh Θ θρ ρ ρ' hs hw hrest ih =>
+  | @cons τ Γ sh Θ θρ θρ' ρ ρ' hs hw hrest ih =>
     subst hs
     refine TwRelEnv.cons (Ty.shape_weaken τ).symm ?_ ih
-    exact (twRel_weaken τ ψ s (w := θρ.1) (eqRec_heq _ _).symm
-      (cast_heq _ _).symm (cast_heq _ _).symm).mpr hw
+    exact (twRel_weaken τ φ ψ s s' (w := θρ.1) (v := θρ'.1) (eqRec_heq _ _).symm
+      (eqRec_heq _ _).symm (cast_heq _ _).symm (cast_heq _ _).symm).mpr hw
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 omit [UnitSys B D] in
 /-- The same under a dimension binder, where nothing at all moves. -/
-theorem twRelEnv_weakenDim {j k : ℕ} {ψ : Scaling B k} :
-    ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ : TwEnv Θ} {ρ ρ' : Env Γ},
-    TwRelEnv ψ Γ Θ θρ ρ ρ' →
-    TwRelEnv ψ Γ.weakenDim Θ θρ (Env.weakenDim ρ) (Env.weakenDim ρ') := by
-  intro Γ Θ θρ ρ ρ' h
+theorem twRelEnv_weakenDim {j k : ℕ} {φ ψ : Scaling B k} :
+    ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ θρ' : TwEnv Θ} {ρ ρ' : Env Γ},
+    TwRelEnv φ ψ Γ Θ θρ θρ' ρ ρ' →
+    TwRelEnv φ ψ Γ.weakenDim Θ θρ θρ' (Env.weakenDim ρ) (Env.weakenDim ρ') := by
+  intro Γ Θ θρ θρ' ρ ρ' h
   induction h with
   | nil => exact TwRelEnv.nil
-  | @cons τ Γ sh Θ θρ ρ ρ' hs hw hrest ih =>
+  | @cons τ Γ sh Θ θρ θρ' ρ ρ' hs hw hrest ih =>
     subst hs
     refine TwRelEnv.cons (Ty.shape_weakenDim τ).symm ?_ ih
-    refine (twRel_ground τ (idU B k) (fun i => Term.ofVar i.succ) ψ
-      (w := θρ.1) (eqRec_heq _ _).symm
+    refine (twRel_ground τ (idU B k) (fun i => Term.ofVar i.succ) φ ψ
+      (w := θρ.1) (v := θρ'.1) (eqRec_heq _ _).symm (eqRec_heq _ _).symm
       (cast_heq _ _).symm (cast_heq _ _).symm).mpr ?_
-    rwa [Scaling.pull_id]
+    rwa [Scaling.pull_id, Scaling.pull_id]
 
-private theorem div_twist (xu xv xs xt A Bv : ℝ) :
-    (xu * (xs * xs) * A) / (xv * (xt * xt) * Bv)
-      = xu / xv * (xs / xt * (xs / xt)) * (A / Bv) := by
+private theorem div_twist (xu xv xs xt ys yt A Bv : ℝ) :
+    (xu * (xs * ys) * A) / (xv * (xt * yt) * Bv)
+      = xu / xv * (xs / xt * (ys / yt)) * (A / Bv) := by
   rw [mul_div_mul_comm, mul_div_mul_comm, mul_div_mul_comm]
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] in
-/-- **The scaling law with a twist.** A term whose conversions accumulate to `t`
-rescales by its type's factor times the *square* of `t`'s value: both readings
-carry the conversion factor, so it appears twice. At trivial ratio the
-conclusion is that of `fundamental_free`, the unrestricted law under every
-rescaling, now for terms that convert but accumulate nothing.
+/-- **The scaling law with a twist.** Rescale the valuation by `φ` and the
+values by `ψ`: a term whose conversions accumulate to `t` rescales by its
+type's factor under `ψ` times `t`'s value under `φ` times `t`'s value under
+`ψ`. The two readings of the ratio are the two things a conversion pays for:
+its factor `V(u)/V(v)` moves with the valuation, and the converted value moves
+with its source unit where its type promises the target. At `φ = ψ` the ratio
+appears squared; at trivial ratio the conclusion is that of `fundamental_free`,
+the unrestricted law under every rescaling, now for terms that convert but
+accumulate nothing.
 
 The value environments are related at the **evaluation of the assignment**:
-the ratio environment is arbitrary at the atoms (positions below `p`, the
+the ratio environments are arbitrary at the atoms (positions below `p`, the
 `lam`-bound variables) and pinned at `1` from `p` on (`TwEnv.OnesFrom`),
 which is where the `varOne` rule reads its trivial ratio back. The exported
-theorems instantiate at `p = 0` and the all-ones environment, the
+theorems instantiate at `p = 0` and the all-ones environments, the
 instantiation they performed already.
 
 Proved at the whole calculus; the binder cases are the ones a function-space
@@ -572,186 +596,197 @@ ratio could not state. -/
 theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     {e : Tm B D j k} {τ : Ty B D j k} {p : ℕ} {Θ : List Shape}
     {d : HasTy Δ Γ e τ} {t : Tw B k Θ (Ty.shape τ)}, Twist p Θ d t →
-    ∀ (V ψ : Scaling B k) (θρ : TwEnv Θ), TwEnv.OnesFrom p θρ →
-      ∀ {ρ ρ' : Env Γ}, TwRelEnv ψ Γ Θ θρ ρ ρ' →
-      TwRel τ (Tw.eval ψ t θρ) ψ (den V d ρ) (den (V.comp ψ) d ρ') := by
+    ∀ (V φ ψ : Scaling B k) (θρ θρ' : TwEnv Θ),
+      TwEnv.OnesFrom p θρ → TwEnv.OnesFrom p θρ' →
+      ∀ {ρ ρ' : Env Γ}, TwRelEnv φ ψ Γ Θ θρ θρ' ρ ρ' →
+      TwRel τ (Tw.eval φ t θρ) (Tw.eval ψ t θρ') φ ψ (den V d ρ) (den (V.comp φ) d ρ') := by
   intro j k Δ Γ e τ p Θ d t ht
   induction ht with
-  | var h h' hp => intro V ψ θρ hOnes ρ ρ' hr; exact twRelEnv_lookup hr _ h h'
+  | var h h' hp => intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr; exact twRelEnv_lookup hr _ h h'
   | varOne h h' hp =>
-    intro V ψ θρ hOnes ρ ρ' hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
     have hl := twRelEnv_lookup hr _ h h'
-    rwa [Tw.eval_one, ← hOnes _ _ h' hp]
+    rw [hOnes _ _ h' hp, hOnes' _ _ h' hp] at hl
+    rwa [Tw.eval_one, Tw.eval_one]
   | lam htb ih =>
-    intro V ψ θρ hOnes ρ ρ' hr r x y hxy
-    exact ih V ψ (r, θρ) (hOnes.cons r) (TwRelEnv.cons rfl hxy hr)
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr r r' x y hxy
+    exact ih V φ ψ (r, θρ) (r', θρ') (hOnes.cons r) (hOnes'.cons r')
+      (TwRelEnv.cons rfl hxy hr)
   | app htf hta ihf iha =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    exact ihf V ψ θρ hOnes hr _ _ _ (iha V ψ θρ hOnes hr)
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    exact ihf V φ ψ θρ θρ' hOnes hOnes' hr _ _ _ _ (iha V φ ψ θρ θρ' hOnes hOnes' hr)
   | @lit _ _ _ _ q _ _ =>
-    intro V ψ θρ hOnes ρ ρ' _
-    show (den (V.comp ψ) (HasTy.lit (q := q)) ρ' : ℝ)
-        = ψ.scale 1 * (Tw.eval ψ (Tw.unit 1) θρ * Tw.eval ψ (Tw.unit 1) θρ)
+    intro V φ ψ θρ θρ' _ _ ρ ρ' _
+    show (den (V.comp φ) (HasTy.lit (q := q)) ρ' : ℝ)
+        = ψ.scale 1 * (Tw.eval φ (Tw.unit 1) θρ * Tw.eval ψ (Tw.unit 1) θρ')
           * den V (HasTy.lit (q := q)) ρ
-    show ((q : ℚ) : ℝ) = ψ.scale 1 * (ψ.scale 1 * ψ.scale 1) * ((q : ℚ) : ℝ)
+    show ((q : ℚ) : ℝ) = ψ.scale 1 * (φ.scale 1 * ψ.scale 1) * ((q : ℚ) : ℝ)
     simp
   | @mul _ _ _ _ _ _ _ _ _ _ da db st tt hta htb iha ihb =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := iha V ψ θρ hOnes hr
-    have h2 := ihb V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := iha V φ ψ θρ θρ' hOnes hOnes' hr
+    have h2 := ihb V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1 h2
-    show den (V.comp ψ) (da.mul db) ρ'
+    show den (V.comp φ) (da.mul db) ρ'
         = ψ.scale (Term.mul _ _)
-          * (Tw.eval ψ (st.mul tt) θρ * Tw.eval ψ (st.mul tt) θρ)
+          * (Tw.eval φ (st.mul tt) θρ * Tw.eval ψ (st.mul tt) θρ')
           * den V (da.mul db) ρ
-    show den (V.comp ψ) da ρ' * den (V.comp ψ) db ρ'
+    show den (V.comp φ) da ρ' * den (V.comp φ) db ρ'
         = _ * _ * (den V da ρ * den V db ρ)
     rw [h1, h2, Scaling.scale_mul]
-    show _ = _ * ((Tw.eval ψ st θρ : ℝ) * (Tw.eval ψ tt θρ : ℝ)
-        * ((Tw.eval ψ st θρ : ℝ) * (Tw.eval ψ tt θρ : ℝ))) * _
+    show _ = _ * ((Tw.eval φ st θρ : ℝ) * (Tw.eval φ tt θρ : ℝ)
+        * ((Tw.eval ψ st θρ' : ℝ) * (Tw.eval ψ tt θρ' : ℝ))) * _
     ring
   | @div _ _ _ _ _ _ _ _ _ _ da db st tt hta htb iha ihb =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := iha V ψ θρ hOnes hr
-    have h2 := ihb V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := iha V φ ψ θρ θρ' hOnes hOnes' hr
+    have h2 := ihb V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1 h2
-    show den (V.comp ψ) (da.div db) ρ'
+    show den (V.comp φ) (da.div db) ρ'
         = ψ.scale (Term.div _ _)
-          * (Tw.eval ψ (st.div tt) θρ * Tw.eval ψ (st.div tt) θρ)
+          * (Tw.eval φ (st.div tt) θρ * Tw.eval ψ (st.div tt) θρ')
           * den V (da.div db) ρ
-    show den (V.comp ψ) da ρ' / den (V.comp ψ) db ρ'
+    show den (V.comp φ) da ρ' / den (V.comp φ) db ρ'
         = _ * _ * (den V da ρ / den V db ρ)
     rw [h1, h2, Scaling.scale_div]
-    show _ = _ * ((Tw.eval ψ st θρ : ℝ) / (Tw.eval ψ tt θρ : ℝ)
-        * ((Tw.eval ψ st θρ : ℝ) / (Tw.eval ψ tt θρ : ℝ))) * _
-    exact div_twist _ _ _ _ _ _
+    show _ = _ * ((Tw.eval φ st θρ : ℝ) / (Tw.eval φ tt θρ : ℝ)
+        * ((Tw.eval ψ st θρ' : ℝ) / (Tw.eval ψ tt θρ' : ℝ))) * _
+    exact div_twist _ _ _ _ _ _ _ _
   | @add _ _ _ _ _ _ _ _ _ da db st tt heq hta htb iha ihb =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := iha V ψ θρ hOnes hr
-    have h2 := ihb V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := iha V φ ψ θρ θρ' hOnes hOnes' hr
+    have h2 := ihb V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1 h2
-    show den (V.comp ψ) (da.add db) ρ'
-        = ψ.scale _ * (Tw.eval ψ st θρ * Tw.eval ψ st θρ) * den V (da.add db) ρ
-    show den (V.comp ψ) da ρ' + den (V.comp ψ) db ρ'
+    show den (V.comp φ) (da.add db) ρ'
+        = ψ.scale _ * (Tw.eval φ st θρ * Tw.eval ψ st θρ') * den V (da.add db) ρ
+    show den (V.comp φ) da ρ' + den (V.comp φ) db ρ'
         = _ * _ * (den V da ρ + den V db ρ)
-    rw [h1, h2, heq ψ θρ]
+    rw [h1, h2, heq φ θρ, heq ψ θρ']
     ring
   | @convert _ _ _ _ u v _ _ _ da st h hta ih =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := ih V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := ih V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1
-    show den (V.comp ψ) (da.convert h) ρ'
+    show den (V.comp φ) (da.convert h) ρ'
         = ψ.scale v
-          * (Tw.eval ψ (st.mul ((Tw.unit u).div (Tw.unit v))) θρ
-            * Tw.eval ψ (st.mul ((Tw.unit u).div (Tw.unit v))) θρ)
+          * (Tw.eval φ (st.mul ((Tw.unit u).div (Tw.unit v))) θρ
+            * Tw.eval ψ (st.mul ((Tw.unit u).div (Tw.unit v))) θρ')
           * den V (da.convert h) ρ
-    show den (V.comp ψ) da ρ' * conv (V.comp ψ) u v
+    show den (V.comp φ) da ρ' * conv (V.comp φ) u v
         = _ * _ * (den V da ρ * conv V u v)
     rw [h1, conv_comp]
-    show _ = _ * (Tw.eval ψ st θρ * (ψ.scale u / ψ.scale v)
-        * (Tw.eval ψ st θρ * (ψ.scale u / ψ.scale v))) * _
+    show _ = _ * (Tw.eval φ st θρ * (φ.scale u / φ.scale v)
+        * (Tw.eval ψ st θρ' * (ψ.scale u / ψ.scale v))) * _
     have hv : ∀ w : UExp B _, ψ.scale w ≠ 0 := fun w => ne_of_gt (ψ.scale_pos w)
+    have hv' : ∀ w : UExp B _, φ.scale w ≠ 0 := fun w => ne_of_gt (φ.scale_pos w)
+    have hVv := ne_of_gt (V.scale_pos v)
+    have hφv := hv' v
+    have hψv := hv v
     rw [conv]
     field_simp
-    try ring
   | pow hte ih =>
     rename_i q e' u' p' Θ' de s
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h := ih V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h := ih V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h ⊢
-    show (den (V.comp ψ) de ρ') ^ ((q : ℚ) : ℝ)
+    show (den (V.comp φ) de ρ') ^ ((q : ℚ) : ℝ)
         = ψ.scale (Term.rpow u' q)
-          * ((Tw.eval ψ s θρ : ℝ) ^ (q : ℝ) * (Tw.eval ψ s θρ : ℝ) ^ (q : ℝ))
+          * ((Tw.eval φ s θρ : ℝ) ^ (q : ℝ) * (Tw.eval ψ s θρ' : ℝ) ^ (q : ℝ))
           * (den V de ρ) ^ ((q : ℚ) : ℝ)
     rw [h, mul_rpow_of_pos_left
-        (mul_pos (ψ.scale_pos u') (mul_pos (Tw.eval ψ s θρ).2 (Tw.eval ψ s θρ).2)),
+        (mul_pos (ψ.scale_pos u') (mul_pos (Tw.eval φ s θρ).2 (Tw.eval ψ s θρ').2)),
       Real.mul_rpow (le_of_lt (ψ.scale_pos u'))
-        (le_of_lt (mul_pos (Tw.eval ψ s θρ).2 (Tw.eval ψ s θρ).2)),
-      Real.mul_rpow (le_of_lt (Tw.eval ψ s θρ).2) (le_of_lt (Tw.eval ψ s θρ).2),
+        (le_of_lt (mul_pos (Tw.eval φ s θρ).2 (Tw.eval ψ s θρ').2)),
+      Real.mul_rpow (le_of_lt (Tw.eval φ s θρ).2) (le_of_lt (Tw.eval ψ s θρ').2),
       ← Scaling.scale_rpow]
     try ring
   | log hone hte ih =>
     rename_i e' p' Θ' de s
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := ih V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := ih V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1
-    rw [hone ψ θρ] at h1
-    have harg : den (V.comp ψ) de ρ' = den V de ρ := by simpa using h1
-    show Real.log (den (V.comp ψ) de ρ')
-        = ψ.scale 1 * (ψ.scale 1 * ψ.scale 1) * Real.log (den V de ρ)
+    rw [hone φ θρ, hone ψ θρ'] at h1
+    have harg : den (V.comp φ) de ρ' = den V de ρ := by simpa using h1
+    show Real.log (den (V.comp φ) de ρ')
+        = ψ.scale 1 * (φ.scale 1 * ψ.scale 1) * Real.log (den V de ρ)
     rw [harg]
     simp
   | exp hone hte ih =>
     rename_i e' p' Θ' de s
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := ih V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := ih V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1
-    rw [hone ψ θρ] at h1
-    have harg : den (V.comp ψ) de ρ' = den V de ρ := by simpa using h1
-    show Real.exp (den (V.comp ψ) de ρ')
-        = ψ.scale 1 * (ψ.scale 1 * ψ.scale 1) * Real.exp (den V de ρ)
+    rw [hone φ θρ, hone ψ θρ'] at h1
+    have harg : den (V.comp φ) de ρ' = den V de ρ := by simpa using h1
+    show Real.exp (den (V.comp φ) de ρ')
+        = ψ.scale 1 * (φ.scale 1 * ψ.scale 1) * Real.exp (den V de ρ)
     rw [harg]
     simp
   | @ulam _ _ _ _ _ _ _ _ _ db tb htb ih =>
-    intro V ψ θρ hOnes ρ ρ' hr r s
-    have h := ih (V.cons r) (ψ.cons s) θρ hOnes (twRelEnv_weaken s hr)
-    show TwRel _ (Tw.eval (ψ.cons s) tb θρ) (ψ.cons s)
-      (den (V.cons r) db (Env.weaken ρ)) (den ((V.comp ψ).cons (r + s)) db (Env.weaken ρ'))
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr r s s'
+    have h := ih (V.cons r) (φ.cons s) (ψ.cons s') θρ θρ' hOnes hOnes'
+      (twRelEnv_weaken s s' hr)
+    show TwRel _ (Tw.eval (φ.cons s) tb θρ) (Tw.eval (ψ.cons s') tb θρ') (φ.cons s) (ψ.cons s')
+      (den (V.cons r) db (Env.weaken ρ)) (den ((V.comp φ).cons (r + s)) db (Env.weaken ρ'))
     rwa [← Scaling.comp_cons]
   | @uapp _ _ _ _ _ _ τ σ _ _ df tf hd htf ihf =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h := ihf V ψ θρ hOnes hr
-    have hIH := h (V.logScale σ) (ψ.logScale σ)
-    rw [Tw.eval_castShape]
-    refine (twRel_subst τ σ ψ (w := Tw.eval ψ (Tw.uapp tf σ) θρ)
-      ?_ (cast_heq _ _).symm (cast_heq _ _).symm).mpr ?_
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h := ihf V φ ψ θρ θρ' hOnes hOnes' hr
+    have hIH := h (V.logScale σ) (φ.logScale σ) (ψ.logScale σ)
+    rw [Tw.eval_castShape, Tw.eval_castShape]
+    refine (twRel_subst τ σ φ ψ (w := Tw.eval φ (Tw.uapp tf σ) θρ)
+      (v := Tw.eval ψ (Tw.uapp tf σ) θρ')
+      ?_ ?_ (cast_heq _ _).symm (cast_heq _ _).symm).mpr ?_
     · exact (eqRec_heq _ _).symm
-    · show TwRel τ (Tw.eval ψ tf θρ (ψ.logScale σ)) (ψ.cons (ψ.logScale σ))
-        (den V df ρ (V.logScale σ)) (den (V.comp ψ) df ρ' ((V.comp ψ).logScale σ))
+    · exact (eqRec_heq _ _).symm
+    · show TwRel τ (Tw.eval φ tf θρ (φ.logScale σ)) (Tw.eval ψ tf θρ' (ψ.logScale σ))
+        (φ.cons (φ.logScale σ)) (ψ.cons (ψ.logScale σ))
+        (den V df ρ (V.logScale σ)) (den (V.comp φ) df ρ' ((V.comp φ).logScale σ))
       rw [Scaling.logScale_comp]
       exact hIH
   | dlam htb ih =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    exact ih V ψ θρ hOnes (twRelEnv_weakenDim hr)
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    exact ih V φ ψ θρ θρ' hOnes hOnes' (twRelEnv_weakenDim hr)
   | @dapp _ _ _ _ _ τ _ _ dm df tf htf ihf =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h := ihf V ψ θρ hOnes hr
-    rw [Tw.eval_castShape]
-    refine (twRel_substDim τ dm ψ (w := Tw.eval ψ tf θρ)
-      (eqRec_heq _ _).symm (cast_heq _ _).symm (cast_heq _ _).symm).mpr h
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h := ihf V φ ψ θρ θρ' hOnes hOnes' hr
+    rw [Tw.eval_castShape, Tw.eval_castShape]
+    refine (twRel_substDim τ dm φ ψ (w := Tw.eval φ tf θρ) (v := Tw.eval ψ tf θρ')
+      (eqRec_heq _ _).symm (eqRec_heq _ _).symm
+      (cast_heq _ _).symm (cast_heq _ _).symm).mpr h
   | vnil =>
-    intro V ψ θρ hOnes ρ ρ' hr i
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr i
     exact i.elim0
   | vcons hte htv ihe ihv =>
     rename_i u Vs p' Θ' de dv s tv
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := ihe V ψ θρ hOnes hr
-    have h2 := ihv V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := ihe V φ ψ θρ θρ' hOnes hOnes' hr
+    have h2 := ihv V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1 h2
     intro i
-    show Fin.cons (α := fun _ => ℝ) (den (V.comp ψ) de ρ') (den (V.comp ψ) dv ρ') i
+    show Fin.cons (α := fun _ => ℝ) (den (V.comp φ) de ρ') (den (V.comp φ) dv ρ') i
         = ψ.scale ((u :: Vs).get i)
-          * (Tw.eval ψ (Tw.veccons s tv) θρ i * Tw.eval ψ (Tw.veccons s tv) θρ i)
+          * (Tw.eval φ (Tw.veccons s tv) θρ i * Tw.eval ψ (Tw.veccons s tv) θρ' i)
           * Fin.cons (α := fun _ => ℝ) (den V de ρ) (den V dv ρ) i
     cases i using Fin.cases with
     | zero => simpa [Tw.eval] using h1
     | succ i => simpa [Tw.eval] using h2 i
   | mnil =>
-    intro V ψ θρ hOnes ρ ρ' hr a
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr a
     exact a.elim0
   | mcons htr htM ihr ihM =>
     rename_i w r' M' Vs Ws p' Θ' dr dM tr tM
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h1 := ihr V ψ θρ hOnes hr
-    have h2 := ihM V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := ihr V φ ψ θρ θρ' hOnes hOnes' hr
+    have h2 := ihM V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h1 h2
     intro a i
     show Fin.cons (α := fun _ => Fin Vs.length → ℝ)
-          (fun i => den (V.comp ψ) dr ρ' (Fin.cast (by simp) i))
-          (den (V.comp ψ) dM ρ') a i
+          (fun i => den (V.comp φ) dr ρ' (Fin.cast (by simp) i))
+          (den (V.comp φ) dM ρ') a i
         = (ψ.scale ((w :: Ws).get a) / ψ.scale (Vs.get i))
-          * (Tw.eval ψ (Tw.matcons (Tw.castShape (by simp) tr) tM) θρ a i
-            * Tw.eval ψ (Tw.matcons (Tw.castShape (by simp) tr) tM) θρ a i)
+          * (Tw.eval φ (Tw.matcons (Tw.castShape (by simp) tr) tM) θρ a i
+            * Tw.eval ψ (Tw.matcons (Tw.castShape (by simp) tr) tM) θρ' a i)
           * Fin.cons (α := fun _ => Fin Vs.length → ℝ)
             (fun i => den V dr ρ (Fin.cast (by simp) i)) (den V dM ρ) a i
     cases a using Fin.cases with
@@ -764,56 +799,56 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
       simpa [Tw.eval] using h2 a i
   | idx hu hte ih =>
     rename_i e' Vs i u p' Θ' de t
-    intro V ψ θρ hOnes ρ ρ' hr
-    have h := ih V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h := ih V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at h ⊢
     have hlt := (List.getElem?_eq_some_iff.mp hu).1
     have hget : Vs.get ⟨i, hlt⟩ = u := by
       simpa [List.get_eq_getElem] using (List.getElem?_eq_some_iff.mp hu).2
-    show den (V.comp ψ) de ρ' ⟨i, hlt⟩
-        = ψ.scale u * (Tw.eval ψ t θρ ⟨i, hlt⟩ * Tw.eval ψ t θρ ⟨i, hlt⟩)
+    show den (V.comp φ) de ρ' ⟨i, hlt⟩
+        = ψ.scale u * (Tw.eval φ t θρ ⟨i, hlt⟩ * Tw.eval ψ t θρ' ⟨i, hlt⟩)
           * den V de ρ ⟨i, hlt⟩
     rw [← hget]
     exact h ⟨i, hlt⟩
   | mapp heq htf htx ihf ihx =>
     rename_i f' x' Vs Ws p' Θ' df dx tf tx tw
-    intro V ψ θρ hOnes ρ ρ' hr
-    have hf := ihf V ψ θρ hOnes hr
-    have hx := ihx V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have hf := ihf V φ ψ θρ θρ' hOnes hOnes' hr
+    have hx := ihx V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at hf hx ⊢
     intro a
-    show (∑ i, den (V.comp ψ) df ρ' a i * den (V.comp ψ) dx ρ' i)
-        = ψ.scale (Ws.get a) * (Tw.eval ψ tw θρ a * Tw.eval ψ tw θρ a)
+    show (∑ i, den (V.comp φ) df ρ' a i * den (V.comp φ) dx ρ' i)
+        = ψ.scale (Ws.get a) * (Tw.eval φ tw θρ a * Tw.eval ψ tw θρ' a)
           * ∑ i, den V df ρ a i * den V dx ρ i
     rw [Finset.mul_sum]
     refine Finset.sum_congr rfl fun i _ => ?_
-    rw [hf a i, hx i, ← heq ψ θρ a i]
+    rw [hf a i, hx i, ← heq φ θρ a i, ← heq ψ θρ' a i]
     simp only [Positive.val_mul]
     have hvi := ne_of_gt (ψ.scale_pos (Vs.get i))
     field_simp
     try ring
   | comp heq htf htg ihf ihg =>
     rename_i f' g' Us Vs Ws p' Θ' df dg tf tg tw
-    intro V ψ θρ hOnes ρ ρ' hr
-    have hf := ihf V ψ θρ hOnes hr
-    have hg := ihg V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have hf := ihf V φ ψ θρ θρ' hOnes hOnes' hr
+    have hg := ihg V φ ψ θρ θρ' hOnes hOnes' hr
     simp only [TwRel] at hf hg ⊢
     intro a i
-    show (∑ b, den (V.comp ψ) df ρ' a b * den (V.comp ψ) dg ρ' b i)
+    show (∑ b, den (V.comp φ) df ρ' a b * den (V.comp φ) dg ρ' b i)
         = ψ.scale (Ws.get a) / ψ.scale (Us.get i)
-          * (Tw.eval ψ tw θρ a i * Tw.eval ψ tw θρ a i)
+          * (Tw.eval φ tw θρ a i * Tw.eval ψ tw θρ' a i)
           * ∑ b, den V df ρ a b * den V dg ρ b i
     rw [Finset.mul_sum]
     refine Finset.sum_congr rfl fun b _ => ?_
-    rw [hf a b, hg b i, ← heq ψ θρ a i b]
+    rw [hf a b, hg b i, ← heq φ θρ a i b, ← heq ψ θρ' a i b]
     simp only [Positive.val_mul]
     have hvb := ne_of_gt (ψ.scale_pos (Vs.get b))
     have hui := ne_of_gt (ψ.scale_pos (Us.get i))
     field_simp
     try ring
   | ratio heq ht ih =>
-    intro V ψ θρ hOnes ρ ρ' hr
-    exact heq ψ θρ ▸ ih V ψ θρ hOnes hr
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    exact heq φ θρ ▸ heq ψ θρ' ▸ ih V φ ψ θρ θρ' hOnes hOnes' hr
 
 /-! ## The characterization at first order
 
@@ -831,16 +866,35 @@ omit [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
   simp [Ctx.shapes, scalarCtx, List.map_map, Function.comp_def, Ty.shape]
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
-/-- A scalar environment is related to its own rescaling at trivial ratios. -/
-theorem twRelEnv_scaleEnv {j k : ℕ} (ψ : Scaling B k) :
+/-- A scalar environment is related to its own rescaling at trivial ratios,
+under any rescaling of the valuation. -/
+theorem twRelEnv_scaleEnv {j k : ℕ} (φ ψ : Scaling B k) :
     ∀ (us : List (UExp B k)) (ρ : Env (scalarCtx (D := D) (j := j) us)),
-    TwRelEnv ψ (scalarCtx us) (us.map fun _ => Shape.scalar)
-      (oneTwEnv (us.map fun _ => Shape.scalar)) ρ (scaleEnv ψ us ρ)
+    TwRelEnv φ ψ (scalarCtx us) (us.map fun _ => Shape.scalar)
+      (oneTwEnv (us.map fun _ => Shape.scalar)) (oneTwEnv (us.map fun _ => Shape.scalar))
+      ρ (scaleEnv ψ us ρ)
   | [], _ => TwRelEnv.nil
   | u :: us, ρ => by
-      refine TwRelEnv.cons rfl ?_ (twRelEnv_scaleEnv ψ us ρ.2)
+      refine TwRelEnv.cons rfl ?_ (twRelEnv_scaleEnv φ ψ us ρ.2)
       show ψ.scale u * ρ.1 = ψ.scale u * ((1 : ℝ) * 1) * ρ.1
       ring
+
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
+/-- **The twisted scaling law at first order.** Rescale the valuation by `φ`
+and the arguments by `ψ`: the result rescales by its unit's factor under `ψ`
+times the accumulated ratio's value under `φ` times its value under `ψ`. The
+two exported specializations are `φ = ψ` (the ratio squared; the
+characterization below) and the two axes held trivial in turn
+(`scaleLaw_of_driftFree`, `den_indep_of_driftFree`). -/
+theorem Twist.law {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
+    {t : Tw B k (us.map fun _ => Shape.scalar) .scalar}
+    (ht : Twist 0 _ d t) (V φ ψ : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    den (V.comp φ) d (scaleEnv ψ us ρ)
+      = ψ.scale u * (Tw.eval φ t (oneTwEnv _) * Tw.eval ψ t (oneTwEnv _)) * den V d ρ :=
+  ht.scaling V φ ψ (oneTwEnv _) (oneTwEnv _) (TwEnv.onesFrom_oneTwEnv 0)
+    (TwEnv.onesFrom_oneTwEnv 0) (twRelEnv_scaleEnv (D := D) (j := j) φ ψ us ρ)
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **Invariance under all scalings forces the ratio's value to `1`.**
@@ -861,9 +915,7 @@ theorem Twist.eq_one_of_invariant {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
     (hinv : ∀ ψ : Scaling B k,
         den (V.comp ψ) d (scaleEnv ψ us ρ) = ψ.scale u * den V d ρ)
     (ψ : Scaling B k) : Tw.eval ψ t (oneTwEnv _) = 1 := by
-  have hr := twRelEnv_scaleEnv (D := D) (j := j) ψ us ρ
-  have htw := ht.scaling V ψ (oneTwEnv _) (TwEnv.onesFrom_oneTwEnv 0) hr
-  simp only [TwRel] at htw
+  have htw := ht.law V ψ ψ ρ
   rw [hinv ψ] at htw
   have hu := ne_of_gt (ψ.scale_pos u)
   set c : ℝ := (Tw.eval ψ t (oneTwEnv (us.map fun _ => Shape.scalar)) : ℝ) with hc
@@ -890,9 +942,7 @@ theorem Twist.invariant_of_eq_one {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
     (hone : ∀ ψ : Scaling B k, Tw.eval ψ t (oneTwEnv _) = 1)
     (V ψ : Scaling B k) (ρ : Env (scalarCtx (D := D) (j := j) us)) :
     den (V.comp ψ) d (scaleEnv ψ us ρ) = ψ.scale u * den V d ρ := by
-  have hr := twRelEnv_scaleEnv (D := D) (j := j) ψ us ρ
-  have htw := ht.scaling V ψ (oneTwEnv _) (TwEnv.onesFrom_oneTwEnv 0) hr
-  simp only [TwRel] at htw
+  have htw := ht.law V ψ ψ ρ
   rw [hone ψ] at htw
   simpa using htw
 
@@ -925,6 +975,15 @@ all-ones environment, with unit variables read as themselves. -/
 def Tw.nfOne {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar) : UExp B k :=
   Tw.nf (idU B k) t (SynEnv.ones Θ)
 
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
+/-- At the all-ones environment a ratio is worth the scale of its normal form:
+the value of `Tw.nfOne` under `ψ`. -/
+theorem Tw.eval_oneTwEnv {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar)
+    (ψ : Scaling B k) : (Tw.eval ψ t (oneTwEnv Θ) : ℝ) = ψ.scale (Tw.nfOne t) := by
+  have h := Tw.nf_correct ψ (idU B k) t (SynEnv.ones Θ) (oneTwEnv Θ)
+    (srelEnv_ones ψ Θ)
+  rwa [Scaling.pull_id] at h
+
 /-- **Triviality of a ratio is decidable.** It is worth `1` under *every*
 scaling exactly when its normal form is the unit of the group: an equality in a
 free ℚ-vector space, decided coordinatewise.
@@ -933,12 +992,7 @@ This is the theorem that turns the characterization into an algorithm. -/
 theorem Tw.nfOne_eq_one_iff {k : ℕ} {Θ : List Shape}
     (t : Tw B k Θ .scalar) :
     Tw.nfOne t = 1 ↔ ∀ ψ : Scaling B k, Tw.eval ψ t (oneTwEnv Θ) = 1 := by
-  have hval : ∀ ψ : Scaling B k,
-      (Tw.eval ψ t (oneTwEnv Θ) : ℝ) = ψ.scale (Tw.nfOne t) := by
-    intro ψ
-    have h := Tw.nf_correct ψ (idU B k) t (SynEnv.ones Θ) (oneTwEnv Θ)
-      (srelEnv_ones ψ Θ)
-    rwa [Scaling.pull_id] at h
+  have hval := Tw.eval_oneTwEnv t
   constructor
   · intro h1 ψ
     exact Subtype.ext (by rw [hval ψ, h1, Scaling.scale_one, Positive.val_one])
@@ -972,7 +1026,8 @@ theorem Twist.invariant_iff_nfOne {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
 derivation, a ratio together with its `Twist` derivation, or `none`.
 
 It fails in exactly two circumstances, and they are different in kind. At `add`
-the two branches' ratios must agree up to the unit algebra (`Tw.scalarEq`):
+the two branches' ratios must agree up to β-reduction and the unit algebra
+(`Tw.normEq`, which normalizes both ratios and compares the normal forms):
 unit constants merge into one exponent vector and atoms into one rational
 exponent each, so reordered, reassociated and differently split conversions
 are accepted. The same check runs per output component at `mapp` and `comp`,
@@ -981,15 +1036,13 @@ agree, and the common value is the component's drift; disagreement declines,
 exactly as at `add`. Under the frees-at-one assignment the program's own
 context variables contribute the literal ratio `1` rather than atoms, so the
 ratio of a first-order program without abstractions of its own is atom-free
-and the check is *exact* there (`Tw.scalarEq_iff_eval_eq`): its only declines
+and the check is *exact* there (`Tw.normEq_iff_eval_eq`): its only declines
 at `add`, `mapp` and `comp` are genuine drift disagreements, such as
 `(x in ft) + y`. The residual incompleteness is that atoms are never
-identified with anything but themselves. Atoms arise under `lam` binders,
-and an abstraction applied inside the program can leave one behind: `appE`
-reduces the redex at hand, but a redex the substitution creates survives,
-and `Tw.flat` treats it as an atom (`LambdaS.Examples.hoSum` is declined
-although its branches agree under every scaling). The decision of
-triviality is unaffected, since `Tw.nfOne` normalizes fully. At `log` and `exp` the same check runs against
+identified with anything but themselves. Atoms arise under `lam` binders
+only; an abstraction applied inside the program leaves none behind, since
+the comparison reduces every redex, the ones substitution creates included
+(`LambdaS.Examples.hoSum` is accepted). At `log` and `exp` the same check runs against
 the literal ratio `1`: a trivial-ratio argument at `Q 1` is unmoved by every
 rescaling, so its logarithm or exponential is unmoved too, and the result
 carries the trivial ratio (`log ((x in ft)/(x in ft))` is
@@ -1155,7 +1208,8 @@ does is identify *distinct* atoms: an atom is the ratio of a `lam`-bound
 variable, standing for a future argument, and nothing relates two arguments'
 ratios. The program's own context variables produce no atoms at all under the
 frees-at-one assignment, which is what makes the comparison complete at first
-order (`Tw.scalarEq_complete`). Soundness of the exponent
+order (`Tw.scalarEq_complete`, lifted to normal forms by
+`Tw.normEq_iff_eval_eq`). Soundness of the exponent
 arithmetic needs every atom's value positive, which the carrier `SemScalar`
 provides: `x ^ p · x ^ q = x ^ (p + q)` already fails at `x = 0`. -/
 
@@ -1384,8 +1438,8 @@ differ. -/
 the ratio is built from `unit`, `mul`, `div` and `qpow` alone. Under the
 frees-at-one assignment this is the ratio of every first-order program
 without abstractions of its own: `lam`-bound variables are the only
-variables there are, and the residues `appE` can leave (a redex created by
-substitution) need an abstraction to create them. -/
+variables there are, and the comparison normalizes away every redex an
+internal application leaves (`Tw.normN_of_atomFree`). -/
 def Tw.AtomFree {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar) : Prop :=
   t.flat.2 = []
 
@@ -1421,10 +1475,61 @@ theorem Tw.scalarEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
       ↔ ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ :=
   ⟨Tw.scalarEq_sound a b, fun h => Tw.scalarEq_complete a b ha hb fun ψ => h ψ _⟩
 
+/-! ### The comparison on normal forms
+
+A redex that substitution creates (a `lam`-bound variable in head position,
+instantiated by an abstraction) is an `app` node to `Tw.flat`, hence an atom.
+Comparing normal forms (`Tw.norm`) removes every such residue: after
+normalization the only atoms left are `lam`-bound variables themselves and
+their projections, which stand for arguments not yet supplied. -/
+
+/-- The branch comparison, run on β-normal forms. -/
+def Tw.normEq {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar) : Bool :=
+  Tw.scalarEq a.norm b.norm
+
+/-- `normEq` is sound: normalization preserves evaluation, and `scalarEq` is
+sound on the normal forms. -/
+theorem Tw.normEq_sound {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar)
+    (h : Tw.normEq a b = true) :
+    ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ :=
+  fun ψ θρ => (Tw.eval_norm ψ a θρ).symm.trans
+    ((Tw.scalarEq_sound a.norm b.norm h ψ θρ).trans (Tw.eval_norm ψ b θρ))
+
+omit [Fintype B] [DecidableEq B] in
+/-- Normalization fixes an atom-free ratio: there is nothing to reduce in a
+term built from `unit`, `mul`, `div` and `qpow`. -/
+theorem Tw.normN_of_atomFree {k : ℕ} {Θ : List Shape} :
+    ∀ (n : ℕ) (t : Tw B k Θ .scalar), t.AtomFree → Tw.normN n t = t
+  | 0, t, _ => by simp [Tw.normN]
+  | n + 1, .unit u, _ => by simp [Tw.normN]
+  | n + 1, .mul a b, h => by
+      simp only [Tw.AtomFree, Tw.flat, List.append_eq_nil_iff] at h
+      simp [Tw.normN, Tw.normN_of_atomFree (n + 1) a h.1, Tw.normN_of_atomFree (n + 1) b h.2]
+  | n + 1, .div a b, h => by
+      simp only [Tw.AtomFree, Tw.flat, List.append_eq_nil_iff, List.map_eq_nil_iff] at h
+      simp [Tw.normN, Tw.normN_of_atomFree (n + 1) a h.1, Tw.normN_of_atomFree (n + 1) b h.2]
+  | n + 1, .qpow t q, h => by
+      simp only [Tw.AtomFree, Tw.flat, List.map_eq_nil_iff] at h
+      simp [Tw.normN, Tw.normN_of_atomFree (n + 1) t h]
+  | _ + 1, .var _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
+  | _ + 1, .app _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
+  | _ + 1, .proj _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
+  | _ + 1, .uapp _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
+
+/-- **The comparison on normal forms is exact on the atom-free fragment**:
+`Tw.scalarEq_iff_eval_eq`, since normalization fixes an atom-free ratio. -/
+theorem Tw.normEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
+    (a b : Tw B k Θ .scalar) (ha : a.AtomFree) (hb : b.AtomFree) :
+    Tw.normEq a b = true
+      ↔ ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ := by
+  unfold Tw.normEq Tw.norm
+  rw [Tw.normN_of_atomFree _ a ha, Tw.normN_of_atomFree _ b hb]
+  exact Tw.scalarEq_iff_eval_eq a b ha hb
+
 /-- The drift of a matrix application, when the analysis can name one. Per
 output row `a`, the products of an entry drift with the matching argument
-drift must agree across the row up to the unit algebra (`Tw.scalarEq`, exactly
-the `add` check), and the representative at column `0` is the row's output
+drift must agree across the row up to β-reduction and the unit algebra
+(`Tw.normEq`, exactly the `add` check), and the representative at column `0` is the row's output
 drift. Entries are extracted with `projE`/`rowE` so that literal rows compare
 by their components rather than as opaque projections. Over the empty domain
 the sum is empty and the output is the zero vector, so the output drift is `1`
@@ -1438,11 +1543,11 @@ def mappDrift {k : ℕ} {Θ : List Shape} {n m : ℕ}
   | 0, _, _ => some ⟨Tw.vecOfFn fun _ => .unit 1, fun _ _ _ i => i.elim0⟩
   | n' + 1, tf, tx =>
     if h : ∀ a : Fin m, ∀ i : Fin (n' + 1),
-        Tw.scalarEq (.mul (Tw.projE (Tw.rowE tf a) i) (Tw.projE tx i))
+        Tw.normEq (.mul (Tw.projE (Tw.rowE tf a) i) (Tw.projE tx i))
           (.mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE tx 0)) then
       some ⟨Tw.vecOfFn fun a => .mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE tx 0),
         fun ψ θρ a i => by
-          have hs := Tw.scalarEq_sound _ _ (h a i) ψ θρ
+          have hs := Tw.normEq_sound _ _ (h a i) ψ θρ
           rw [Tw.eval_vecOfFn]
           simpa [Tw.eval, Tw.eval_projE, Tw.eval_rowE] using hs⟩
     else none
@@ -1460,12 +1565,12 @@ def compDrift {k : ℕ} {Θ : List Shape} {p n m : ℕ}
       some ⟨Tw.matOfFn fun _ => Tw.vecOfFn fun _ => .unit 1, fun _ _ _ _ b => b.elim0⟩
   | n' + 1, tf, tg =>
     if h : ∀ a : Fin m, ∀ i : Fin p, ∀ b : Fin (n' + 1),
-        Tw.scalarEq (.mul (Tw.projE (Tw.rowE tf a) b) (Tw.projE (Tw.rowE tg b) i))
+        Tw.normEq (.mul (Tw.projE (Tw.rowE tf a) b) (Tw.projE (Tw.rowE tg b) i))
           (.mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE (Tw.rowE tg 0) i)) then
       some ⟨Tw.matOfFn fun a => Tw.vecOfFn fun i =>
           .mul (Tw.projE (Tw.rowE tf a) 0) (Tw.projE (Tw.rowE tg 0) i),
         fun ψ θρ a i b => by
-          have hs := Tw.scalarEq_sound _ _ (h a i b) ψ θρ
+          have hs := Tw.normEq_sound _ _ (h a i b) ψ θρ
           rw [Tw.eval_matOfFn, Tw.eval_vecOfFn]
           simpa [Tw.eval, Tw.eval_projE, Tw.eval_rowE] using hs⟩
     else none
@@ -1477,7 +1582,8 @@ is `lam`-bound and enters as an atom, a variable at or beyond `p` is a context
 variable of the program and enters at the literal ratio `1`. The exported
 diagnostic runs at `p = 0`.
 
-The `add` check is `Tw.scalarEq`: branch ratios compare with their unit
+The `add` check is `Tw.normEq`: branch ratios are β-normalized (`Tw.norm`)
+and their normal forms compare with their unit
 constants merged into one exponent vector and their atoms as coordinates of a
 free ℚ-vector space, one total exponent per atom, so the same conversions
 reordered, reassociated, split into different rational powers, and canceled
@@ -1485,7 +1591,7 @@ against themselves across the fraction bar are all accepted; the positive
 scalar carrier is what makes `x / x = 1` sound. What the check never does is
 identify *distinct* atoms, since nothing relates two arguments' ratios; but
 atoms arise only under `lam` binders, so a first-order ratio has none and the
-check is exact there (`Tw.scalarEq_iff_eval_eq`).
+check is exact there (`Tw.normEq_iff_eval_eq`).
 `mapp` and `comp` run the same check per output component, across the summed
 index, and `log` and `exp` run it against the literal ratio `1`, accepting
 exactly the arguments whose ratio is identifiably trivial. Everything
@@ -1526,8 +1632,8 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
   | _, _, _, _, _, _, p, Θ, hΘ, .add da db => do
       let ⟨ta, hta⟩ ← twistOf p Θ hΘ da
       let ⟨tb, htb⟩ ← twistOf p Θ hΘ db
-      if hb : Tw.scalarEq ta tb then
-        some ⟨ta, .add (Tw.scalarEq_sound ta tb hb) hta htb⟩
+      if hb : Tw.normEq ta tb then
+        some ⟨ta, .add (Tw.normEq_sound ta tb hb) hta htb⟩
       else none
   | _, _, _, _, _, _, p, Θ, hΘ, .convert (u := u) (v := v) da hsd => do
       let ⟨ta, hta⟩ ← twistOf p Θ hΘ da
@@ -1582,16 +1688,16 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
       some ⟨.qpow t q, .pow ht⟩
   | _, _, _, _, _, _, p, Θ, hΘ, .log de => do
       let ⟨t, ht⟩ ← twistOf p Θ hΘ de
-      if h1 : Tw.scalarEq t (.unit 1) then
+      if h1 : Tw.normEq t (.unit 1) then
         some ⟨.unit 1, .log (fun ψ θρ =>
-          (Tw.scalarEq_sound t (.unit 1) h1 ψ θρ).trans
+          (Tw.normEq_sound t (.unit 1) h1 ψ θρ).trans
             (Tw.eval_one ψ .scalar θρ)) ht⟩
       else none
   | _, _, _, _, _, _, p, Θ, hΘ, .exp de => do
       let ⟨t, ht⟩ ← twistOf p Θ hΘ de
-      if h1 : Tw.scalarEq t (.unit 1) then
+      if h1 : Tw.normEq t (.unit 1) then
         some ⟨.unit 1, .exp (fun ψ θρ =>
-          (Tw.scalarEq_sound t (.unit 1) h1 ψ θρ).trans
+          (Tw.normEq_sound t (.unit 1) h1 ψ θρ).trans
             (Tw.eval_one ψ .scalar θρ)) ht⟩
       else none
   -- `ucon` is the one unconditional decline, by design rather than necessity.
@@ -1609,7 +1715,7 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
 ratio, computed from its derivation. `some 1` means the conversions cancel;
 `some w` with `w ≠ 1` exhibits the drift; `none` means the analysis does not
 apply (a `ucon`, a `log` or `exp` whose argument ratio is not identifiably
-trivial, or an `add` whose branch ratios `Tw.scalarEq` cannot identify). -/
+trivial, or an `add` whose branch ratios `Tw.normEq` cannot identify). -/
 def unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {u : UExp B k}
     {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.Q u)) : Option (UExp B k) :=
   (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
@@ -1655,14 +1761,58 @@ def unitDriftLam : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       (twistOf 0 (Ctx.shapes Γ) rfl d).map fun p => Tw.nfOne p.1
   | _, _, _, _, _, _, _ => none
 
+omit [Fintype D] [DecidableEq D] in
+/-- The verdict read off a ratio does not depend on how the shape list was
+presented: the two proofs that it is the context's are interchangeable. -/
+theorem twistOf_nfOne_irrel {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
+    {e : Tm B D j k} {u : UExp B k} (d : HasTy Δ Γ e (.Q u)) {Θ Θ' : List Shape}
+    (hΘ : Θ = Γ.shapes) (hΘ' : Θ' = Γ.shapes) :
+    (twistOf 0 Θ hΘ d).map (fun p => Tw.nfOne p.1)
+      = (twistOf 0 Θ' hΘ' d).map (fun p => Tw.nfOne p.1) := by
+  subst hΘ hΘ'; rfl
+
+omit [Fintype D] [DecidableEq D] in
+/-- **The stripped kernel is analyzed as an open term.** At a quantity type
+over a scalar context, `unitDriftLam` is `unitDrift`. -/
+theorem unitDriftLam_eq_unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {u : UExp B k} {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.Q u)) :
+    unitDriftLam d = unitDrift d := by
+  rw [unitDriftLam.eq_2, unitDrift]; exact twistOf_nfOne_irrel _ _ _
+
+omit [Fintype D] [DecidableEq D] in
+/-- **Through a leading abstraction.** The verdict on `λx:Q σ. e` is the
+verdict on `e` over the context extended by `x` (definitionally), and the
+diagnostic is exact for the abstraction applied to any input: for `x` with
+`(λx. e) x ≠ 0`, rescaling the input by `σ`'s factor together with the
+context rescales the output by `u`'s factor, under every rescaling, exactly
+when the drift is `1`. Each further leading binder is the same step again,
+since `unitDriftLam (.lam db) = unitDriftLam db` by definition and the
+denotation of an abstraction is the function it denotes. -/
+theorem unitDriftLam_spec {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {σ u : UExp B k} {e : Tm B D j k} {db : HasTy Δ (scalarCtx (σ :: us)) e (.Q u)}
+    {w : UExp B k} (hw : unitDriftLam (HasTy.lam db) = some w) (V : Scaling B k)
+    {ρ : Env (scalarCtx (D := D) (j := j) us)} {x : ℝ}
+    (hne : den V (HasTy.lam db) ρ x ≠ 0) :
+    (∀ ψ : Scaling B k,
+        den (V.comp ψ) (HasTy.lam db) (scaleEnv ψ us ρ) (ψ.scale σ * x)
+          = ψ.scale u * den V (HasTy.lam db) ρ x)
+      ↔ w = 1 :=
+  unitDrift_spec (d := db) (ρ := (x, ρ)) (unitDriftLam_eq_unitDrift db ▸ hw) V hne
+
 /-! ## Closing the loop with the declarations
 
-A closed dimensionless program whose conversions cancel computes a number that
-does not depend on the declared unit magnitudes at all. Composed with adequacy,
-the same statement holds of the compiled program: its output is invariant
-across every consistent extension of the declaration set. This is the
-ratio-level analogue of `evalC_convert_declared`: `Twist` joined to `Declare`
-the way `eval_adeq` joined `Dynamics` to `Declare`. -/
+The twisted law has two parameters, and holding each at the trivial scaling
+in turn yields the two statements a drift diagnosis is for. With the values
+held fixed, a program's dependence on the declared unit magnitudes is exactly
+its drift: drift `1` is declaration independence at any first-order type, for
+open programs as for closed ones. With the valuation held fixed, a drift-free
+program obeys the unrestricted scaling law of `scaleLaw`, which is the
+hypothesis the Pi theorem consumes, now supplied by the drift analysis rather
+than by the absence of conversion. Composed with adequacy, the first
+statement holds of the compiled program: its output is invariant across every
+consistent extension of the declaration set. This is the ratio-level analogue
+of `evalC_convert_declared`: `Twist` joined to `Declare` the way `eval_adeq`
+joined `Dynamics` to `Declare`. -/
 
 omit [Fintype B] [DecidableEq B] in
 /-- Any scaling is reachable from any other by composition: log-space is a
@@ -1674,24 +1824,59 @@ theorem Scaling.comp_sub {k : ℕ} (V V' : Scaling B k) :
   exact ⟨funext fun x => by ring, funext fun x => by ring⟩
 
 omit [Fintype D] [DecidableEq D] in
-/-- **Drift-free programs are declaration-independent.** A closed dimensionless
-program with canceling conversions denotes the same number under every
-valuation, however the units it converts between are declared. -/
-theorem den_indep_of_driftFree {e : Tm B D 0 0}
-    {d : HasTy (DCtx.nil D) ([] : Ctx B D 0 0) e (.Q 1)}
-    (h1 : unitDrift (us := []) d = some 1) (V V' : Scaling B 0) :
-    den V d PUnit.unit = den V' d PUnit.unit := by
-  obtain ⟨⟨t, ht⟩, hp, hnf⟩ := Option.map_eq_some_iff.mp h1
-  set ψ : Scaling B 0 :=
-    ⟨fun b => V'.base b - V.base b, fun i => V'.vars i - V.vars i⟩ with hψ
-  have hone := (Tw.nfOne_eq_one_iff t).mp hnf
-  have hlaw := ht.invariant_of_eq_one hone V ψ PUnit.unit
-  have hV' : den V' d PUnit.unit = den (V.comp ψ) d PUnit.unit := by
-    rw [Scaling.comp_sub]
-  rw [hV']
-  have := hlaw
-  simp only [scaleEnv, Scaling.scale_one, one_mul] at this
-  exact this.symm
+/-- **The drift law.** A program with unit drift `w` rescales, under a
+rescaling `φ` of the valuation and `ψ` of its arguments, by its unit's factor
+under `ψ` times `w`'s factor under each: `Twist.law` with the ratio's two
+values read off its normal form (`Tw.eval_oneTwEnv`). -/
+theorem unitDrift_law {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
+    {w : UExp B k} (hw : unitDrift d = some w) (V φ ψ : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    den (V.comp φ) d (scaleEnv ψ us ρ) = ψ.scale u * (φ.scale w * ψ.scale w) * den V d ρ := by
+  obtain ⟨⟨t, ht⟩, hp, rfl⟩ := Option.map_eq_some_iff.mp hw
+  rw [ht.law V φ ψ ρ, Tw.eval_oneTwEnv, Tw.eval_oneTwEnv]
+
+omit [Fintype D] [DecidableEq D] in
+/-- **Declared magnitudes enter through the drift alone.** With the arguments
+held fixed, rescaling the valuation by `φ` multiplies a program of drift `w`
+by `φ(w)`: the drift the diagnostic exhibits is the program's exact
+dependence on the unit system. -/
+theorem den_comp_of_drift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
+    {w : UExp B k} (hw : unitDrift d = some w) (V φ : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    den (V.comp φ) d ρ = φ.scale w * den V d ρ := by
+  have h := unitDrift_law hw V φ Scaling.zero ρ
+  simpa using h
+
+omit [Fintype D] [DecidableEq D] in
+/-- **Drift-free programs are declaration-independent.** A program with
+canceling conversions denotes, at every environment, the same number under
+every valuation, however the units it converts between are declared. Open
+programs at any unit included: the drift is the only route by which a
+declared magnitude reaches the result. -/
+theorem den_indep_of_driftFree {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
+    (h1 : unitDrift d = some 1) (V V' : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) : den V d ρ = den V' d ρ := by
+  have h := den_comp_of_drift h1 V
+    ⟨fun b => V'.base b - V.base b, fun i => V'.vars i - V.vars i⟩ ρ
+  rwa [Scaling.comp_sub, Scaling.scale_one, one_mul, eq_comm] at h
+
+omit [Fintype D] [DecidableEq D] in
+/-- **Drift-free programs obey the unrestricted scaling law.** With the
+valuation held fixed, rescaling the arguments of a drift-free program by
+their units' factors rescales its result by its own: the conclusion of
+`scaleLaw` for a program that converts, provided its conversions cancel. The
+hypothesis the Pi theorem consumes, supplied by the drift analysis
+(`den_mulScaleLaw_driftFree`). -/
+theorem scaleLaw_of_driftFree {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
+    (h1 : unitDrift d = some 1) (V ψ : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    den V d (scaleEnv ψ us ρ) = ψ.scale u * den V d ρ := by
+  have h := unitDrift_law h1 V Scaling.zero ψ ρ
+  simpa using h
 
 /-- **The program is declaration-independent**, drift-free case. The
 evaluator's output (a scalar at the trivial unit, at carrier `ℝ`) is the same
@@ -1707,7 +1892,8 @@ theorem evalC_indep_of_driftFree {e : Tm B D 0 0}
   obtain ⟨n, hn⟩ := evalC_eq_den V d
   obtain ⟨n', hn'⟩ := evalC_eq_den V' d
   refine ⟨n, n', den V d PUnit.unit, hn, ?_⟩
-  rw [den_indep_of_driftFree h1 V V']
+  rw [show den V d PUnit.unit = den V' d PUnit.unit from
+    den_indep_of_driftFree h1 V V' PUnit.unit]
   exact hn'
 
 end LambdaS

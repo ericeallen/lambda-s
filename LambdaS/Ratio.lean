@@ -438,6 +438,71 @@ def Tw.rowE {k : ℕ} {Θ : List Shape} {n : ℕ} :
   | _, .matcons r M, j => Fin.cases r (fun j' => Tw.rowE M j') j
   | _, t, j => .row t j
 
+/-! ### Normalization
+
+`appE` and `uappE` reduce the redex at hand, but substitution can create
+another: a `lam`-bound variable in head position, instantiated by an
+abstraction, becomes a redex the construction site never sees. The flat-form
+comparison treats any surviving `app` as an atom, so a residue of this kind
+costs an agreement check its completeness. `Tw.norm` reduces every redex,
+under binders included, before a ratio is compared. It runs on fuel, one unit
+per reduction at a root; the ratio calculus is simply typed, so a normal form
+exists, and the fuel is a bound the normalizer never exhausts on the ratios
+`twistOf` builds, which nest applications no deeper than the program does.
+Exhausting it leaves a redex in place, which the comparison then declines:
+fuel costs completeness, never soundness (`Tw.eval_norm`). -/
+
+/-- Node count of a ratio, the fuel `Tw.norm` runs on. -/
+def Tw.size : {k : ℕ} → {Θ : List Shape} → {s : Shape} → Tw B k Θ s → ℕ
+  | _, _, _, .var _ _ => 1
+  | _, _, _, .unit _ => 1
+  | _, _, _, .mul a b => a.size + b.size + 1
+  | _, _, _, .div a b => a.size + b.size + 1
+  | _, _, _, .qpow t _ => t.size + 1
+  | _, _, _, .lam t => t.size + 1
+  | _, _, _, .app f a => f.size + a.size + 1
+  | _, _, _, .vecnil => 1
+  | _, _, _, .veccons a v => a.size + v.size + 1
+  | _, _, _, .proj v _ => v.size + 1
+  | _, _, _, .matnil => 1
+  | _, _, _, .matcons r M => r.size + M.size + 1
+  | _, _, _, .row M _ => M.size + 1
+  | _, _, _, .ulam t => t.size + 1
+  | _, _, _, .uapp t _ => t.size + 1
+
+/-- Full β-normalization on fuel: reduces `app` of a literal `lam` and `uapp`
+of a literal `ulam` wherever they occur, projections and rows of literals
+included, and leaves everything else in place. -/
+def Tw.normN : (n : ℕ) → {k : ℕ} → {Θ : List Shape} → {s : Shape} →
+    Tw B k Θ s → Tw B k Θ s
+  | 0, _, _, _, t => t
+  | n + 1, _, _, _, .app f a =>
+      match Tw.normN (n + 1) f, Tw.normN (n + 1) a with
+      | .lam b, a' => Tw.normN n (b.subst0 a')
+      | f', a' => .app f' a'
+  | n + 1, k, _, _, .uapp t μ =>
+      match Tw.normN (n + 1) t with
+      | .ulam b => Tw.normN n (b.pullU (Fin.cons μ (idU B k)))
+      | t' => .uapp t' μ
+  | n + 1, _, _, _, .mul a b => .mul (Tw.normN (n + 1) a) (Tw.normN (n + 1) b)
+  | n + 1, _, _, _, .div a b => .div (Tw.normN (n + 1) a) (Tw.normN (n + 1) b)
+  | n + 1, _, _, _, .qpow t q => .qpow (Tw.normN (n + 1) t) q
+  | n + 1, _, _, _, .lam t => .lam (Tw.normN (n + 1) t)
+  | n + 1, _, _, _, .veccons a v => .veccons (Tw.normN (n + 1) a) (Tw.normN (n + 1) v)
+  | n + 1, _, _, _, .proj v i => Tw.projE (Tw.normN (n + 1) v) i
+  | n + 1, _, _, _, .matcons r M => .matcons (Tw.normN (n + 1) r) (Tw.normN (n + 1) M)
+  | n + 1, _, _, _, .row M j => Tw.rowE (Tw.normN (n + 1) M) j
+  | n + 1, _, _, _, .ulam t => .ulam (Tw.normN (n + 1) t)
+  | _ + 1, _, _, _, .var n h => .var n h
+  | _ + 1, _, _, _, .unit u => .unit u
+  | _ + 1, _, _, _, .vecnil => .vecnil
+  | _ + 1, _, _, _, .matnil => .matnil
+termination_by n _ _ _ t => (n, sizeOf t)
+
+/-- Normalization at the fuel a ratio's own size supplies. -/
+def Tw.norm {k : ℕ} {Θ : List Shape} {s : Shape} (t : Tw B k Θ s) : Tw B k Θ s :=
+  Tw.normN t.size t
+
 /-- The trivial ratio, as syntax, at every shape: the unit `1` at a scalar,
 `1` in every component at a space, the constant trivial family at an arrow
 and under a unit binder. This is the ratio the frees-at-one assignment gives
@@ -679,6 +744,72 @@ instantiating unit's magnitude, which is `Scaling.pull_subst`. -/
   | _, _, .app g a, μ, ρ => by simp [Tw.uappE, Tw.eval]
   | _, _, .uapp t ν, μ, ρ => by simp [Tw.uappE, Tw.eval]
 
+/-- Normalization preserves evaluation, at every fuel. -/
+theorem Tw.eval_normN {k : ℕ} (ψ : Scaling B k) : ∀ (n : ℕ) {Θ : List Shape}
+    {s : Shape} (t : Tw B k Θ s) (ρ : TwEnv Θ),
+    Tw.eval ψ (Tw.normN n t) ρ = Tw.eval ψ t ρ
+  | 0, _, _, t, ρ => by simp [Tw.normN]
+  | n + 1, _, _, .app f a, ρ => by
+      have hf := Tw.eval_normN ψ (n + 1) f ρ
+      have ha := Tw.eval_normN ψ (n + 1) a ρ
+      rw [Tw.normN]
+      simp only [Tw.eval]
+      rw [← hf, ← ha]
+      generalize Tw.normN (n + 1) f = f' at *
+      generalize Tw.normN (n + 1) a = a' at *
+      cases f' with
+      | lam b =>
+        have hb := Tw.eval_normN ψ n (b.subst0 a') ρ
+        rw [Tw.eval_subst0] at hb
+        exact hb
+      | var m h => rfl
+      | app g c => rfl
+      | uapp g μ => rfl
+  | n + 1, _, _, .uapp t μ, ρ => by
+      have ht := Tw.eval_normN ψ (n + 1) t ρ
+      rw [Tw.normN]
+      simp only [Tw.eval]
+      rw [← ht]
+      generalize Tw.normN (n + 1) t = t' at *
+      cases t' with
+      | ulam b =>
+        have hb := Tw.eval_normN ψ n (b.pullU (Fin.cons μ (idU B k))) ρ
+        rw [Tw.eval_pullU, Scaling.pull_subst] at hb
+        exact hb
+      | var m h => rfl
+      | app g c => rfl
+      | uapp g ν => rfl
+  | n + 1, _, _, .mul a b, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_normN ψ (n + 1) a ρ, Tw.eval_normN ψ (n + 1) b ρ]
+  | n + 1, _, _, .div a b, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_normN ψ (n + 1) a ρ, Tw.eval_normN ψ (n + 1) b ρ]
+  | n + 1, _, _, .qpow t q, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_normN ψ (n + 1) t ρ]
+  | n + 1, _, _, .lam t, ρ => by
+      simp only [Tw.normN, Tw.eval]
+      exact funext fun r => Tw.eval_normN ψ (n + 1) (Θ := _ :: _) t (r, ρ)
+  | n + 1, _, _, .veccons a v, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_normN ψ (n + 1) a ρ, Tw.eval_normN ψ (n + 1) v ρ]
+  | n + 1, _, _, .proj v i, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_projE, Tw.eval_normN ψ (n + 1) v ρ]
+  | n + 1, _, _, .matcons r M, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_normN ψ (n + 1) r ρ, Tw.eval_normN ψ (n + 1) M ρ]
+  | n + 1, _, _, .row M j, ρ => by
+      simp only [Tw.normN, Tw.eval, Tw.eval_rowE, Tw.eval_normN ψ (n + 1) M ρ]
+  | n + 1, _, _, .ulam t, ρ => by
+      simp only [Tw.normN, Tw.eval]
+      exact funext fun r => Tw.eval_normN (ψ.cons r) (n + 1) t ρ
+  | _ + 1, _, _, .var n h, ρ => by simp [Tw.normN]
+  | _ + 1, _, _, .unit u, ρ => by simp [Tw.normN]
+  | _ + 1, _, _, .vecnil, ρ => by simp [Tw.normN]
+  | _ + 1, _, _, .matnil, ρ => by simp [Tw.normN]
+termination_by n _ _ t => (n, sizeOf t)
+
+/-- Normalization preserves evaluation. -/
+@[simp] theorem Tw.eval_norm {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} {s : Shape}
+    (t : Tw B k Θ s) (ρ : TwEnv Θ) : Tw.eval ψ (Tw.norm t) ρ = Tw.eval ψ t ρ :=
+  Tw.eval_normN ψ _ t ρ
+
 /-- The trivial semantic ratio at each shape: `1` at a quantity, `1` in every
 component at a space, and "maps trivial to trivial" at a function. -/
 def oneSem : (s : Shape) → SemTw s
@@ -707,29 +838,43 @@ theorem Tw.eval_one : ∀ {k : ℕ} (ψ : Scaling B k) {Θ : List Shape} (s : Sh
 /-! ## The twisted logical relation
 
 `Rel` says a term is scale-invariant. `TwRel` says it is invariant *up to* a
-ratio, and the square is what a conversion costs: both readings carry the
-factor, so it appears twice. At ratio `1` this is `Rel`.
+ratio, and it separates the two things a rescaling can move. The valuation the
+conversion factors are drawn from is rescaled by `φ`; the values themselves are
+rescaled by `ψ`. A conversion pays once for each: its factor `V(u)/V(v)` moves
+with `φ`, and the converted value moves with `ψ` at its source unit where its
+type promises the target. So the relation carries two readings of the ratio,
+`s` under `φ` and `s'` under `ψ`, and at a quantity the rescaled value is
+`ψ(u) · s · s'` times the original. At `φ = ψ` the ratio appears squared, the
+law of the paper's opening example; at `ψ = 0` (values fixed, valuation moved)
+it appears once and the type's factor not at all, which is what makes a
+drift-free program declaration-independent; at `φ = 0` (valuation fixed, values
+moved) it appears once beside the type's factor, which is the scaling law the
+Pi theorem consumes. At ratio `1` all three are `Rel`.
 
 At a unit binder the ratio is a family indexed by the bound unit's *scaling*,
-while the denotation is a family indexed by its *magnitude*. Those are different
-things, which is why both indices appear. -/
+one family per reading, while the denotation is a family indexed by its
+*magnitude*. Those are different things, which is why all three indices
+appear; the rescaled denotation is read at `r + s`, the magnitude moved by
+the valuation's extension. -/
 
 variable [UnitSys B D]
 
-/-- **The logical relation, twisted by a ratio.** -/
-def TwRel : {j k : ℕ} → (τ : Ty B D j k) → SemTw (Ty.shape τ) → Scaling B k →
-    Ty.den τ → Ty.den τ → Prop
-  | _, _, .Q u, s, ψ, x, y => y = ψ.scale u * ((s : ℝ) * (s : ℝ)) * x
-  | _, _, .arrow a b, φ, ψ, f, g =>
-      ∀ (r : SemTw (Ty.shape a)) x y, TwRel a r ψ x y → TwRel b (φ r) ψ (f x) (g y)
-  | _, _, .vec V, r, ψ, v, w =>
-      ∀ i, w i = ψ.scale (V.get i) * ((r i : ℝ) * (r i)) * v i
-  | _, _, .lin V W, t, ψ, A, C =>
+/-- **The logical relation, twisted by a ratio**, read once under the valuation
+rescaling `φ` and once under the value rescaling `ψ`. -/
+def TwRel : {j k : ℕ} → (τ : Ty B D j k) → SemTw (Ty.shape τ) → SemTw (Ty.shape τ) →
+    Scaling B k → Scaling B k → Ty.den τ → Ty.den τ → Prop
+  | _, _, .Q u, s, s', _, ψ, x, y => y = ψ.scale u * ((s : ℝ) * (s' : ℝ)) * x
+  | _, _, .arrow a b, F, F', φ, ψ, f, g =>
+      ∀ (r r' : SemTw (Ty.shape a)) x y,
+        TwRel a r r' φ ψ x y → TwRel b (F r) (F' r') φ ψ (f x) (g y)
+  | _, _, .vec V, r, r', _, ψ, v, w =>
+      ∀ i, w i = ψ.scale (V.get i) * ((r i : ℝ) * (r' i)) * v i
+  | _, _, .lin V W, t, t', _, ψ, A, C =>
       ∀ a i, C a i = (ψ.scale (W.get a) / ψ.scale (V.get i))
-        * ((t a i : ℝ) * (t a i)) * A a i
-  | _, _, .all _ τ, F, ψ, X, Y =>
-      ∀ r s : ℝ, TwRel τ (F s) (ψ.cons s) (X r) (Y (r + s))
-  | _, _, .allDim τ, F, ψ, X, Y => TwRel τ F ψ X Y
+        * ((t a i : ℝ) * (t' a i)) * A a i
+  | _, _, .all _ τ, F, F', φ, ψ, X, Y =>
+      ∀ r s s' : ℝ, TwRel τ (F s) (F' s') (φ.cons s) (ψ.cons s') (X r) (Y (r + s))
+  | _, _, .allDim τ, F, F', φ, ψ, X, Y => TwRel τ F F' φ ψ X Y
 
 /-- **Having a trivial ratio**, at every shape: `1` at a quantity, and at a
 function "maps trivial to trivial". The arrow clause is what a convert-free
@@ -753,13 +898,15 @@ theorem isOneSem_oneSem : ∀ s : Shape, IsOneSem s (oneSem s)
 omit [UnitSys B D] in
 /-- **At the trivial ratio and at scalar type, `TwRel` is `Rel`.** So Kennedy's
 theorem is the `s = 1` case of the twisted one rather than a separate result.
+The valuation rescaling `φ` is invisible at scalar type: only conversion reads
+the valuation, and a trivial ratio says the conversions canceled.
 
 Stated at scalar type, and that is not a limitation to apologize for: at arrow
 type `TwRel` quantifies over *every* argument ratio, so it is strictly stronger
 than `Rel` there rather than equivalent to it. The scalar case is where the
 characterization is used, and where the two genuinely coincide. -/
-@[simp] theorem trel_Q_one {k : ℕ} {u : UExp B k} (ψ : Scaling B k) (x y : ℝ) :
-    TwRel (D := D) (j := 0) (.Q u) 1 ψ x y ↔ Rel (D := D) (j := 0) (.Q u) ψ x y := by
+@[simp] theorem trel_Q_one {k : ℕ} {u : UExp B k} (φ ψ : Scaling B k) (x y : ℝ) :
+    TwRel (D := D) (j := 0) (.Q u) 1 1 φ ψ x y ↔ Rel (D := D) (j := 0) (.Q u) ψ x y := by
   simp [TwRel, Rel]
 
 /-! Positivity of ratios lives in the carrier itself, `SemScalar`, where the
@@ -770,79 +917,86 @@ semantic face of the group having no zero. -/
 
 /-! ## Transporting the twisted relation
 
-The same shape as `rel_ground` and `relCo_ground`, carrying the ratio as
-well. The ratio's transport is along an equality of *shapes*, which is why it
-costs nothing: `Ty.shape_ground` says grounding leaves the shape alone. -/
+The same shape as `rel_ground` and `relCo_ground`, carrying the two ratio
+readings as well. The ratios' transport is along an equality of *shapes*, which
+is why it costs nothing: `Ty.shape_ground` says grounding leaves the shape
+alone. -/
 
 omit [UnitSys B D] in
 /-- **`TwRel` transports along grounding.** -/
 theorem twRel_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
-    (η : Fin k → UExp B k₀) (δ : Fin j → DExp D j₀) (ψ : Scaling B k₀)
-    {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (Ty.ground η δ τ))}
+    (η : Fin k → UExp B k₀) (δ : Fin j → DExp D j₀) (φ ψ : Scaling B k₀)
+    {w v : SemTw (Ty.shape τ)} {w' v' : SemTw (Ty.shape (Ty.ground η δ τ))}
     {x y : Ty.den τ} {x' y' : Ty.den (Ty.ground η δ τ)},
-    HEq w w' → HEq x x' → HEq y y' →
-    (TwRel (Ty.ground η δ τ) w' ψ x' y' ↔ TwRel τ w (ψ.pull η) x y) := by
+    HEq w w' → HEq v v' → HEq x x' → HEq y y' →
+    (TwRel (Ty.ground η δ τ) w' v' φ ψ x' y' ↔ TwRel τ w v (φ.pull η) (ψ.pull η) x y) := by
   intro j k τ
   induction τ with
   | Q u =>
-    intro _ _ η δ ψ w w' x y x' y' hw hx hy
+    intro _ _ η δ φ ψ w v w' v' x y x' y' hw hv hx hy
     obtain rfl := eq_of_heq hw
+    obtain rfl := eq_of_heq hv
     obtain rfl := eq_of_heq hx
     obtain rfl := eq_of_heq hy
     simp [Ty.ground, TwRel, Scaling.scale_pull]
   | vec V =>
-    intro _ _ η δ ψ w w' x y x' y' hw hx hy
+    intro _ _ η δ φ ψ w v w' v' x y x' y' hw hv hx hy
     have hlen : V.length = (V.map (substU η)).length := by simp
     have hw : HEq (show Fin V.length → SemScalar from w)
         (show Fin (V.map (substU η)).length → SemScalar from w') := hw
+    have hv : HEq (show Fin V.length → SemScalar from v)
+        (show Fin (V.map (substU η)).length → SemScalar from v') := hv
     have hx : HEq (show Fin V.length → ℝ from x)
         (show Fin (V.map (substU η)).length → ℝ from x') := hx
     have hy : HEq (show Fin V.length → ℝ from y)
         (show Fin (V.map (substU η)).length → ℝ from y') := hy
-    rw [Fin.heq_fun_iff hlen] at hw hx hy
+    rw [Fin.heq_fun_iff hlen] at hw hv hx hy
     show (∀ i, y' i
-        = ψ.scale ((V.map (substU η)).get i) * ((w' i : ℝ) * (w' i : ℝ)) * x' i)
-      ↔ ∀ i, y i = (ψ.pull η).scale (V.get i) * ((w i : ℝ) * (w i : ℝ)) * x i
+        = ψ.scale ((V.map (substU η)).get i) * ((w' i : ℝ) * (v' i : ℝ)) * x' i)
+      ↔ ∀ i, y i = (ψ.pull η).scale (V.get i) * ((w i : ℝ) * (v i : ℝ)) * x i
     constructor
     · intro h i
       have := h ⟨(i : ℕ), hlen ▸ i.2⟩
-      rw [← hw i, ← hx i, ← hy i] at this
+      rw [← hw i, ← hv i, ← hx i, ← hy i] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
     · intro h i
       have := h ⟨(i : ℕ), hlen.symm ▸ i.2⟩
-      rw [hw ⟨(i : ℕ), hlen.symm ▸ i.2⟩, hx ⟨(i : ℕ), hlen.symm ▸ i.2⟩,
-          hy ⟨(i : ℕ), hlen.symm ▸ i.2⟩] at this
+      rw [hw ⟨(i : ℕ), hlen.symm ▸ i.2⟩, hv ⟨(i : ℕ), hlen.symm ▸ i.2⟩,
+          hx ⟨(i : ℕ), hlen.symm ▸ i.2⟩, hy ⟨(i : ℕ), hlen.symm ▸ i.2⟩] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
   | lin V W =>
-    intro _ _ η δ ψ w w' x y x' y' hw hx hy
+    intro _ _ η δ φ ψ w v w' v' x y x' y' hw hv hx hy
     have hV : V.length = (V.map (substU η)).length := by simp
     have hW : W.length = (W.map (substU η)).length := by simp
     have hw : HEq (show Fin W.length → Fin V.length → SemScalar from w)
         (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → SemScalar from w') := hw
+    have hv : HEq (show Fin W.length → Fin V.length → SemScalar from v)
+        (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → SemScalar from v') := hv
     have hx : HEq (show Fin W.length → Fin V.length → ℝ from x)
         (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → ℝ from x') := hx
     have hy : HEq (show Fin W.length → Fin V.length → ℝ from y)
         (show Fin (W.map (substU η)).length → Fin (V.map (substU η)).length → ℝ from y') := hy
-    rw [Fin.heq_fun₂_iff hW hV] at hw hx hy
+    rw [Fin.heq_fun₂_iff hW hV] at hw hv hx hy
     show (∀ a i, y' a i
             = (ψ.scale ((W.map (substU η)).get a) / ψ.scale ((V.map (substU η)).get i))
-              * ((w' a i : ℝ) * (w' a i : ℝ)) * x' a i)
+              * ((w' a i : ℝ) * (v' a i : ℝ)) * x' a i)
       ↔ ∀ a i, y a i
             = ((ψ.pull η).scale (W.get a) / (ψ.pull η).scale (V.get i))
-              * ((w a i : ℝ) * (w a i : ℝ)) * x a i
+              * ((w a i : ℝ) * (v a i : ℝ)) * x a i
     constructor
     · intro h a i
       have := h ⟨(a : ℕ), hW ▸ a.2⟩ ⟨(i : ℕ), hV ▸ i.2⟩
-      rw [← hw a i, ← hx a i, ← hy a i] at this
+      rw [← hw a i, ← hv a i, ← hx a i, ← hy a i] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
     · intro h a i
       have := h ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩
       rw [hw ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩,
+          hv ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩,
           hx ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩,
           hy ⟨(a : ℕ), hW.symm ▸ a.2⟩ ⟨(i : ℕ), hV.symm ▸ i.2⟩] at this
       simpa [List.get_eq_getElem, Scaling.scale_pull] using this
   | arrow a b iha ihb =>
-    intro _ _ η δ ψ w w' x y x' y' hw hx hy
+    intro _ _ η δ φ ψ w v w' v' x y x' y' hw hv hx hy
     have ha := Ty.den_ground a η δ
     have hb := Ty.den_ground b η δ
     have hsa : SemTw (Ty.shape a) = SemTw (Ty.shape (Ty.ground η δ a)) := by
@@ -850,75 +1004,80 @@ theorem twRel_ground : ∀ {j k : ℕ} (τ : Ty B D j k) {j₀ k₀ : ℕ}
     have hsb : SemTw (Ty.shape b) = SemTw (Ty.shape (Ty.ground η δ b)) := by
       rw [Ty.shape_ground]
     constructor
-    · intro h r p q hpq
-      exact (ihb η δ ψ (heq_app hsa hsb hw (cast_heq hsa r).symm)
+    · intro h r r' p q hpq
+      exact (ihb η δ φ ψ (heq_app hsa hsb hw (cast_heq hsa r).symm)
+          (heq_app hsa hsb hv (cast_heq hsa r').symm)
           (heq_app ha.symm hb.symm hx (cast_heq ha.symm p).symm)
           (heq_app ha.symm hb.symm hy (cast_heq ha.symm q).symm)).mp
-        (h _ _ _ ((iha η δ ψ (cast_heq hsa r).symm (cast_heq ha.symm p).symm
-          (cast_heq ha.symm q).symm).mpr hpq))
-    · intro h r p q hpq
-      exact (ihb η δ ψ (heq_app hsa hsb hw (cast_heq hsa.symm r))
+        (h _ _ _ _ ((iha η δ φ ψ (cast_heq hsa r).symm (cast_heq hsa r').symm
+          (cast_heq ha.symm p).symm (cast_heq ha.symm q).symm).mpr hpq))
+    · intro h r r' p q hpq
+      exact (ihb η δ φ ψ (heq_app hsa hsb hw (cast_heq hsa.symm r))
+          (heq_app hsa hsb hv (cast_heq hsa.symm r'))
           (heq_app ha.symm hb.symm hx (cast_heq ha p))
           (heq_app ha.symm hb.symm hy (cast_heq ha q))).mpr
-        (h _ _ _ ((iha η δ ψ (cast_heq hsa.symm r) (cast_heq ha p)
-          (cast_heq ha q)).mp hpq))
+        (h _ _ _ _ ((iha η δ φ ψ (cast_heq hsa.symm r) (cast_heq hsa.symm r')
+          (cast_heq ha p) (cast_heq ha q)).mp hpq))
   | all d τ ih =>
-    intro _ _ η δ ψ w w' x y x' y' hw hx hy
+    intro _ _ η δ φ ψ w v w' v' x y x' y' hw hv hx hy
     have hτ := Ty.den_ground τ (liftU η) δ
     have hsτ : SemTw (Ty.shape τ) = SemTw (Ty.shape (Ty.ground (liftU η) δ τ)) := by
       rw [Ty.shape_ground]
-    show (∀ r s : ℝ, TwRel (Ty.ground (liftU η) δ τ) (w' s) (ψ.cons s) (x' r) (y' (r + s)))
-      ↔ ∀ r s : ℝ, TwRel τ (w s) ((ψ.pull η).cons s) (x r) (y (r + s))
+    show (∀ r s s' : ℝ, TwRel (Ty.ground (liftU η) δ τ) (w' s) (v' s')
+          (φ.cons s) (ψ.cons s') (x' r) (y' (r + s)))
+      ↔ ∀ r s s' : ℝ, TwRel τ (w s) (v s') ((φ.pull η).cons s) ((ψ.pull η).cons s')
+          (x r) (y (r + s))
     constructor
-    · intro h r s
-      have := (ih (liftU η) δ (ψ.cons s)
+    · intro h r s s'
+      have := (ih (liftU η) δ (φ.cons s) (ψ.cons s')
         (heq_app rfl hsτ hw (HEq.refl s))
+        (heq_app rfl hsτ hv (HEq.refl s'))
         (heq_app rfl hτ.symm hx (HEq.refl r))
-        (heq_app rfl hτ.symm hy (HEq.refl (r + s)))).mp (h r s)
-      rwa [Scaling.pull_liftU] at this
-    · intro h r s
-      refine (ih (liftU η) δ (ψ.cons s)
+        (heq_app rfl hτ.symm hy (HEq.refl (r + s)))).mp (h r s s')
+      rwa [Scaling.pull_liftU, Scaling.pull_liftU] at this
+    · intro h r s s'
+      refine (ih (liftU η) δ (φ.cons s) (ψ.cons s')
         (heq_app rfl hsτ hw (HEq.refl s))
+        (heq_app rfl hsτ hv (HEq.refl s'))
         (heq_app rfl hτ.symm hx (HEq.refl r))
         (heq_app rfl hτ.symm hy (HEq.refl (r + s)))).mpr ?_
-      rw [Scaling.pull_liftU]
-      exact h r s
+      rw [Scaling.pull_liftU, Scaling.pull_liftU]
+      exact h r s s'
   | allDim τ ih =>
-    intro _ _ η δ ψ w w' x y x' y' hw hx hy
-    exact ih η (liftU δ) ψ hw hx hy
+    intro _ _ η δ φ ψ w v w' v' x y x' y' hw hv hx hy
+    exact ih η (liftU δ) φ ψ hw hv hx hy
 
-omit [UnitSys B D] in
 omit [UnitSys B D] in
 /-- Instantiating a unit variable, for `TwRel`. -/
-theorem twRel_subst {j k : ℕ} (τ : Ty B D j (k + 1)) (σ : UExp B k) (ψ : Scaling B k)
-    {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (τ.subst σ))}
+theorem twRel_subst {j k : ℕ} (τ : Ty B D j (k + 1)) (σ : UExp B k) (φ ψ : Scaling B k)
+    {w v : SemTw (Ty.shape τ)} {w' v' : SemTw (Ty.shape (τ.subst σ))}
     {x y : Ty.den τ} {x' y' : Ty.den (τ.subst σ)}
-    (hw : HEq w w') (hx : HEq x x') (hy : HEq y y') :
-    TwRel (τ.subst σ) w' ψ x' y' ↔ TwRel τ w (ψ.cons (ψ.logScale σ)) x y := by
-  have h := twRel_ground τ (Fin.cons σ (idU B k)) (idU D j) ψ hw hx hy
-  rwa [Scaling.pull_subst] at h
+    (hw : HEq w w') (hv : HEq v v') (hx : HEq x x') (hy : HEq y y') :
+    TwRel (τ.subst σ) w' v' φ ψ x' y'
+      ↔ TwRel τ w v (φ.cons (φ.logScale σ)) (ψ.cons (ψ.logScale σ)) x y := by
+  have h := twRel_ground τ (Fin.cons σ (idU B k)) (idU D j) φ ψ hw hv hx hy
+  rwa [Scaling.pull_subst, Scaling.pull_subst] at h
 
-omit [UnitSys B D] in
 omit [UnitSys B D] in
 /-- Instantiating a dimension variable, for `TwRel`. -/
-theorem twRel_substDim {j k : ℕ} (τ : Ty B D (j + 1) k) (d : DExp D j) (ψ : Scaling B k)
-    {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (τ.substDim d))}
+theorem twRel_substDim {j k : ℕ} (τ : Ty B D (j + 1) k) (d : DExp D j) (φ ψ : Scaling B k)
+    {w v : SemTw (Ty.shape τ)} {w' v' : SemTw (Ty.shape (τ.substDim d))}
     {x y : Ty.den τ} {x' y' : Ty.den (τ.substDim d)}
-    (hw : HEq w w') (hx : HEq x x') (hy : HEq y y') :
-    TwRel (τ.substDim d) w' ψ x' y' ↔ TwRel τ w ψ x y := by
-  have h := twRel_ground τ (idU B k) (Fin.cons d (idU D j)) ψ hw hx hy
-  rwa [Scaling.pull_id] at h
+    (hw : HEq w w') (hv : HEq v v') (hx : HEq x x') (hy : HEq y y') :
+    TwRel (τ.substDim d) w' v' φ ψ x' y' ↔ TwRel τ w v φ ψ x y := by
+  have h := twRel_ground τ (idU B k) (Fin.cons d (idU D j)) φ ψ hw hv hx hy
+  rwa [Scaling.pull_id, Scaling.pull_id] at h
 
 omit [UnitSys B D] in
-omit [UnitSys B D] in
 /-- Weakening under a unit binder, for `TwRel`. -/
-theorem twRel_weaken {j k : ℕ} (τ : Ty B D j k) (ψ : Scaling B k) (s : ℝ)
-    {w : SemTw (Ty.shape τ)} {w' : SemTw (Ty.shape (Ty.weaken τ))}
+theorem twRel_weaken {j k : ℕ} (τ : Ty B D j k) (φ ψ : Scaling B k) (s s' : ℝ)
+    {w v : SemTw (Ty.shape τ)} {w' v' : SemTw (Ty.shape (Ty.weaken τ))}
     {x y : Ty.den τ} {x' y' : Ty.den (Ty.weaken τ)}
-    (hw : HEq w w') (hx : HEq x x') (hy : HEq y y') :
-    TwRel (Ty.weaken τ) w' (ψ.cons s) x' y' ↔ TwRel τ w ψ x y := by
-  have h := twRel_ground τ (fun i => Term.ofVar i.succ) (idU D j) (ψ.cons s) hw hx hy
-  rwa [Scaling.pull_weaken] at h
+    (hw : HEq w w') (hv : HEq v v') (hx : HEq x x') (hy : HEq y y') :
+    TwRel (Ty.weaken τ) w' v' (φ.cons s) (ψ.cons s') x' y' ↔ TwRel τ w v φ ψ x y := by
+  have h := twRel_ground τ (fun i => Term.ofVar i.succ) (idU D j) (φ.cons s) (ψ.cons s')
+    hw hv hx hy
+  rwa [Scaling.pull_weaken, Scaling.pull_weaken] at h
 
 /-- Every argument enters with trivial ratio: a `TwEnv` of ones. -/
 def oneTwEnv : (Θ : List Shape) → TwEnv Θ

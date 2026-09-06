@@ -380,6 +380,13 @@ theorem scaleEnv_eq_self (ψ : Scaling B k) :
       rw [h1, one_mul, hrest]
       rfl
 
+omit [DecidableEq B] [UnitSys B D] in
+omit [Fintype D] in
+/-- The trivial scaling fixes every environment. -/
+@[simp] theorem scaleEnv_zero (us : List (UExp B k))
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) : scaleEnv Scaling.zero us ρ = ρ :=
+  scaleEnv_eq_self _ us (fun u _ => Scaling.scale_zero u) ρ
+
 omit [Fintype D] [UnitSys B D] in
 omit [Fintype D] in
 /-- **Invariance forces zero when the result escapes the arguments.**

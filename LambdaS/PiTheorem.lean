@@ -5,6 +5,7 @@ Authors: Eric Allen
 -/
 import LambdaS.Pi
 import LambdaS.Fundamental
+import LambdaS.Twist
 import Mathlib.LinearAlgebra.Dual.Lemmas
 
 /-!
@@ -809,6 +810,29 @@ theorem den_mulScaleLaw {m : ℕ} {Δ : DCtx D j k} {e : Tm B D j k}
       (fun x => den V d (envOf us x)) := by
   intro κ hκ x
   have h := scaleLaw d hp hf V (scalingOfFactors eqv κ) (envOf us x)
+  rw [scaleEnv_envOf] at h
+  simp only [scale_scalingOfFactors eqv κ hκ] at h
+  simpa [Matrix.of_apply] using h
+
+omit [Fintype D] in
+/-- **The term-level multiplicative scale law, drift-free case.** The same
+conclusion as `den_mulScaleLaw` with the convert-free hypothesis replaced by
+a drift diagnosis of `1`: a program may convert as it likes, provided its
+conversions cancel (`scaleLaw_of_driftFree`). Parametricity is not assumed
+separately, because a unit constant is a `ucon` node and the drift analysis
+declines it. The two hypotheses are incomparable, so both theorems stay:
+`(λx. λy. x + y) a b` is convert-free but its drift is undetermined, since
+the two branches' ratios are atoms under distinct binders. -/
+theorem den_mulScaleLaw_driftFree [DecidableEq B] {m : ℕ} {Δ : DCtx D j k}
+    {e : Tm B D j k} {us : List (UExp B k)} {u₀ : UExp B k}
+    {d : HasTy Δ (scalarCtx us) e (.Q u₀)} (h1 : unitDrift d = some 1)
+    (V : Scaling B k) (eqv : Fin m ≃ B ⊕ Fin k) :
+    MulScaleLaw
+      (Matrix.of fun v i => Sum.elim (us.get i).base (us.get i).vars (eqv v))
+      (fun v => Sum.elim u₀.base u₀.vars (eqv v))
+      (fun x => den V d (envOf us x)) := by
+  intro κ hκ x
+  have h := scaleLaw_of_driftFree h1 V (scalingOfFactors eqv κ) (envOf us x)
   rw [scaleEnv_envOf] at h
   simp only [scale_scalingOfFactors eqv κ hκ] at h
   simpa [Matrix.of_apply] using h

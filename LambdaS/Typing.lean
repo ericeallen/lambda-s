@@ -514,6 +514,16 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
   | convert {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e u v} :
       HasTy Δ Γ e (.Q u) → SameDim Δ u v → HasTy Δ Γ (.convert e u v) (.Q v)
 
+/-- **T-MCons enforces the model's entry units.** The row `T-MCons` accepts at
+codomain unit `w` carries, at component `i`, the unit `w / δ_V(i)`, which is
+entry `(0, i)` of the resulting matrix at `Lin V (w :: W)` (`linEntry`) and,
+through `entry_toSpace`, the model's `entry`: reading a component out of the
+row lands at exactly the unit Hart's form assigns it. -/
+def HasTy.mcons_entry {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w r : _} {V : Sp B k}
+    (W : Sp B k) (dr : HasTy Δ Γ r (.vec (V.map fun u => Term.div w u))) (i : Fin V.length) :
+    HasTy Δ Γ (.idx r i) (.Q (linEntry V (w :: W) ⟨0, Nat.succ_pos _⟩ i)) :=
+  .idx dr (by simp [linEntry])
+
 section Check
 
 /-- The checker. Syntax-directed, total, executable, and it returns the
