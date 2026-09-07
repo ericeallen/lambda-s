@@ -379,6 +379,8 @@ noncomputable def den : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k}
   | _, _, _, _, .pow q _, _, V, .pow a, ρ => (den V a ρ) ^ ((q : ℚ) : ℝ)
   | _, _, _, _, .idx _ i, _, V, .idx a hu, ρ =>
       den V a ρ ⟨i, (List.getElem?_eq_some_iff.mp hu).1⟩
+  | _, _, _, _, .mrow _ i, _, V, .mrow a hw, ρ =>
+      fun c => den V a ρ ⟨i, (List.getElem?_eq_some_iff.mp hw).1⟩ (Fin.cast (by simp) c)
   | _, _, _, _, .mapp _ _, _, V, .mapp f x, ρ =>
       fun a => ∑ i, den V f ρ a i * den V x ρ i
   | _, _, _, _, .comp _ _, _, V, .comp f g, ρ =>
@@ -668,6 +670,7 @@ def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .add a b => a.Parametric ∧ b.Parametric
   | _, _, .pow _ a => a.Parametric
   | _, _, .idx a _ => a.Parametric
+  | _, _, .mrow a _ => a.Parametric
   | _, _, .mapp f x => f.Parametric ∧ x.Parametric
   | _, _, .comp f g => f.Parametric ∧ g.Parametric
   | _, _, .vnil => True
@@ -698,6 +701,7 @@ def Tm.ConvertFree : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .add a b => a.ConvertFree ∧ b.ConvertFree
   | _, _, .pow _ a => a.ConvertFree
   | _, _, .idx a _ => a.ConvertFree
+  | _, _, .mrow a _ => a.ConvertFree
   | _, _, .mapp f x => f.ConvertFree ∧ x.ConvertFree
   | _, _, .comp f g => f.ConvertFree ∧ g.ConvertFree
   | _, _, .vnil => True
@@ -875,6 +879,10 @@ theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | idx a hu ih =>
     intro hf V V' ρ ρ' hr
     show den V a ρ _ = den V' a ρ' _; rw [ih hf V V' hr]
+  | mrow a hw ih =>
+    intro hf V V' ρ ρ' hr
+    show (fun c => den V a ρ _ (Fin.cast _ c)) = fun c => den V' a ρ' _ (Fin.cast _ c)
+    rw [ih hf V V' hr]
   | mapp f x ihf ihx =>
     intro hf V V' ρ ρ' hr
     show (fun a => ∑ i, den V f ρ a i * den V x ρ i)
@@ -975,6 +983,14 @@ theorem fundamental : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     have h := ih hp V ψ Φ hΦ hr ⟨_, (List.getElem?_eq_some_iff.mp hu).1⟩
     rw [List.get_eq_getElem, (List.getElem?_eq_some_iff.mp hu).2] at h
     exact h
+  | @mrow _ _ _ _ _ Vs Ws i w a hw ih =>
+    intro hp V ψ Φ hΦ ρ ρ' hr c
+    have h := ih hp V ψ Φ hΦ hr ⟨i, (List.getElem?_eq_some_iff.mp hw).1⟩ (Fin.cast (by simp) c)
+    show den (V.comp ψ) a ρ' ⟨i, _⟩ (Fin.cast (by simp) c)
+        = ψ.scale ((Vs.map fun u => Term.div w u).get c) * den V a ρ ⟨i, _⟩ (Fin.cast (by simp) c)
+    simp only [List.get_eq_getElem, List.getElem_map, Fin.val_cast] at h ⊢
+    rw [(List.getElem?_eq_some_iff.mp hw).2] at h
+    rw [h, Scaling.scale_div]
   | mapp f x ihf ihx =>
     intro hp V ψ Φ hΦ ρ ρ' hr a
     have hF := ihf hp.1 V ψ Φ hΦ hr
@@ -1110,6 +1126,14 @@ theorem fundamental_free : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     have h := ih hp hf V ψ hr ⟨_, (List.getElem?_eq_some_iff.mp hu).1⟩
     rw [List.get_eq_getElem, (List.getElem?_eq_some_iff.mp hu).2] at h
     exact h
+  | @mrow _ _ _ _ _ Vs Ws i w a hw ih =>
+    intro hp hf V ψ ρ ρ' hr c
+    have h := ih hp hf V ψ hr ⟨i, (List.getElem?_eq_some_iff.mp hw).1⟩ (Fin.cast (by simp) c)
+    show den (V.comp ψ) a ρ' ⟨i, _⟩ (Fin.cast (by simp) c)
+        = ψ.scale ((Vs.map fun u => Term.div w u).get c) * den V a ρ ⟨i, _⟩ (Fin.cast (by simp) c)
+    simp only [List.get_eq_getElem, List.getElem_map, Fin.val_cast] at h ⊢
+    rw [(List.getElem?_eq_some_iff.mp hw).2] at h
+    rw [h, Scaling.scale_div]
   | mapp f x ihf ihx =>
     intro hp hf V ψ ρ ρ' hr a
     have hF := ihf hp.1 hf.1 V ψ hr

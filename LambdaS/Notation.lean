@@ -62,6 +62,9 @@ syntax:max "exp" ppSpace lamS:max : lamS
 syntax:max "fn" "[" term "]" ppSpace lamS : lamS
 /-- Component of a vector. -/
 syntax:80 lamS:80 "!" num : lamS
+/-- Row of a linear map: one `!` reads a component out of a vector, two read a
+row out of a map. -/
+syntax:80 lamS:80 "!!" num : lamS
 /-- A linear map applied to a vector. -/
 syntax:80 lamS:80 " ⊙ " lamS:81 : lamS
 /-- Ordinary application. -/
@@ -86,6 +89,7 @@ macro_rules
   | `(⟪ exp $e ⟫)        => `(Tm.exp ⟪ $e ⟫)
   | `(⟪ fn[$t] $e ⟫)     => `(Tm.lam $t ⟪ $e ⟫)
   | `(⟪ $e ! $n:num ⟫)   => `(Tm.idx ⟪ $e ⟫ $n)
+  | `(⟪ $e !! $n:num ⟫)  => `(Tm.mrow ⟪ $e ⟫ $n)
   | `(⟪ $f ⊙ $x ⟫)       => `(Tm.mapp ⟪ $f ⟫ ⟪ $x ⟫)
   | `(⟪ $f ◃ $x ⟫)       => `(Tm.app ⟪ $f ⟫ ⟪ $x ⟫)
   | `(⟪ $a * $b ⟫)       => `(Tm.mul ⟪ $a ⟫ ⟪ $b ⟫)

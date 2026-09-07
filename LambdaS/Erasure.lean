@@ -223,6 +223,13 @@ def eeval (cf : UExp B 0 → UExp B 0 → R) :
           | some x => some (.scalar x)
           | none => none
       | _ => none
+  | fu, j, k, η, δ, ρ, .mrow a i =>
+      match eeval cf fu j k η δ ρ a with
+      | some (.matrix M _) =>
+          match M[i]? with
+          | some r => some (.vector r)
+          | none => none
+      | _ => none
   | fu, j, k, η, δ, ρ, .mapp f x =>
       match eeval cf fu j k η δ ρ f, eeval cf fu j k η δ ρ x with
       | some (.matrix M _), some (.vector xs) => some (.vector (Num.matVec M xs))
@@ -400,6 +407,16 @@ theorem eeval_erase (cf : UExp B 0 → UExp B 0 → R) :
         · rename_i x u hx hu
           obtain rfl := Option.some.inj h.symm
           simp only [eeval, eeval_erase cf fu a η δ ρ _ ha, Val.erase, hx]
+        · exact absurd h (by simp)
+      · exact absurd h (by simp)
+  | fu, _, _, .mrow a i, η, δ, ρ, v, h => by
+      simp only [eval] at h
+      split at h
+      · rename_i M V W ha
+        split at h
+        · rename_i r w hr hw
+          obtain rfl := Option.some.inj h.symm
+          simp only [eeval, eeval_erase cf fu a η δ ρ _ ha, Val.erase, hr]
         · exact absurd h (by simp)
       · exact absurd h (by simp)
   | fu, _, _, .mapp f x, η, δ, ρ, v, h => by

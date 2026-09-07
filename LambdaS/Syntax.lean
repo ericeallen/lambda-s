@@ -775,6 +775,11 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   grammar symmetric with it: `pow (1/n)` is the `n`-th root. -/
   | pow {j k} : ℚ → Tm B D j k → Tm B D j k
   | idx {j k} : Tm B D j k → ℕ → Tm B D j k
+  /-- Row extraction: the elimination form for `Lin`, dual to `mcons` as
+  `idx` is to `vcons`. Row `i` of a map at `Lin V W` is a vector over the
+  row space `w / δ_V(·)` for `w = δ_W(i)`, which is exactly the vector
+  `mcons` consumes, so extraction and introduction meet on the nose. -/
+  | mrow {j k} : Tm B D j k → ℕ → Tm B D j k
   | mapp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   | comp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   /-- The empty vector, at the empty space. -/

@@ -455,6 +455,19 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       (hu : V[i]? = some u) :
       Twist (τ := .vec V) p Θ de t →
       Twist p Θ (.idx de hu) (.proj t ⟨i, (List.getElem?_eq_some_iff.mp hu).1⟩)
+  /-- Row extraction reads the row's drift vector out of the drift matrix.
+  Extraction converts nothing, so the row carries exactly the drift its
+  entries had. The row space is a `map` over the column space, so the shape is
+  retyped along `List.length_map`, in the direction opposite to `mcons`. -/
+  | mrow {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k}
+      {V W : Sp B k} {i : ℕ} {w : UExp B k} {p : ℕ} {Θ : List Shape}
+      {de : HasTy Δ Γ e (.lin V W)} {t : Tw B k Θ (.mat V.length W.length)}
+      (hw : W[i]? = some w) :
+      Twist (τ := .lin V W) p Θ de t →
+      Twist p Θ (.mrow de hw) (Tw.castShape
+        (show Shape.vec V.length = Shape.vec (V.map fun u => Term.div w u).length
+          by simp)
+        (.row t ⟨i, (List.getElem?_eq_some_iff.mp hw).1⟩))
   /-- Matrix application. The `add`-style agreement condition, per output row
   `a`: the product of the entry drift at `(a, i)` with the argument drift at
   `i` must be worth the output drift at `a`, for every column `i`, in every
@@ -485,8 +498,9 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
   every scaling and environment. This is how `twistOf` β-normalizes as it
   builds: `app` on a literal `lam` emits the substituted body (`Tw.appE`),
   `uapp` on a literal `ulam` performs the recorded instantiation
-  (`Tw.uappE`), and `idx` reduces projections of vector literals
-  (`Tw.projE`), each justified by its evaluation lemma. -/
+  (`Tw.uappE`), `idx` reduces projections of vector literals (`Tw.projE`),
+  and `mrow` reduces rows of matrix literals (`Tw.rowE`), each justified by
+  its evaluation lemma. -/
   | ratio {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k}
       {τ : Ty B D j k} {p Θ} {d : HasTy Δ Γ e τ}
       {t t' : Tw B k Θ (Ty.shape τ)}
@@ -810,6 +824,25 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
           * den V de ρ ⟨i, hlt⟩
     rw [← hget]
     exact h ⟨i, hlt⟩
+  | mrow hw hte ih =>
+    rename_i e' Vs Ws i w p' Θ' de t
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h := ih V φ ψ θρ θρ' hOnes hOnes' hr
+    simp only [TwRel] at h ⊢
+    have hlt := (List.getElem?_eq_some_iff.mp hw).1
+    have hsh : Shape.vec Vs.length = Shape.vec (Vs.map fun u => Term.div w u).length := by
+      simp
+    intro c
+    have h' := h ⟨i, hlt⟩ (Fin.cast (by simp) c)
+    show den (V.comp φ) de ρ' ⟨i, hlt⟩ (Fin.cast (by simp) c)
+        = ψ.scale ((Vs.map fun u => Term.div w u).get c)
+          * (Tw.eval φ (Tw.castShape hsh (Tw.row t ⟨i, hlt⟩)) θρ c
+            * Tw.eval ψ (Tw.castShape hsh (Tw.row t ⟨i, hlt⟩)) θρ' c)
+          * den V de ρ ⟨i, hlt⟩ (Fin.cast (by simp) c)
+    simp only [List.get_eq_getElem, List.getElem_map, Fin.val_cast, Tw.eval,
+      Tw.eval_castShape_vec] at h' ⊢
+    rw [(List.getElem?_eq_some_iff.mp hw).2] at h'
+    rw [h', Scaling.scale_div]
   | mapp heq htf htx ihf ihx =>
     rename_i f' x' Vs Ws p' Θ' df dx tf tx tw
     intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
@@ -1058,7 +1091,7 @@ The vector and matrix forms are *accepted*, at the `vec` and `mat` shapes,
 with no side conditions at the introductions: the drift of a vector is a
 vector of drifts, the drift of a matrix is a matrix of drifts, and a drifting
 literal component is reported rather than declined. `idx` projects a drift
-back out. `pow` is accepted too: the drift of `e ^ q` is the drift of `e`
+back out, and `mrow` reads a row of drifts back out. `pow` is accepted too: the drift of `e ^ q` is the drift of `e`
 lifted to the `q` by `Tw.qpow`, which the positive scalar carrier makes
 sound. -/
 
@@ -1673,6 +1706,17 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
             = Tw.eval ψ (Tw.projE t ⟨i, hlt⟩) θρ :=
         fun ψ θρ => (Tw.eval_projE ψ t ⟨i, hlt⟩ θρ).symm
       some ⟨Tw.projE t ⟨i, hlt⟩, .ratio heqp (.idx hu ht)⟩
+  | _, _, _, _, _, _, p, Θ, hΘ, .mrow (V := V) (i := i) (w := w) de hw => do
+      let ⟨t, ht⟩ ← twistOf p Θ hΘ de
+      let hlt : i < _ := (List.getElem?_eq_some_iff.mp hw).1
+      let hsh : Shape.vec V.length = Shape.vec (V.map fun u => Term.div w u).length := by
+        simp
+      let heqp : ∀ (ψ : Scaling B _) (θρ : TwEnv Θ),
+          Tw.eval ψ (Tw.castShape hsh (Tw.row t ⟨i, hlt⟩)) θρ
+            = Tw.eval ψ (Tw.castShape hsh (Tw.rowE t ⟨i, hlt⟩)) θρ :=
+        fun ψ θρ => funext fun c => by
+          simp only [Tw.eval_castShape_vec, Tw.eval, Tw.eval_rowE]
+      some ⟨Tw.castShape hsh (Tw.rowE t ⟨i, hlt⟩), .ratio heqp (.mrow hw ht)⟩
   | _, _, _, _, _, _, p, Θ, hΘ, .mapp df dx => do
       let ⟨tf, htf⟩ ← twistOf p Θ hΘ df
       let ⟨tx, htx⟩ ← twistOf p Θ hΘ dx

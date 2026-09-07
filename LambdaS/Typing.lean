@@ -468,6 +468,14 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
   /-- The unit of a component is read out of the space. -/
   | idx {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e V i u} :
       HasTy Δ Γ e (.vec V) → V[i]? = some u → HasTy Δ Γ (.idx e i) (.Q u)
+  /-- **Row extraction**, the elimination form for `Lin`. Row `i` of a map at
+  `Lin V W` is a vector over `w / δ_V(·)` for `w = δ_W(i)`: precisely the row
+  `mcons` consumes, so intro and elim meet definitionally. Without this rule
+  `Lin` has introduction forms and no elimination form, and no closed term can
+  read an entry out of a matrix it did not itself build. -/
+  | mrow {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e V W i w} :
+      HasTy Δ Γ e (.lin V W) → W[i]? = some w →
+      HasTy Δ Γ (.mrow e i) (.vec (V.map fun u => Term.div w u))
   | mapp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f x V W} :
       HasTy Δ Γ f (.lin V W) → HasTy Δ Γ x (.vec V) → HasTy Δ Γ (.mapp f x) (.vec W)
   | comp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f g U V W} :
@@ -576,6 +584,13 @@ def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm
           | some _ => some ⟨_, .idx d hv⟩
           | none => none
       | _ => none
+  | _, _, Δ, Γ, .mrow e i =>
+      match check Δ Γ e with
+      | some ⟨.lin _ W, d⟩ =>
+          match hw : W[i]? with
+          | some _ => some ⟨_, .mrow d hw⟩
+          | none => none
+      | _ => none
   | _, _, Δ, Γ, .mapp f x =>
       match check Δ Γ f, check Δ Γ x with
       | some ⟨.lin V _, df⟩, some ⟨.vec V', dx⟩ =>
@@ -662,6 +677,11 @@ theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm 
     split
     · next x h => obtain rfl : x = _ := Option.some.inj (h.symm.trans hu); rfl
     · next h => exact absurd (h.symm.trans hu) (by simp)
+  | mrow _ hw ih =>
+    simp only [check, ih]
+    split
+    · next x h => obtain rfl : x = _ := Option.some.inj (h.symm.trans hw); rfl
+    · next h => exact absurd (h.symm.trans hw) (by simp)
   | mapp _ _ ihf ihx => simp [check, ihf, ihx]
   | comp _ _ ihf ihg => simp [check, ihf, ihg]
   | vnil => rfl

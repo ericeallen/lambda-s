@@ -415,6 +415,27 @@ theorem eval_sound (cf : UExp B 0 → UExp B 0 → R) :
           exact ValTy.scalar _ _
         · exact absurd hv (by simp)
       · exact absurd hv (by simp)
+  | mrow a i iha =>
+    intro η δ ρ Δ Γ τ v hρ hΔ ht hv
+    cases ht with
+    | mrow hta hw =>
+      simp only [eval] at hv
+      split at hv
+      · rename_i M V W ha
+        obtain ⟨M', hM, _, hrows⟩ := (iha η δ ρ Δ Γ _ _ hρ hΔ hta ha).matrix_inv
+        injection hM with hM hV hW; subst hM; subst hV; subst hW
+        split at hv
+        · rename_i r w hr hw'
+          injection hv with hv; subst hv
+          simp only [List.getElem?_map, hw, Option.map_some] at hw'
+          injection hw' with hw'
+          subst hw'
+          obtain ⟨hlt, hval⟩ := List.getElem?_eq_some_iff.mp hr
+          have hlen := hrows r (hval ▸ List.getElem_mem hlt)
+          simp only [Ty.ground, List.map_map, Function.comp_def, substU_div]
+          exact ValTy.vector (by simpa using hlen)
+        · exact absurd hv (by simp)
+      · exact absurd hv (by simp)
   | mapp f x ihf ihx =>
     intro η δ ρ Δ Γ τ v hρ hΔ ht hv
     cases ht with

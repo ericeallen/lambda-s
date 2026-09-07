@@ -184,6 +184,13 @@ def eval (cf : UExp B 0 → UExp B 0 → R) :
           | some x, some u => some (.scalar ⟨x, u⟩)
           | _, _ => none
       | _ => none
+  | fu, j, k, η, δ, ρ, .mrow a i =>
+      match eval cf fu j k η δ ρ a with
+      | some (.matrix M V W) =>
+          match M[i]?, W[i]? with
+          | some r, some w => some (.vector r (V.map fun u => Term.div w u))
+          | _, _ => none
+      | _ => none
   | fu, j, k, η, δ, ρ, .mapp f x =>
       match eval cf fu j k η δ ρ f, eval cf fu j k η δ ρ x with
       | some (.matrix M V W), some (.vector xs V') =>

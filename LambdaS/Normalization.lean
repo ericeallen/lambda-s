@@ -214,6 +214,12 @@ theorem eval_mono (cf : UExp B 0 → UExp B 0 → R) :
       · rename_i xs V ha
         rw [eval_mono cf n a m η δ ρ _ hnm ha]; exact h
       · exact absurd h (by simp)
+  | n, _, _, .mrow a i, m, η, δ, ρ, v, hnm, h => by
+      simp only [eval] at h ⊢
+      split at h
+      · rename_i M V W ha
+        rw [eval_mono cf n a m η δ ρ _ hnm ha]; exact h
+      · exact absurd h (by simp)
   | n, _, _, .mapp f x, m, η, δ, ρ, v, hnm, h => by
       simp only [eval] at h ⊢
       split at h
@@ -536,6 +542,26 @@ theorem red_eval (cf : UExp B 0 → UExp B 0 → R) :
       case r_idx =>
         simp only [Ty.ground, Red]
         exact ⟨_, rfl⟩
+  | mrow a i iha =>
+    intro η δ ρ Δ Γ τ hρ hΔ ht
+    cases ht with
+    | @mrow _ _ _ _ _ V W _ w hta hw =>
+      obtain ⟨n₁, va, ha, hra⟩ := iha η δ ρ Δ Γ _ hρ hΔ hta
+      simp only [Ty.ground, Red] at hra
+      obtain ⟨M, rfl, hMl, hMr⟩ := hra
+      have hW : (List.map (substU η) W)[i]? = some (substU η w) := by
+        simp [List.getElem?_map, hw]
+      have hlt : i < M.length := by
+        rw [hMl, List.length_map]; exact (List.getElem?_eq_some_iff.mp hw).1
+      refine ⟨n₁, ?v_mrow, ?e_mrow, ?r_mrow⟩
+      case e_mrow =>
+        simp only [eval]
+        rw [ha]
+        simp only [List.getElem?_eq_getElem hlt, hW]
+        rfl
+      case r_mrow =>
+        simp only [Ty.ground, Red, List.map_map, Function.comp_def, substU_div]
+        exact ⟨_, rfl, by simpa using hMr _ (List.getElem_mem hlt)⟩
   | mapp f x ihf ihx =>
     intro η δ ρ Δ Γ τ hρ hΔ ht
     cases ht with

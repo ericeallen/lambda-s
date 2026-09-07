@@ -126,6 +126,7 @@ def Tm.Inert : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .add a b => a.Inert ∧ b.Inert
   | _, _, .pow _ a => a.Inert
   | _, _, .idx a _ => a.Inert
+  | _, _, .mrow a _ => a.Inert
   | _, _, .mapp f x => f.Inert ∧ x.Inert
   | _, _, .comp f g => f.Inert ∧ g.Inert
   | _, _, .vnil => True
@@ -153,6 +154,7 @@ theorem Tm.inert_of_convertFree : ∀ {j k : ℕ} (e : Tm B D j k), e.ConvertFre
   | _, _, .add a b, h => ⟨Tm.inert_of_convertFree a h.1, Tm.inert_of_convertFree b h.2⟩
   | _, _, .pow _ a, h => Tm.inert_of_convertFree a h
   | _, _, .idx a _, h => Tm.inert_of_convertFree a h
+  | _, _, .mrow a _, h => Tm.inert_of_convertFree a h
   | _, _, .mapp f x, h => ⟨Tm.inert_of_convertFree f h.1, Tm.inert_of_convertFree x h.2⟩
   | _, _, .comp f g, h => ⟨Tm.inert_of_convertFree f h.1, Tm.inert_of_convertFree g h.2⟩
   | _, _, .vnil, _ => trivial
@@ -232,6 +234,12 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
     obtain ⟨a', da, hf, hp, hd⟩ := ih hi
     refine ⟨_, .idx da hu, hf, hp, fun V ρ => ?_⟩
     show den V da ρ _ = den V a ρ _; rw [hd]
+  | mrow a hw ih =>
+    intro hi
+    obtain ⟨a', da, hf, hp, hd⟩ := ih hi
+    refine ⟨_, .mrow da hw, hf, hp, fun V ρ => ?_⟩
+    show (fun c => den V da ρ _ (Fin.cast _ c)) = fun c => den V a ρ _ (Fin.cast _ c)
+    rw [hd]
   | mapp f x ihf ihx =>
     intro hi
     obtain ⟨f', df, hf1, hp1, hd1⟩ := ihf hi.1

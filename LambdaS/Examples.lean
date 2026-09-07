@@ -7,6 +7,7 @@ import LambdaS.Typing
 import LambdaS.Declare
 import LambdaS.Twist
 import LambdaS.NonDefinability
+import LambdaS.Notation
 
 /-!
 # Λs, running
@@ -1222,6 +1223,53 @@ value of its consed component, magnitude and unit both. -/
               evalC (D := Dim) (fun _ _ => (1.0 : Float)) 10 [] length with
         | some (.scalar x), some (.scalar y) => x.mag == y.mag && x.unit == y.unit
         | _, _ => false)
+
+/-! ### Row extraction
+
+`mrow` is the elimination form for `Lin`, dual to `mcons` as `idx` is to
+`vcons`. Introduction and elimination meet on the nose: row `0` of
+`mcons w r M` has exactly the type `r` was checked at. Without it a matrix
+could be built and applied but never read, so no closed term could name a
+matrix element, a column, or a transpose. -/
+
+/- Harmony: the row `toTime` was built from is the row `mrow` reads back. -/
+#guard typeOf (.mrow toTime 0) == some (.vec (State.map fun u => Term.div sec u))
+
+/- Row `1` of `fromTime` is the momentum row, over the row space `pmom / sec`. -/
+#guard typeOf (.mrow fromTime 1) == some (.vec (W.map fun u => Term.div pmom u))
+
+/- Out-of-range rows are rejected, exactly as out-of-range components are. -/
+#guard (typeOf (.mrow toTime 1)).isNone
+
+/- A row is a vector, so `idx` reads a matrix element out of it. -/
+#guard typeOf (.idx (.mrow fromTime 1) 0) == some (.Q (Term.div pmom sec))
+
+/-- **A transpose, at fixed arity.** The transpose of a map `V → W` is the
+map `W* → V*` on the dual spaces, whose units are the reciprocals. Here
+`fromTime : Lin W State`, so its transpose lives at
+`Lin [1/m, 1/pmom] [1/sec]`, and the one row of the transpose is the one
+column of `fromTime`, assembled entry by entry from row extractions. The
+`mcons` rule checks that the entries `m/sec` and `pmom/sec` are exactly
+`(1/sec) / (1/m)` and `(1/sec) / (1/pmom)`, which is where the dual spaces
+come from. -/
+def fromTimeT : Term₀ :=
+  .mcons (Term.div 1 sec)
+    (.vcons (.idx (.mrow fromTime 0) 0)
+      (.vcons (.idx (.mrow fromTime 1) 0) .vnil))
+    (.mnil [Term.div 1 m, Term.div 1 pmom])
+
+#guard typeOf fromTimeT == some (.lin [Term.div 1 m, Term.div 1 pmom] [Term.div 1 sec])
+
+/- The evaluator agrees: the element read out of `fromTime` is the entry it
+was consed from, magnitude and unit both. -/
+#guard (match evalC (D := Dim) (fun _ _ => (1.0 : Float)) 10 [] (.idx (.mrow fromTime 1) 0),
+              evalC (D := Dim) (fun _ _ => (1.0 : Float)) 10 []
+                (.mul (.lit 5) (.ucon (Term.div pmom sec))) with
+        | some (.scalar x), some (.scalar y) => x.mag == y.mag && x.unit == y.unit
+        | _, _ => false)
+
+/- In the surface syntax, one `!` reads a component and two read a row. -/
+#guard typeOf ⟪ fromTime !! 1 ! 0 ⟫ == some (.Q (Term.div pmom sec))
 
 end Literals
 

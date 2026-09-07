@@ -614,6 +614,40 @@ theorem eval_adeq (V : Scaling B 0) :
         rw [hval, hunit] at hv
         obtain rfl := (Option.some.inj hv).symm
         rfl
+  | mrow a i iha =>
+    intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
+    cases d with
+    | @mrow _ _ _ _ _ Vs Ws _ w da hw =>
+      simp only [eval] at hv
+      cases hA : eval (conv V) n _ _ η δ ρ a with
+      | none => rw [hA] at hv; simp at hv
+      | some va =>
+        rw [hA] at hv
+        have h1 := iha η δ ρ Δ Γ _ ρd da hρ hΔ _ _ hA
+        simp only [Adeq] at h1
+        subst h1
+        have hlt := (List.getElem?_eq_some_iff.mp hw).1
+        have hval : (List.ofFn fun a => List.ofFn fun c => den (V.pull η) da ρd a c)[i]?
+            = some (List.ofFn fun c => den (V.pull η) da ρd ⟨i, hlt⟩ c) := by
+          simp [hlt]
+        have hunit : (List.map (substU η) Ws)[i]? = some (substU η w) := by
+          simp [List.getElem?_map, hw]
+        simp only at hv
+        rw [hval, hunit] at hv
+        obtain rfl := (Option.some.inj hv).symm
+        have hrow : List.ofFn (fun c => den (V.pull η) da ρd ⟨i, hlt⟩ c)
+            = List.ofFn (fun c : Fin (Vs.map fun u => Term.div w u).length =>
+                den (V.pull η) da ρd ⟨i, hlt⟩ (Fin.cast (by simp) c)) := by
+          refine ofFn_heq (by simp) ?_
+          rw [Fin.heq_fun_iff (by simp)]
+          intro c
+          rfl
+        show Val.vector (List.ofFn fun c => den (V.pull η) da ρd ⟨i, hlt⟩ c)
+              (List.map (fun u => Term.div (substU η w) u) (List.map (substU η) Vs))
+            = Val.vector _ (List.map (substU η) (List.map (fun u => Term.div w u) Vs))
+        rw [hrow]
+        simp only [List.map_map, Function.comp_def, substU_div]
+        rfl
   | mapp f x ihf ihx =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
     cases d with
