@@ -1717,4 +1717,53 @@ diagnostic decides invariance for first-order scalar programs, and the kernels
 that motivate the first are outside the second. Whether the wrapper generalizes
 cheaply is an open question and deliberately not settled here. -/
 
+/-! ### The kernel restated over scalar arguments
+
+The gap above is in the *judgment's shape*, not the program. `unitDrift` wants
+a scalar context and a scalar result; the sweep has a matrix in both places.
+The context half can be worked around by passing the entries rather than the
+matrix, which is what this is: the same rotation over a context of three
+scalars, assembling its own matrix. It leaves only the result shape between
+the kernel and the diagnostic. -/
+
+/-- The entry unit of a symmetric matrix on the uniform space. -/
+def e2 : UExp Base 0 := Term.div (Term.div 1 m) m
+
+/-- Three scalar arguments, which is a `scalarCtx`. -/
+def ΓS : Ctx Base Dim 0 0 := [.Q e2, .Q e2, .Q e2]
+
+/-- The matrix assembled from them, symmetric by construction. -/
+def asymm : Term₀ :=
+  .mcons (Term.div 1 m) (.vcons (.var 0) (.vcons (.var 1) .vnil))
+    (.mcons (Term.div 1 m) (.vcons (.var 1) (.vcons (.var 2) .vnil))
+      (.mnil U2))
+
+#guard typeOfIn ΓS asymm == some (.lin U2 U2d)
+
+def tauS : Term₀ := ⟪ (%2 - %0) / (2 * %1) ⟫
+def tanS : Term₀ :=
+  .ifle (.lit 0) tauS
+    ⟪ 1 / (tauS + √2 (1 + tauS * tauS)) ⟫
+    ⟪ (0 - 1) / ((0 - 1) * tauS + √2 (1 + tauS * tauS)) ⟫
+def cosS : Term₀ := ⟪ 1 / √2 (1 + tanS * tanS) ⟫
+def sinS : Term₀ := ⟪ tanS * cosS ⟫
+
+def rotS : Term₀ :=
+  .mcons m (.vcons cosS (.vcons ⟪ (0 - 1) * sinS ⟫ .vnil))
+    (.mcons m (.vcons sinS (.vcons cosS .vnil)) (.mnil U2))
+
+def rotTS : Term₀ :=
+  .mcons (Term.div 1 m)
+    (.vcons ⟪ (rotS !! 0) ! 0 ⟫ (.vcons ⟪ (rotS !! 1) ! 0 ⟫ .vnil))
+    (.mcons (Term.div 1 m)
+      (.vcons ⟪ (rotS !! 0) ! 1 ⟫ (.vcons ⟪ (rotS !! 1) ! 1 ⟫ .vnil))
+      (.mnil U2d))
+
+/-- **The sweep over a scalar context.** Everything `unitDrift` asks of the
+context is satisfied here; only the result shape remains. -/
+def sweepS : Term₀ := .comp rotTS (.comp asymm rotS)
+
+#guard typeOfIn ΓS tauS == some (.Q 1)
+#guard typeOfIn ΓS sweepS == some (.lin U2 U2d)
+
 end LambdaS.Examples
