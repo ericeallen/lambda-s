@@ -129,25 +129,25 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Square root not definable, at the term grammar | `LambdaS.NonDef.sqrt_not_definable_tm` | [`LambdaS/NonDefinability.lean:325`](LambdaS/NonDefinability.lean#L325) |
 | No seed for Newton's method | `LambdaS.NonDef.no_newton_seed` | [`LambdaS/NonDefinability.lean:235`](LambdaS/NonDefinability.lean#L235) |
 | No seed, at the term grammar | `LambdaS.NonDef.no_newton_seed_tm` | [`LambdaS/NonDefinability.lean:336`](LambdaS/NonDefinability.lean#L336) |
-| The multiplicative scale law (definition) | `LambdaS.Pi.MulScaleLaw` | [`LambdaS/PiTheorem.lean:408`](LambdaS/PiTheorem.lean#L408) |
-| Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:803`](LambdaS/PiTheorem.lean#L803) |
-| Term-level scale law from drift 1 | `LambdaS.Pi.den_mulScaleLaw_driftFree` | [`LambdaS/PiTheorem.lean:826`](LambdaS/PiTheorem.lean#L826) |
-| Log transport, positivity hypothesis | `LambdaS.Pi.scaleLaw_of_mulScaleLaw` | [`LambdaS/PiTheorem.lean:665`](LambdaS/PiTheorem.lean#L665) |
+| The multiplicative scale law (definition) | `LambdaS.Pi.MulScaleLaw` | [`LambdaS/PiTheorem.lean:486`](LambdaS/PiTheorem.lean#L486) |
+| Term-level multiplicative scale law | `LambdaS.Pi.den_mulScaleLaw` | [`LambdaS/PiTheorem.lean:896`](LambdaS/PiTheorem.lean#L896) |
+| Term-level scale law from drift 1 | `LambdaS.Pi.den_mulScaleLaw_driftFree` | [`LambdaS/PiTheorem.lean:919`](LambdaS/PiTheorem.lean#L919) |
+| Log transport, positivity hypothesis | `LambdaS.Pi.scaleLaw_of_mulScaleLaw` | [`LambdaS/PiTheorem.lean:758`](LambdaS/PiTheorem.lean#L758) |
 | Pi, the factorization | `LambdaS.Pi.pi_theorem` | [`LambdaS/PiTheorem.lean:273`](LambdaS/PiTheorem.lean#L273) |
-| Pi, multiplicative coordinates | `LambdaS.Pi.mulScaleLaw_factorization` | [`LambdaS/PiTheorem.lean:517`](LambdaS/PiTheorem.lean#L517) |
-| Invariants are the dimensionless monomials | `LambdaS.Pi.invariant_iff_dimensionless` | [`LambdaS/PiTheorem.lean:300`](LambdaS/PiTheorem.lean#L300) |
-| Buckingham's counting (Theorem 8.1) | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:323`](LambdaS/PiTheorem.lean#L323) |
-| The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:363`](LambdaS/PiTheorem.lean#L363) |
+| Pi, multiplicative coordinates | `LambdaS.Pi.mulScaleLaw_factorization` | [`LambdaS/PiTheorem.lean:596`](LambdaS/PiTheorem.lean#L596) |
+| Invariants are the dimensionless monomials | `LambdaS.Pi.invariant_iff_dimensionless` | [`LambdaS/PiTheorem.lean:301`](LambdaS/PiTheorem.lean#L301) |
+| Buckingham's counting (Theorem 8.1) | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:325`](LambdaS/PiTheorem.lean#L325) |
+| The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:441`](LambdaS/PiTheorem.lean#L441) |
 | The pendulum signature | `LambdaS.Pi.pendulum` | [`LambdaS/Pi.lean:138`](LambdaS/Pi.lean#L138) |
 | The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:167`](LambdaS/Pi.lean#L167) |
-| The pendulum ignores its mass, both halves | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:851`](LambdaS/PiTheorem.lean#L851) |
+| The pendulum ignores its mass, both halves | `LambdaS.Pi.pendulum_mass_absent` | [`LambdaS/PiTheorem.lean:944`](LambdaS/PiTheorem.lean#L944) |
 | Mass is absent from every solution | `LambdaS.Pi.pendulum_period_independent_of_mass` | [`LambdaS/Pi.lean:156`](LambdaS/Pi.lean#L156) |
 | Mass is absent from every dimensionless group | `LambdaS.Pi.pendulum_mass_drops_out` | [`LambdaS/Pi.lean:150`](LambdaS/Pi.lean#L150) |
 | A once-appearing base unit forces zero in every invariant | `LambdaS.Pi.eq_zero_of_appears_once` | [`LambdaS/Pi.lean:106`](LambdaS/Pi.lean#L106) |
 | A once-appearing base unit forces a zero exponent | `LambdaS.Pi.solution_eq_zero_of_appears_once` | [`LambdaS/Pi.lean:123`](LambdaS/Pi.lean#L123) |
-| Signed equivalence, multiplicative coordinates | `LambdaS.Pi.piEquivSigned` | [`LambdaS/PiTheorem.lean:471`](LambdaS/PiTheorem.lean#L471) |
-| Unsolvable signatures admit only zero | `LambdaS.Pi.mulScaleLaw_eq_zero_of_unsolvable` | [`LambdaS/PiTheorem.lean:610`](LambdaS/PiTheorem.lean#L610) |
-| The solvability dichotomy (Theorem 8.1) | `LambdaS.Pi.mulScaleLaw_dichotomy` | [`LambdaS/PiTheorem.lean:638`](LambdaS/PiTheorem.lean#L638) |
+| Signed equivalence, multiplicative coordinates | `LambdaS.Pi.piEquivSigned` | [`LambdaS/PiTheorem.lean:549`](LambdaS/PiTheorem.lean#L549) |
+| Unsolvable signatures admit only zero | `LambdaS.Pi.mulScaleLaw_eq_zero_of_unsolvable` | [`LambdaS/PiTheorem.lean:703`](LambdaS/PiTheorem.lean#L703) |
+| The solvability dichotomy (Theorem 8.1) | `LambdaS.Pi.mulScaleLaw_dichotomy` | [`LambdaS/PiTheorem.lean:731`](LambdaS/PiTheorem.lean#L731) |
 
 ## Dimensioned linear algebra
 
@@ -195,3 +195,11 @@ build time by `#guard`s in `LambdaS/Algorithms.lean`; the `#guard`s there
 and in `LambdaS/Examples.lean` and `LambdaS/QM.lean` run the checker, the
 drift analysis, and the evaluator during `lake build`, so a wrong stated
 result would fail the build.
+
+## Pi arity descent
+
+| Paper claim | Lean name | Location |
+|---|---|---|
+| Rational dimensionless coordinates | `LambdaS.Pi.piCoordinates` | [`LambdaS/PiTheorem.lean:352`](LambdaS/PiTheorem.lean#L352) |
+| Arbitrary invariants descend to n minus rank coordinates | `LambdaS.Pi.invariant_descends` | [`LambdaS/PiTheorem.lean:406`](LambdaS/PiTheorem.lean#L406) |
+| Signed Buckingham factorization at reduced arity | `LambdaS.Pi.mulScaleLaw_factorization_reduced` | [`LambdaS/PiTheorem.lean:623`](LambdaS/PiTheorem.lean#L623) |

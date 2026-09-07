@@ -176,3 +176,11 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Algorithms.ydPerFt
 #print axioms LambdaS.Algorithms.ydPerFtIn1
 #print axioms LambdaS.Algorithms.ydPerFtViaFt
+
+-- Rational dimensionless coordinates and arbitrary-function descent
+#print axioms LambdaS.Pi.dimensionlessBasis
+#print axioms LambdaS.Pi.piCoordinates
+#print axioms LambdaS.Pi.exists_act_of_annihilates
+#print axioms LambdaS.Pi.exists_act_of_piCoordinates_eq
+#print axioms LambdaS.Pi.invariant_descends
+#print axioms LambdaS.Pi.mulScaleLaw_factorization_reduced

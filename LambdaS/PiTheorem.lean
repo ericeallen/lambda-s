@@ -295,8 +295,9 @@ A monomial `∏ xᵢ^{cᵢ}` (a linear functional `⟨c, ·⟩` in log coordinat
 invariant under every rescaling precisely when `c` lies in the kernel of the
 exponent matrix, which is `Dimensionless A`.
 
-So the function `pi_theorem` produces really is a function of the Π groups, and
-by `finrank_dimensionless_add_rank` there are `n − r` of them. -/
+This characterizes linear invariants only. `invariant_descends` separately
+proves that every invariant function descends to coordinates in a rational
+basis of the kernel; `finrank_dimensionless_add_rank` gives their count. -/
 theorem invariant_iff_dimensionless (A : ExpMatrix m n) (c : Fin n → ℝ) :
     (∀ ψ : Fin m → ℝ, ∑ i, c i * act A ψ i = 0) ↔
       ∀ v, ∑ i, (A v i : ℝ) * c i = 0 := by
@@ -316,7 +317,8 @@ theorem invariant_iff_dimensionless (A : ExpMatrix m n) (c : Fin n → ℝ) :
     rw [this, h v, zero_mul]
 
 /-- **The count.** The dimensionless groups form a space of dimension `n − r`,
-so `pi_theorem`'s `G` depends on exactly that many arguments.
+and `invariant_descends` shows that every invariant depends on at most that
+many arguments. Particular functions may ignore some or all of them.
 
 Restated here from `finrank_dimensionless_add_rank` to keep the theorem's two
 halves (the factorization and the count) in one place. -/
@@ -332,9 +334,86 @@ to the scale-invariant functions, and the correspondence is adding and
 subtracting the power-product `∏ xᵢ^{Xᵢ}`. -/
 
 /-- A function invariant under every rescaling: a function of the dimensionless
-groups alone, by `invariant_iff_dimensionless`. -/
+groups alone, as `invariant_descends` proves below. -/
 def Invariant (A : ExpMatrix m n) (G : (Fin n → ℝ) → ℝ) : Prop :=
   ∀ ψ ξ, G (fun i => ξ i + act A ψ i) = G ξ
+
+/-! ## Descent to finitely many dimensionless coordinates -/
+
+/-- A rational basis of the dimensionless power products, indexed by the
+Buckingham count. Choosing it is noncomputable; each exponent is rational. -/
+noncomputable def dimensionlessBasis (A : ExpMatrix m n) :
+    Module.Basis (Fin (n - Matrix.rank A)) ℚ (Dimensionless A) :=
+  Module.finBasisOfFinrankEq ℚ (Dimensionless A) (by
+    have h := pi_count A
+    omega)
+
+/-- The logarithms of the independent dimensionless power products. -/
+noncomputable def piCoordinates (A : ExpMatrix m n) (ξ : Fin n → ℝ)
+    (j : Fin (n - Matrix.rank A)) : ℝ :=
+  ∑ i, ((dimensionlessBasis A j).val i : ℝ) * ξ i
+
+/-- If a real vector annihilates every rational dependency among the columns,
+it is an orbit displacement. Rational linear extension with real values avoids
+any appeal to an unproved scalar-extension identity for kernels. -/
+theorem exists_act_of_annihilates (A : ExpMatrix m n) (δ : Fin n → ℝ)
+    (hδ : ∀ c : Dimensionless A, ∑ i, (c.val i : ℝ) * δ i = 0) :
+    ∃ ψ : Fin m → ℝ, act A ψ = δ := by
+  classical
+  obtain ⟨φ, hφ⟩ := exists_linearMap_of_dependencies (K := ℚ)
+    (fun i v => A v i) δ (fun c hc => by
+      have hker : c ∈ Dimensionless A := by
+        rw [mem_dimensionless]
+        funext v
+        simpa [Matrix.mulVec, dotProduct, Finset.sum_apply, smul_eq_mul, mul_comm]
+          using congrFun hc v
+      simpa [Rat.smul_def] using hδ ⟨c, hker⟩)
+  refine ⟨fun v => φ (Pi.single v 1), funext fun i => ?_⟩
+  have hrep := LinearMap.pi_apply_eq_sum_univ φ (fun v => A v i)
+  have hs : ∀ v : Fin m, (fun w => if v = w then (1 : ℚ) else 0) = Pi.single v 1 := by
+    intro v
+    funext w
+    simp [Pi.single_apply, eq_comm]
+  simp only [hs, Rat.smul_def] at hrep
+  exact hrep.symm.trans (hφ i)
+
+/-- The independent dimensionless coordinates separate scaling orbits. -/
+theorem exists_act_of_piCoordinates_eq (A : ExpMatrix m n)
+    {ξ η : Fin n → ℝ} (h : piCoordinates A ξ = piCoordinates A η) :
+    ∃ ψ : Fin m → ℝ, (fun i => η i + act A ψ i) = ξ := by
+  classical
+  let ℓ : Dimensionless A →ₗ[ℚ] ℝ :=
+    { toFun := fun c => ∑ i, (c.val i : ℝ) * (ξ i - η i)
+      map_add' := by
+        intro c d
+        simp [add_mul, Finset.sum_add_distrib]
+      map_smul' := by
+        intro q c
+        simp [Rat.smul_def, Finset.mul_sum, mul_assoc] }
+  have hzero : ℓ = 0 := (dimensionlessBasis A).ext fun j => by
+    have hj := congrFun h j
+    simpa [ℓ, piCoordinates, mul_sub, Finset.sum_sub_distrib] using sub_eq_zero.mpr hj
+  obtain ⟨ψ, hψ⟩ := exists_act_of_annihilates A (fun i => ξ i - η i)
+    (fun c => by simpa [ℓ] using LinearMap.congr_fun hzero c)
+  refine ⟨ψ, funext fun i => ?_⟩
+  rw [show act A ψ i = ξ i - η i from congrFun hψ i]
+  ring
+
+/-- **Arity descent.** Every arbitrary (not necessarily linear or continuous)
+invariant is a function of `n - rank A` rational dimensionless power products,
+in logarithmic coordinates. This supplies the descent missing from the
+invariant-factor theorem alone. -/
+theorem invariant_descends (A : ExpMatrix m n) {H : (Fin n → ℝ) → ℝ}
+    (hH : Invariant A H) :
+    ∃ G : (Fin (n - Matrix.rank A) → ℝ) → ℝ,
+      ∀ ξ, H ξ = G (piCoordinates A ξ) := by
+  have hf : H.FactorsThrough (piCoordinates A) := by
+    intro ξ η h
+    obtain ⟨ψ, hψ⟩ := exists_act_of_piCoordinates_eq A h
+    rw [← hψ]
+    exact hH ψ η
+  obtain ⟨G, hG⟩ := (Function.factorsThrough_iff H).mp hf
+  exact ⟨G, fun ξ => congrFun hG ξ⟩
 
 /-- Adding the power-product back turns an invariant function into one obeying
 the scaling law. The inverse direction of `pi_theorem`. -/
@@ -356,10 +435,9 @@ theorem scaleLaw_add_linear (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n �
 /-- **Kennedy's isomorphism, as a bijection.**
 
 Functions obeying the scaling law of the signature `(A, b)` are in bijection with
-scale-invariant functions. Since the invariants are exactly the functions of the
-`n − r` dimensionless groups (`invariant_iff_dimensionless`, `pi_count`), this is
-the statement that a first-order unit-polymorphic type is isomorphic to one with
-`n − r` dimensionless arguments. -/
+scale-invariant functions. The separate `invariant_descends` theorem expresses
+each invariant in `n − r` rational dimensionless coordinates; this equivalence
+itself retains the invariant-function subtype as its codomain. -/
 noncomputable def piEquiv (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n → ℝ)
     (hX : ∀ v, ∑ i, (A v i : ℝ) * X i = (b v : ℝ)) :
     {F : (Fin n → ℝ) → ℝ // ScaleLaw A b F} ≃
@@ -507,7 +585,8 @@ noncomputable def piEquivSigned (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin
 satisfying the multiplicative scale law factors, on the positive orthant, as
 the power product `∏ i, x i ^ X i` times a function of the log magnitudes
 that is invariant under every rescaling, hence a function of the
-dimensionless groups alone (`invariant_iff_dimensionless`, `pi_count`).
+dimensionless groups alone (`invariant_descends`). The explicit reduced-arity
+statement is `mulScaleLaw_factorization_reduced`.
 
 No positivity of `f` is assumed and none survives in the conclusion: `H` is
 real-valued of whatever sign `f` takes, and the zero function is carried by
@@ -536,6 +615,20 @@ theorem mulScaleLaw_factorization (A : ExpMatrix m n) (b : Fin m → ℚ) (X : F
       * Real.exp (-(∑ i, X i * Real.log (x i))) = 1 := by
     rw [← Real.exp_add, add_neg_cancel, Real.exp_zero]
   linear_combination (-(f x)) * hc
+
+/-- **Buckingham factorization with the reduced arity.** On positive inputs,
+a function of arbitrary output sign satisfying the multiplicative scaling law
+is a power product times a function of `n - rank A` rational dimensionless
+combinations. `piCoordinates A (log x)` lists their logarithms. -/
+theorem mulScaleLaw_factorization_reduced (A : ExpMatrix m n) (b : Fin m → ℚ)
+    (X : Fin n → ℝ) (hX : ∀ v, ∑ i, (A v i : ℝ) * X i = (b v : ℝ))
+    {f : (Fin n → ℝ) → ℝ} (hmul : MulScaleLaw A b f) :
+    ∃ G : (Fin (n - Matrix.rank A) → ℝ) → ℝ,
+      ∀ x : Fin n → ℝ, (∀ i, 0 < x i) →
+        f x = (∏ i, x i ^ X i) * G (piCoordinates A (fun i => Real.log (x i))) := by
+  obtain ⟨H, hH, heq⟩ := mulScaleLaw_factorization A b X hX hmul
+  obtain ⟨G, hG⟩ := invariant_descends A hH
+  exact ⟨G, fun x hx => (heq x hx).trans (congrArg ((∏ i, x i ^ X i) * ·) (hG _))⟩
 
 /-! ## The solvability dichotomy
 
