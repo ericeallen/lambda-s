@@ -1550,4 +1550,171 @@ power `1/2` is `ft/m`, the drift of the speed. -/
 
 end Ballistics
 
+/-! ## A Jacobi rotation, and what the units force
+
+The reason `ifle` was added. Section 5 classifies dimensioned maps, and
+`svd_entry_const` says a singular value decomposition needs a *uniform* space
+because sorting singular values requires a shared unit. That is a claim about
+types, and until now nothing in the development ran an actual kernel against
+it. This does.
+
+The setting is the symmetric eigenvalue problem, the fourth Hart class:
+`A : V ⊸ dual V` on a uniform `V`, so every entry carries `1 / (V j * V i)`
+and, uniformly, `m⁻²`. A Jacobi sweep annihilates the off-diagonal entry by a
+rotation whose angle is computed from the entries themselves. -/
+
+/-- A uniform two-component space. -/
+def U2 : Sp Base 0 := [m, m]
+
+/-- Its dual, carrying reciprocal units. -/
+def U2d : Sp Base 0 := [Term.div 1 m, Term.div 1 m]
+
+/-- The context the kernel runs in: one symmetric matrix. -/
+def ΓA : Ctx Base Dim 0 0 := [.lin U2 U2d]
+
+/- Every entry of a symmetric matrix on a uniform space carries the same unit,
+which is what makes the rotation algebra below typecheck at all. -/
+#guard typeOfIn ΓA ⟪ (%0 !! 0) ! 0 ⟫ == some (.Q (Term.div (Term.div 1 m) m))
+#guard typeOfIn ΓA ⟪ (%0 !! 0) ! 1 ⟫ == some (.Q (Term.div (Term.div 1 m) m))
+#guard typeOfIn ΓA ⟪ (%0 !! 1) ! 1 ⟫ == some (.Q (Term.div (Term.div 1 m) m))
+
+/-- The tangent parameter of the rotation angle.
+
+Every entry carries `m⁻²`, so the difference is legal and the ratio is
+dimensionless. The rotation is forced to be a pure number, and it is the
+uniformity of the space that forces it: on a non-uniform space the numerator
+below does not typecheck. -/
+def tau : Term₀ := ⟪ ((%0 !! 1) ! 1 - (%0 !! 0) ! 0) / (2 * (%0 !! 0) ! 1) ⟫
+
+#guard typeOfIn ΓA tau == some (.Q 1)
+
+/-- `t = sign(τ) / (|τ| + √(1 + τ²))`, the standard stable form, written with
+the two branches the sign requires. This is the term that could not be written
+before `ifle`. -/
+def tanRot : Term₀ :=
+  .ifle (.lit 0) tau
+    ⟪ 1 / (tau + √2 (1 + tau * tau)) ⟫
+    ⟪ (0 - 1) / ((0 - 1) * tau + √2 (1 + tau * tau)) ⟫
+
+#guard typeOfIn ΓA tanRot == some (.Q 1)
+
+/-- Cosine and sine of the rotation, both dimensionless. -/
+def cosRot : Term₀ := ⟪ 1 / √2 (1 + tanRot * tanRot) ⟫
+def sinRot : Term₀ := ⟪ tanRot * cosRot ⟫
+
+#guard typeOfIn ΓA cosRot == some (.Q 1)
+#guard typeOfIn ΓA sinRot == some (.Q 1)
+
+/-- The rotation itself, an endomorphism of the uniform space. Its entries
+carry `V j / V i = 1`, so a rotation is a matrix of plain numbers, which is
+`entry_id_diag` and `entry_perm_prod` seen from the term side. -/
+def rot : Term₀ :=
+  .mcons m (.vcons cosRot (.vcons ⟪ (0 - 1) * sinRot ⟫ .vnil))
+    (.mcons m (.vcons sinRot (.vcons cosRot .vnil))
+      (.mnil U2))
+
+#guard typeOfIn ΓA rot == some (.lin U2 U2)
+
+/-- Its transpose, assembled column by column with `mrow`. The rotation is
+orthogonal, so this is also its inverse, and it lands at the dual spaces. -/
+def rotT : Term₀ :=
+  .mcons (Term.div 1 m)
+    (.vcons ⟪ (rot !! 0) ! 0 ⟫ (.vcons ⟪ (rot !! 1) ! 0 ⟫ .vnil))
+    (.mcons (Term.div 1 m)
+      (.vcons ⟪ (rot !! 0) ! 1 ⟫ (.vcons ⟪ (rot !! 1) ! 1 ⟫ .vnil))
+      (.mnil U2d))
+
+#guard typeOfIn ΓA rotT == some (.lin U2d U2d)
+
+/-- **One Jacobi sweep**, the congruence `Rᵀ A R`. It needs both extensions at
+once: `mrow` to build the transpose and `ifle` to choose the angle. The type is
+preserved exactly, so sweeps compose. -/
+def sweep : Term₀ := .comp rotT (.comp (.var 0) rot)
+
+#guard typeOfIn ΓA sweep == some (.lin U2 U2d)
+
+/-! ### What the units refuse
+
+The rotation algebra above is not merely *typeable* on a uniform space; it is
+typeable **only** there. On a non-uniform space the two diagonal entries carry
+different units, so the numerator of `tau` is an addition at unequal units and
+the term is rejected before any question of correctness arises. Hart's
+uniformity condition for the singular value decomposition (`svd_entry_const`)
+is thus not a hypothesis a programmer must remember: it is the condition under
+which the kernel can be written at all. -/
+
+def N2 : Sp Base 0 := [m, sec]
+def N2d : Sp Base 0 := [Term.div 1 m, Term.div 1 sec]
+def ΓN : Ctx Base Dim 0 0 := [.lin N2 N2d]
+
+#guard (typeOfIn ΓN tau).isNone
+
+/-! ### What the units say about the stopping test
+
+A convergence test compares the off-diagonal to a tolerance, and the tolerance
+must carry the entries' unit. There are two ways to supply one and the type
+system separates them.
+
+A **relative** tolerance scales a quantity already in hand by a dimensionless
+factor. It names no unit, so it stays inside the parametric fragment and
+Theorem 6.1 applies to the kernel.
+
+An **absolute** tolerance has to name the unit, and the only term that can is
+`ucon`. That is exactly what `Tm.Parametric` excludes. The kernel still
+typechecks and still runs; it simply falls out of the invariance theory, and
+rescaling can change the iteration it stops at. -/
+
+def stopRelative : Term₀ :=
+  .ifle ⟪ (%0 !! 0) ! 1 ⟫ ⟪ 0.000000001 * (%0 !! 0) ! 0 ⟫ (.var 0) sweep
+
+def stopAbsolute : Term₀ :=
+  .ifle ⟪ (%0 !! 0) ! 1 ⟫
+    (.mul (.lit 0.000000001) (.ucon (Term.div (Term.div 1 m) m)))
+    (.var 0) sweep
+
+/- Both are well typed, and at the same type. -/
+#guard typeOfIn ΓA stopRelative == some (.lin U2 U2d)
+#guard typeOfIn ΓA stopAbsolute == some (.lin U2 U2d)
+
+/-- **The relative test is parametric.** Theorem 6.1 applies to the kernel: a
+rescaling moves its inputs and its output and changes nothing else, including
+which iteration it stops at. -/
+example : Tm.Parametric stopRelative := by
+  simp [stopRelative, sweep, rotT, rot, cosRot, sinRot, tanRot, tau,
+    Tm.Parametric]
+
+/-- **The absolute test is not.** The tolerance has to name the unit, and a
+term that names a unit can detect a rescaling. Same type, same behavior on any
+one unit system, outside the invariance theory. -/
+example : ¬ Tm.Parametric stopAbsolute := by
+  simp [stopAbsolute, Tm.Parametric]
+
+/-! ### What the experiment found
+
+Two things the kernel confirms and one it does not.
+
+Confirmed: uniformity is not a hypothesis but a precondition for writing the
+code at all, and the parametric fragment separates a relative tolerance from
+an absolute one. Both were predicted before the kernel was written.
+
+Not confirmed: **the drift analysis does not reach this program.** `unitDrift`
+is typed
+`HasTy Δ (scalarCtx us) e (.Q u) → Option (UExp B k)`,
+so it wants scalar arguments and a scalar result, and `sweep` has a matrix
+argument and a matrix result. It cannot be applied here, and no rearrangement
+of the kernel helps, because the restriction is on the shape of the judgment
+rather than on the term.
+
+This is a coverage gap between two parts of the development rather than an
+unsoundness. `twistOf`, the analysis underneath, is indexed by `Ctx.shapes`
+and already handles vector and matrix shapes; that is why `Tw.agree` needed
+cases at those shapes at all. It is the `unitDrift` wrapper, and the theorem
+stated over it, that are scalar-only.
+
+The gap matters because it falls exactly between two claims the development
+makes. `LambdaS.Map` classifies dimensioned linear operators, and the
+diagnostic decides invariance for first-order scalar programs, and the kernels
+that motivate the first are outside the second. Whether the wrapper generalizes
+cheaply is an open question and deliberately not settled here. -/
+
 end LambdaS.Examples
