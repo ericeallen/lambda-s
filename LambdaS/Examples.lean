@@ -1689,42 +1689,62 @@ one unit system, outside the invariance theory. -/
 example : ¬ Tm.Parametric stopAbsolute := by
   simp [stopAbsolute, Tm.Parametric]
 
+/-! ### The diagnostic at the sweep
+
+`unitDriftGen` takes an arbitrary context and a `.lin` result, so it applies
+to the kernel exactly as written, matrix argument and matrix result. This is
+the guard that says so. -/
+
+/- **The sweep's drift table.** One normal ratio per entry of the result. -/
+#guard (match check Δ₀ ΓA sweep with
+  | some ⟨.lin _ _, d⟩ =>
+      match unitDriftGen d with
+      | some tbl => decide (∀ a i, tbl a i = (1 : UExp Base 0))
+      | none => false
+  | _ => false)
+
 /-! ### What the experiment found
 
-Two things the kernel confirms and one it does not.
+Three things the kernel confirms, one of which took a generalization to
+reach.
 
 Confirmed: uniformity is not a hypothesis but a precondition for writing the
 code at all, and the parametric fragment separates a relative tolerance from
 an absolute one. Both were predicted before the kernel was written.
 
-Not confirmed: **the drift analysis does not reach this program.** `unitDrift`
-is typed
+Not confirmed at first: **the drift analysis did not reach this program.**
+`unitDrift` is typed
 `HasTy Δ (scalarCtx us) e (.Q u) → Option (UExp B k)`,
-so it wants scalar arguments and a scalar result, and `sweep` has a matrix
-argument and a matrix result. It cannot be applied here, and no rearrangement
-of the kernel helps, because the restriction is on the shape of the judgment
-rather than on the term.
+so it wanted scalar arguments and a scalar result, and `sweep` has a matrix
+argument and a matrix result. No rearrangement of the kernel helped, because
+the restriction was on the shape of the judgment rather than on the term.
 
-This is a coverage gap between two parts of the development rather than an
-unsoundness. `twistOf`, the analysis underneath, is indexed by `Ctx.shapes`
-and already handles vector and matrix shapes; that is why `Tw.agree` needed
-cases at those shapes at all. It is the `unitDrift` wrapper, and the theorem
-stated over it, that are scalar-only.
+That was a coverage gap between two parts of the development rather than an
+unsoundness, and the diagnosis said where to look: `twistOf`, the analysis
+underneath, is indexed by `Ctx.shapes` and already handled vector and matrix
+shapes, which is why `Tw.agree` needed cases at those shapes at all. Only the
+wrapper was scalar-only. The gap mattered because it fell exactly between two
+claims the development makes: `LambdaS.Map` classifies dimensioned linear
+operators, the diagnostic decides invariance, and the kernels motivating the
+first sat outside the second.
 
-The gap matters because it falls exactly between two claims the development
-makes. `LambdaS.Map` classifies dimensioned linear operators, and the
-diagnostic decides invariance for first-order scalar programs, and the kernels
-that motivate the first are outside the second. Whether the wrapper generalizes
-cheaply is an open question and deliberately not settled here. -/
+The wrapper did generalize, on both axes. `unitDriftLin` reports one ratio per
+entry of a matrix result, and `unitDriftGen` drops the scalar-context
+restriction as well, so it applies to `sweep` exactly as written. The guard
+above runs it and finds every entry trivial, which is the answer the
+congruence of rotations should have: the kernel converts nowhere, so nothing
+drifts. Neither axis needed a new theorem, and `Twist.scaling` turned out to
+have been fully general already. -/
 
 /-! ### The kernel restated over scalar arguments
 
-The gap above is in the *judgment's shape*, not the program. `unitDrift` wants
-a scalar context and a scalar result; the sweep has a matrix in both places.
-The context half can be worked around by passing the entries rather than the
-matrix, which is what this is: the same rotation over a context of three
-scalars, assembling its own matrix. It leaves only the result shape between
-the kernel and the diagnostic. -/
+Written when the gap above was open, as the workaround: pass the entries
+rather than the matrix, so that the context is a `scalarCtx` and only the
+result shape stands between the kernel and the diagnostic. `unitDriftGen`
+has since removed the need for it. It stays because it exercises a genuinely
+different path, a scalar context with a matrix result, and because the same
+rotation algebra written two ways is a check that the shapes are doing no
+work the units are not. -/
 
 /-- The entry unit of a symmetric matrix on the uniform space. -/
 def e2 : UExp Base 0 := Term.div (Term.div 1 m) m
