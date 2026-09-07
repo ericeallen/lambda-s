@@ -109,6 +109,51 @@ def readme_rows(total: Counts) -> dict[str, str]:
 ROW = re.compile(r"^\| (?P<label>[^|]+?) \| (?P<value>[^|]+?) \|$")
 
 
+def readme_prose(total: Counts) -> dict[str, str]:
+    """The figures the README's opening sentence states.
+
+    The table below it repeats two of them and adds a third. Owning only the
+    table left this sentence unchecked, and an unchecked figure drifts: this
+    one was wrong three times in two days before it was covered here.
+    """
+    return {
+        "code": round_hundreds(total.code),
+        "doc": round_hundreds(total.doc),
+        "total": round_hundreds(total.total),
+    }
+
+
+PROSE = re.compile(
+    r"The development is (?P<code>[\d,]+) lines of definitions and proofs "
+    r"and (?P<doc>[\d,]+) lines\s+of documentation "
+    r"\((?P<total>[\d,]+) lines of source in all;"
+)
+
+
+def reconcile_prose(text: str, total: Counts, fix: bool) -> tuple[str, int]:
+    """Compare (or rewrite) the three figures in the opening sentence.
+
+    Rewrites by span rather than by value: two of the figures can coincide,
+    and a substitution by value would then edit the wrong one.
+    """
+    expected = readme_prose(total)
+    m = PROSE.search(text)
+    if m is None:
+        print("README: opening sentence not in the form this script can check")
+        return text, 1
+    drifted = [k for k, want in expected.items() if m[k] != want]
+    for k in drifted:
+        print(f"README: prose {k}: stated {m[k]}, measured {expected[k]}")
+    if drifted and fix:
+        text = (
+            text[: m.start("code")] + expected["code"]
+            + text[m.end("code") : m.start("doc")] + expected["doc"]
+            + text[m.end("doc") : m.start("total")] + expected["total"]
+            + text[m.end("total") :]
+        )
+    return text, len(drifted)
+
+
 def reconcile_readme(total: Counts, fix: bool) -> int:
     """Compare (or rewrite) the README's owned rows; return the drift count."""
     expected = readme_rows(total)
@@ -128,8 +173,10 @@ def reconcile_readme(total: Counts, fix: bool) -> int:
     for label in expected.keys() - seen:
         drifted += 1
         print(f"README: no row for {label}")
+    text, prose_drift = reconcile_prose("".join(lines), total, fix)
+    drifted += prose_drift
     if fix and drifted:
-        README.write_text("".join(lines), encoding="utf-8")
+        README.write_text(text, encoding="utf-8")
         print("README rewritten")
     return drifted
 

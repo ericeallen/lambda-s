@@ -24,7 +24,7 @@ which the development turns into a compiler diagnostic.
 
 The development is 9,200 lines of definitions and proofs and 5,800 lines
 of documentation (17,300 lines of source in all; `scripts/count_lines.py`
-is the method, and CI checks the table below against it), and stays that small
+is the method, and CI checks these figures and the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
 vectors over ℚ, so substitution is a linear map, every substitution lemma is
 a reordering of finite sums, and no normalization pass over unit syntax
