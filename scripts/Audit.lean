@@ -184,3 +184,13 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.exists_act_of_piCoordinates_eq
 #print axioms LambdaS.Pi.invariant_descends
 #print axioms LambdaS.Pi.mulScaleLaw_factorization_reduced
+
+-- Coherent dimension-level Buckingham bridge
+#print axioms LambdaS.eval_congr_sameDim
+#print axioms LambdaS.den_eq_of_sameDim_conv
+#print axioms LambdaS.den_eq_of_coherent
+#print axioms LambdaS.scaleLaw_coherent
+#print axioms LambdaS.Pi.dimensionExponents
+#print axioms LambdaS.Pi.dimensionMatrix
+#print axioms LambdaS.Pi.den_mulScaleLaw_coherent
+#print axioms LambdaS.Pi.den_pi_coherent

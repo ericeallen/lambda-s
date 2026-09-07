@@ -22,6 +22,7 @@ import LambdaS.Erasure
 import LambdaS.Parametricity
 import LambdaS.Fundamental
 import LambdaS.PiTheorem
+import LambdaS.PiCoherent
 import LambdaS.NonDefinability
 import LambdaS.Ratio
 import LambdaS.Definability
