@@ -1864,6 +1864,20 @@ def unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {u : UExp B k
   (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
     fun p => Tw.nfOne p.1
 
+/-- **Unit drift at a matrix result over an arbitrary context.**
+
+`twistOf` never wanted a scalar context; only `unitDrift`'s wrapper did, and
+only because `twRelEnv_scaleEnv` *constructs* the rescaled environment and
+knows how to do that at scalar types alone. Taking the environment relation as
+a hypothesis instead removes the restriction without proving anything new: the
+relation is the specification of "each argument rescaled as its type
+prescribes", and constructing one is the caller's business. -/
+def unitDriftGen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V W : Sp B k}
+    {e : Tm B D j k} (d : HasTy Δ Γ e (.lin V W)) :
+    Option (Fin W.length → Fin V.length → UExp B k) :=
+  (twistOf 0 Γ.shapes rfl d).map
+    fun p => fun a i => Tw.nfOne (Tw.projE (Tw.rowE p.1 a) i)
+
 /-- **Unit drift at a matrix result**: one normal ratio per entry.
 
 A scalar program has a drift; a map-valued one has a drift *table*, because
@@ -1876,6 +1890,63 @@ def unitDriftLin {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {V W : Sp 
     Option (Fin W.length → Fin V.length → UExp B k) :=
   (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
     fun p => fun a i => Tw.nfOne (Tw.projE (Tw.rowE p.1 a) i)
+
+/-- Rescale a map-valued argument the way its type prescribes: entry `(a,i)`
+by `ψ(W a) / ψ(V i)`, which is Hart's rank-one factor. -/
+noncomputable def scaleLinVal {k : ℕ} {V W : Sp B k} (ψ : Scaling B k)
+    (A : Fin W.length → Fin V.length → ℝ) : Fin W.length → Fin V.length → ℝ :=
+  fun a i => (ψ.scale (W.get a) / ψ.scale (V.get i)) * A a i
+
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
+/-- A one-map environment is related to its own rescaling at trivial ratios.
+
+The map-valued analogue of `twRelEnv_scaleEnv`, and the piece that lets
+`scaleLaw_lin_of_driftFree_gen` be applied to a kernel that takes a matrix
+rather than its entries. -/
+theorem twRelEnv_scaleLinVal {j k : ℕ} (φ ψ : Scaling B k) {V W : Sp B k}
+    (A : Fin W.length → Fin V.length → ℝ) (u : PUnit) :
+    TwRelEnv φ ψ [(Ty.lin V W : Ty B D j k)] [Shape.mat V.length W.length]
+      (oneTwEnv _) (oneTwEnv _) (A, u) (scaleLinVal ψ A, u) := by
+  refine TwRelEnv.cons rfl ?_ TwRelEnv.nil
+  intro a i
+  show (ψ.scale (W.get a) / ψ.scale (V.get i)) * A a i
+    = (ψ.scale (W.get a) / ψ.scale (V.get i)) * ((1 : ℝ) * 1) * A a i
+  ring
+
+omit [Fintype D] [DecidableEq D] in
+/-- **The scaling law at a matrix result, over any context at all.**
+
+The context restriction is gone. Rescale the arguments however their types
+prescribe, which is what `TwRelEnv` at trivial ratios says, and a drift-free
+map moves entry `(a,i)` by exactly `ψ(W a) / ψ(V i)`.
+
+`scaleLaw_lin_of_driftFree` is this with the environment relation supplied by
+`twRelEnv_scaleEnv`, which is available only at scalar arguments. A caller
+with a map-valued argument proves the relation for it directly; at first order
+that is the entrywise equation and nothing more. -/
+theorem scaleLaw_lin_of_driftFree_gen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
+    {V W : Sp B k} {e : Tm B D j k} {d : HasTy Δ Γ e (.lin V W)}
+    {w : Fin W.length → Fin V.length → UExp B k}
+    (hd : unitDriftGen d = some w) (h1 : ∀ a i, w a i = 1)
+    (V₀ ψ : Scaling B k) {ρ ρ' : Env Γ}
+    (hr : TwRelEnv Scaling.zero ψ Γ Γ.shapes (oneTwEnv _) (oneTwEnv _) ρ ρ') :
+    ∀ a i, den V₀ d ρ' a i
+      = (ψ.scale (W.get a) / ψ.scale (V.get i)) * den V₀ d ρ a i := by
+  intro a i
+  unfold unitDriftGen at hd
+  rcases hopt : twistOf 0 Γ.shapes rfl d with _ | p
+  · rw [hopt] at hd; exact absurd hd (by simp)
+  · rw [hopt] at hd
+    simp only [Option.map_some, Option.some.injEq] at hd
+    subst hd
+    have hone : ∀ (χ : Scaling B k), Tw.eval χ p.1 (oneTwEnv _) a i = 1 := by
+      intro χ
+      have := (Tw.nfOne_eq_one_iff (Tw.projE (Tw.rowE p.1 a) i)).mp (h1 a i) χ
+      simpa using this
+    have hl := p.2.scaling V₀ Scaling.zero ψ (oneTwEnv _) (oneTwEnv _)
+      (TwEnv.onesFrom_oneTwEnv 0) (TwEnv.onesFrom_oneTwEnv 0) hr a i
+    rw [hone Scaling.zero, hone ψ] at hl
+    simpa using hl
 
 omit [Fintype D] [DecidableEq D] in
 /-- **A drift-free map obeys its type's scaling law, entry by entry.**

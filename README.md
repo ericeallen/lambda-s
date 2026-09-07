@@ -22,8 +22,8 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is 9,100 lines of definitions and proofs and 5,800 lines
-of documentation (17,200 lines of source in all; `scripts/count_lines.py`
+The development is 9,200 lines of definitions and proofs and 5,800 lines
+of documentation (17,300 lines of source in all; `scripts/count_lines.py`
 is the method, and CI checks the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
 vectors over ℚ, so substitution is a linear map, every substitution lemma is
@@ -37,9 +37,9 @@ exists anywhere in the system.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| lines of definitions and proofs | 9,100 |
+| lines of definitions and proofs | 9,200 |
 | lines of documentation | 5,800 |
-| theorem and lemma declarations | 465 |
+| theorem and lemma declarations | 467 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
