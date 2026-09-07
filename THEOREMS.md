@@ -10,8 +10,8 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:442`](LambdaS/Typing.lean#L442) |
-| Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:640`](LambdaS/Typing.lean#L640) |
+| Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:445`](LambdaS/Typing.lean#L445) |
+| Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:643`](LambdaS/Typing.lean#L643) |
 | The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:1005`](LambdaS/Examples.lean#L1005) |
 | The velocity idiom | `LambdaS.Examples.velocity` | [`LambdaS/Examples.lean:96`](LambdaS/Examples.lean#L96) |
 | Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:106`](LambdaS/Notation.lean#L106) |
@@ -153,7 +153,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 |---|---|---|
 | Entry units (definition) | `LambdaS.entry` | [`LambdaS/Map.lean:162`](LambdaS/Map.lean#L162) |
 | The calculus's entry units are the model's | `LambdaS.entry_toSpace` | [`LambdaS/Syntax.lean:352`](LambdaS/Syntax.lean#L352) |
-| T-MCons enforces the model's entry units | `LambdaS.HasTy.mcons_entry` | [`LambdaS/Typing.lean:522`](LambdaS/Typing.lean#L522) |
+| T-MCons enforces the model's entry units | `LambdaS.HasTy.mcons_entry` | [`LambdaS/Typing.lean:525`](LambdaS/Typing.lean#L525) |
 | Rank-one units (Theorem 9.1) | `LambdaS.entry_rank_one` | [`LambdaS/Map.lean:174`](LambdaS/Map.lean#L174) |
 | Composition entry units | `LambdaS.entry_comp` | [`LambdaS/Map.lean:185`](LambdaS/Map.lean#L185) |
 | Endomorphism diagonals dimensionless | `LambdaS.entry_id_diag` | [`LambdaS/Map.lean:212`](LambdaS/Map.lean#L212) |

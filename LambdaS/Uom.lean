@@ -87,12 +87,13 @@ precisely why the square root of a dimensioned quantity is inexpressible there. 
 theorem rpow_nth_root (u : Uom B) {n : ℚ} (hn : n ≠ 0) : (u ^ (1 / n)) ^ n = u := by
   ext b; simp; field_simp
 
-/-- ℚ is torsion-free, so the unit group is too: a unit equal to its own
-inverse is trivial.
+/-- The exponent group is torsion-free, over ℚ here and over ℤ equally, so a
+unit equal to its own inverse is trivial.
 
 This single fact is what forces the Cholesky factor into the dimensionless
-space in `LambdaS.Map`, and it is where the choice of ℚ (rather than, say,
-ℤ/2ℤ-graded exponents) does load-bearing work. -/
+space in `LambdaS.Map`. The contrast it needs is a group with torsion, say
+ℤ/2ℤ-graded exponents, not the integer exponents of [Kennedy 1997]; for what
+the rational exponents do buy, see `rpow_nth_root` above. -/
 theorem eq_inv_iff_one {u : Uom B} : u = u⁻¹ ↔ u = 1 := by
   constructor
   · intro h

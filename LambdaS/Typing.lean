@@ -134,25 +134,28 @@ First, *exponents are rational*, not integral. In Kennedy's
 calculus [Kennedy 1997] the units form the free abelian group on the
 base units, with integer exponents; here they form the free
 ℚ-vector space on the same generators (see note 1).
-The difference propagates everywhere downstream: the group is torsion-free,
-so a ratio of units equals the dimensionless unit 1 (the empty exponent
-vector) exactly when the two units are equal (“Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`));
-consistency of unit declarations is consistency of a linear
-system over ℚ, solved by Gaussian elimination rather than Smith
-normal form, the integer-matrix analogue of diagonalization
-(“Unit Declarations” (`Declare.lean`)); and √(·) of a
-dimensioned quantity is well-typed
+The difference propagates everywhere downstream: the group is *divisible*,
+every unit having an `n`-th root for nonzero `n` (`Uom.rpow_nth_root`),
+so √(·) of a dimensioned quantity is well-typed
 (√(m²) = m) where systems with integer
-exponents must reject it. Quantities with genuinely fractional dimension,
+exponents must reject it; and consistency of unit declarations is
+consistency of a linear system over a *field*, solved by Gaussian
+elimination rather than Smith normal form, the integer-matrix analogue of
+diagonalization (“Unit Declarations” (`Declare.lean`)).
+Neither follows from torsion-freeness, which the free abelian group of
+[Kennedy 1997] has too (see note 1). Quantities with genuinely fractional dimension,
 such as the half-densities of geometric quantization (see note 2),
 come for free.
 
 > **Note 1.** Precisely: the
 > units over B with k variables in scope form the free ℚ-vector
-> space on B ⊔ {0,…,k-1}, written multiplicatively. Every
-> ℚ-vector space is torsion-free (written multiplicatively:
-> uⁿ = 1 forces u = 1 for nonzero n), and torsion-freeness is what makes
-> “ratio equal to one” mean “units equal” (“Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`)).
+> space on B ⊔ {0,…,k-1}, written multiplicatively. It is
+> torsion-free (written multiplicatively: uⁿ = 1 forces u = 1 for
+> nonzero n), which `LambdaS.Map` uses to put the Cholesky factor in the
+> dimensionless space, but so is a free abelian group over ℤ, so this is
+> not a difference the rational exponents make. Nor is it what makes
+> “ratio equal to one” mean “units equal”: that is cancellation, and holds
+> in any group (`Definability.div_eq_one_iff`).
 
 > **Note 2.** A probability
 > density on a line measured in Length carries dimension

@@ -106,9 +106,9 @@ u_j · (u_j u_i)⁻¹ · u_i = 1
 Rᵀ ∘ R with R : Lin u⃗ y⃗, composability
 forces y⃗ = y⃗⁻¹, and a self-dual space is
 dimensionless (`cholesky_factor_dimensionless`: the unit group is
-a ℚ-vector space,
-“Units and Dimensions” (`Typing.lean`), hence torsion-free, so y_i² = 1 forces
-y_i = 1). The Cholesky factor is therefore a whitening transform, a map
+torsion-free, “Units and Dimensions” (`Typing.lean`), so y_i² = 1 forces
+y_i = 1; this one needs torsion-freeness and not the rational exponents,
+which is why it holds over ℤ as well). The Cholesky factor is therefore a whitening transform, a map
 carrying
 dimensioned data into dimensionless coordinates, derived rather
 than asserted.

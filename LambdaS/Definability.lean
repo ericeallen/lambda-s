@@ -455,8 +455,9 @@ omit [Fintype B] in
   refine Term.ext' (funext fun b => ?_) (funext fun i => ?_) <;> simp
 
 omit [Fintype B] [DecidableEq B] in
-/-- A ratio is trivial exactly when its two units agree. The unit group is
-torsion-free and cancellative, so `u/v = 1` really does mean `u = v`. -/
+/-- A ratio is trivial exactly when its two units agree. This is cancellation
+and needs nothing but the group structure; it would hold just as well over ℤ
+exponents. -/
 theorem div_eq_one_iff {u v : UExp B k} : Term.div u v = 1 ↔ u = v := by
   constructor
   · intro h
