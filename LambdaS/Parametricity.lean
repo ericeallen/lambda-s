@@ -353,6 +353,20 @@ theorem relQ_add {u : UExp B k} {ψ : Scaling B k} {x y x' y' : ℝ}
   simp only [RelQ] at *
   rw [h, h']; ring
 
+/-- **Comparison survives a rescaling.** Both sides scale by the same positive
+factor, so the ordering is the same in both unit systems, and a conditional
+takes the same branch. This is where `OrderedNum.le_scale` is discharged: the
+factor is `Scaling.scale`, positive by construction, and the law is read at
+the `ℝ` instance, the carrier the denotation lives over. -/
+theorem relQ_le_iff {u : UExp B k} {ψ : Scaling B k} {x y x' y' : ℝ}
+    (h : RelQ u ψ x y) (h' : RelQ u ψ x' y') : (y ≤ y') ↔ (x ≤ x') := by
+  simp only [RelQ] at h h'
+  subst h h'
+  have hc : Num.le (ψ.scale u) (Num.ofRat 0 : ℝ) = false := by
+    simp [Num.le, Num.ofRat, not_le, ψ.scale_pos u]
+  have hl := OrderedNum.le_scale (ψ.scale u) x x' hc
+  simpa only [Num.le, Num.mul, decide_eq_decide] using hl
+
 /-- **A positive factor distributes over real powers, for every real base.**
 
 For `0 ≤ x` this is `Real.mul_rpow`. For `x < 0` both `x` and `k * x` are

@@ -190,6 +190,20 @@ theorem eval_mono (cf : UExp B 0 → UExp B 0 → R) :
         rw [eval_mono cf n a m η δ ρ _ hnm ha, eval_mono cf n b m η δ ρ _ hnm hb]
         exact h
       · exact absurd h (by simp)
+  | n, _, _, .ifle a b t f, m, η, δ, ρ, v, hnm, h => by
+      simp only [eval] at h ⊢
+      split at h
+      · rename_i x y ha hb
+        rw [eval_mono cf n a m η δ ρ _ hnm ha, eval_mono cf n b m η δ ρ _ hnm hb]
+        dsimp only
+        split at h
+        · rename_i hu
+          rw [if_pos hu]
+          split at h
+          · rename_i hle; rw [if_pos hle]; exact eval_mono cf n t m η δ ρ _ hnm h
+          · rename_i hle; rw [if_neg hle]; exact eval_mono cf n f m η δ ρ _ hnm h
+        · exact absurd h (by simp)
+      · exact absurd h (by simp)
   | n, _, _, .pow q a, m, η, δ, ρ, v, hnm, h => by
       simp only [eval] at h ⊢
       split at h
@@ -476,6 +490,33 @@ theorem red_eval (cf : UExp B 0 → UExp B 0 → R) :
       case r_add =>
         simp only [Ty.ground, Red]
         exact ⟨_, rfl⟩
+  | ifle a b t f iha ihb iht ihf =>
+    intro η δ ρ Δ Γ τ hρ hΔ ht
+    cases ht with
+    | ifle hta htb htt htf =>
+      obtain ⟨n₁, va, ha, hra⟩ := iha η δ ρ Δ Γ _ hρ hΔ hta
+      simp only [Ty.ground, Red] at hra
+      obtain ⟨m, rfl⟩ := hra
+      obtain ⟨n₂, vb, hb, hrb⟩ := ihb η δ ρ Δ Γ _ hρ hΔ htb
+      simp only [Ty.ground, Red] at hrb
+      obtain ⟨m', rfl⟩ := hrb
+      obtain ⟨n₃, vt, htv, hrt⟩ := iht η δ ρ Δ Γ _ hρ hΔ htt
+      obtain ⟨n₄, vf, hfv, hrf⟩ := ihf η δ ρ Δ Γ _ hρ hΔ htf
+      refine ⟨max (max n₁ n₂) (max n₃ n₄), if Num.le m m' then vt else vf,
+        ?e_ifle, ?r_ifle⟩
+      case e_ifle =>
+        simp only [eval]
+        rw [eval_mono cf n₁ a _ η δ ρ _ (by omega) ha,
+            eval_mono cf n₂ b _ η δ ρ _ (by omega) hb]
+        by_cases hle : Num.le m m' = true
+        · simp only [hle, ↓reduceIte]
+          exact eval_mono cf n₃ t _ η δ ρ _ (by omega) htv
+        · simp only [hle, ↓reduceIte]
+          exact eval_mono cf n₄ f _ η δ ρ _ (by omega) hfv
+      case r_ifle =>
+        by_cases hle : Num.le m m' = true
+        · simp only [hle]; exact hrt
+        · simp only [hle]; exact hrf
   | pow q a iha =>
     intro η δ ρ Δ Γ τ hρ hΔ ht
     cases ht with

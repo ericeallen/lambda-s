@@ -519,6 +519,31 @@ theorem eval_adeq (V : Scaling B 0) :
           show _ = _
           simp only [Val.scalar.injEq, Meas.mk.injEq, and_true]
           rfl
+  | ifle a b t f iha ihb iht ihf =>
+    intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
+    cases d with
+    | ifle da db dt df =>
+      simp only [eval] at hv
+      cases hA : eval (conv V) n _ _ η δ ρ a with
+      | none => rw [hA] at hv; simp at hv
+      | some va =>
+        cases hB : eval (conv V) n _ _ η δ ρ b with
+        | none => rw [hA, hB] at hv; cases va <;> simp at hv
+        | some vb =>
+          rw [hA, hB] at hv
+          have h1 := iha η δ ρ Δ Γ _ ρd da hρ hΔ _ _ hA
+          have h2 := ihb η δ ρ Δ Γ _ ρd db hρ hΔ _ _ hB
+          simp only [Adeq] at h1 h2
+          subst h1; subst h2
+          simp only [Num.le, decide_eq_true_eq, ite_true] at hv
+          show Adeq V η δ _ v
+            (if den (V.pull η) da ρd ≤ den (V.pull η) db ρd then den (V.pull η) dt ρd
+             else den (V.pull η) df ρd)
+          split at hv
+          · rename_i hle
+            rw [if_pos hle]; exact iht η δ ρ Δ Γ _ ρd dt hρ hΔ _ _ hv
+          · rename_i hle
+            rw [if_neg hle]; exact ihf η δ ρ Δ Γ _ ρd df hρ hΔ _ _ hv
   | pow q a iha =>
     intro η δ ρ Δ Γ τ ρd d hρ hΔ n v hv
     cases d with

@@ -376,6 +376,8 @@ noncomputable def den : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k}
   | _, _, _, _, .mul _ _, _, V, .mul a b, ρ => den V a ρ * den V b ρ
   | _, _, _, _, .div _ _, _, V, .div a b, ρ => den V a ρ / den V b ρ
   | _, _, _, _, .add _ _, _, V, .add a b, ρ => den V a ρ + den V b ρ
+  | _, _, _, _, .ifle _ _ _ _, _, V, .ifle a b t f, ρ =>
+      if den V a ρ ≤ den V b ρ then den V t ρ else den V f ρ
   | _, _, _, _, .pow q _, _, V, .pow a, ρ => (den V a ρ) ^ ((q : ℚ) : ℝ)
   | _, _, _, _, .idx _ i, _, V, .idx a hu, ρ =>
       den V a ρ ⟨i, (List.getElem?_eq_some_iff.mp hu).1⟩
@@ -668,6 +670,7 @@ def Tm.Parametric : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .mul a b => a.Parametric ∧ b.Parametric
   | _, _, .div a b => a.Parametric ∧ b.Parametric
   | _, _, .add a b => a.Parametric ∧ b.Parametric
+  | _, _, .ifle a b t f => a.Parametric ∧ b.Parametric ∧ t.Parametric ∧ f.Parametric
   | _, _, .pow _ a => a.Parametric
   | _, _, .idx a _ => a.Parametric
   | _, _, .mrow a _ => a.Parametric
@@ -699,6 +702,8 @@ def Tm.ConvertFree : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .mul a b => a.ConvertFree ∧ b.ConvertFree
   | _, _, .div a b => a.ConvertFree ∧ b.ConvertFree
   | _, _, .add a b => a.ConvertFree ∧ b.ConvertFree
+  | _, _, .ifle a b t f =>
+      a.ConvertFree ∧ b.ConvertFree ∧ t.ConvertFree ∧ f.ConvertFree
   | _, _, .pow _ a => a.ConvertFree
   | _, _, .idx a _ => a.ConvertFree
   | _, _, .mrow a _ => a.ConvertFree
@@ -873,6 +878,14 @@ theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | add a b iha ihb =>
     intro hf V V' ρ ρ' hr
     show _ + _ = _ + _; rw [iha hf.1 V V' hr, ihb hf.2 V V' hr]
+  | ifle a b t f iha ihb iht ihf =>
+    intro hf V V' ρ ρ' hr
+    show Indep _ (if den V a ρ ≤ den V b ρ then den V t ρ else den V f ρ)
+      (if den V' a ρ' ≤ den V' b ρ' then den V' t ρ' else den V' f ρ')
+    rw [iha hf.1 V V' hr, ihb hf.2.1 V V' hr]
+    split_ifs
+    · exact iht hf.2.2.1 V V' hr
+    · exact ihf hf.2.2.2 V V' hr
   | pow a ih =>
     intro hf V V' ρ ρ' hr
     show _ ^ _ = _ ^ _; rw [ih hf V V' hr]
@@ -975,6 +988,15 @@ theorem fundamental : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | add a b iha ihb =>
     intro hp V ψ Φ hΦ ρ ρ' hr
     exact relQ_add (iha hp.1 V ψ Φ hΦ hr) (ihb hp.2 V ψ Φ hΦ hr)
+  | ifle a b t f iha ihb iht ihf =>
+    intro hp V ψ Φ hΦ ρ ρ' hr
+    have hle := relQ_le_iff (iha hp.1 V ψ Φ hΦ hr) (ihb hp.2.1 V ψ Φ hΦ hr)
+    show RelCo _ _ _ ψ (if den V a ρ ≤ den V b ρ then den V t ρ else den V f ρ)
+      (if den (V.comp ψ) a ρ' ≤ den (V.comp ψ) b ρ' then den (V.comp ψ) t ρ'
+       else den (V.comp ψ) f ρ')
+    by_cases h : den V a ρ ≤ den V b ρ
+    · rw [if_pos h, if_pos (hle.mpr h)]; exact iht hp.2.2.1 V ψ Φ hΦ hr
+    · rw [if_neg h, if_neg (mt hle.mp h)]; exact ihf hp.2.2.2 V ψ Φ hΦ hr
   | pow a ih =>
     intro hp V ψ Φ hΦ ρ ρ' hr
     exact relQ_rpow _ (ih hp V ψ Φ hΦ hr)
@@ -1118,6 +1140,15 @@ theorem fundamental_free : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
   | add a b iha ihb =>
     intro hp hf V ψ ρ ρ' hr
     exact relQ_add (iha hp.1 hf.1 V ψ hr) (ihb hp.2 hf.2 V ψ hr)
+  | ifle a b t f iha ihb iht ihf =>
+    intro hp hf V ψ ρ ρ' hr
+    have hle := relQ_le_iff (iha hp.1 hf.1 V ψ hr) (ihb hp.2.1 hf.2.1 V ψ hr)
+    show Rel _ ψ (if den V a ρ ≤ den V b ρ then den V t ρ else den V f ρ)
+      (if den (V.comp ψ) a ρ' ≤ den (V.comp ψ) b ρ' then den (V.comp ψ) t ρ'
+       else den (V.comp ψ) f ρ')
+    by_cases h : den V a ρ ≤ den V b ρ
+    · rw [if_pos h, if_pos (hle.mpr h)]; exact iht hp.2.2.1 hf.2.2.1 V ψ hr
+    · rw [if_neg h, if_neg (mt hle.mp h)]; exact ihf hp.2.2.2 hf.2.2.2 V ψ hr
   | pow a ih =>
     intro hp hf V ψ ρ ρ' hr
     exact relQ_rpow _ (ih hp hf V ψ hr)

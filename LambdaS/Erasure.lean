@@ -204,6 +204,11 @@ def eeval (cf : UExp B 0 → UExp B 0 → R) :
       match eeval cf fu j k η δ ρ a, eeval cf fu j k η δ ρ b with
       | some (.scalar x), some (.scalar y) => some (.scalar (Num.add x y))
       | _, _ => none
+  | fu, j, k, η, δ, ρ, .ifle a b t f =>
+      match eeval cf fu j k η δ ρ a, eeval cf fu j k η δ ρ b with
+      | some (.scalar x), some (.scalar y) =>
+          if Num.le x y then eeval cf fu j k η δ ρ t else eeval cf fu j k η δ ρ f
+      | _, _ => none
   | fu, j, k, η, δ, ρ, .pow q a =>
       match eeval cf fu j k η δ ρ a with
       | some (.scalar x) => some (.scalar (Num.npow q x))
@@ -380,6 +385,22 @@ theorem eeval_erase (cf : UExp B 0 → UExp B 0 → R) :
       · rename_i x ha
         obtain rfl := Option.some.inj h.symm
         simp only [eeval, eeval_erase cf fu a η δ ρ _ ha, Val.erase]
+      · exact absurd h (by simp)
+  | fu, _, _, .ifle a b t f, η, δ, ρ, v, h => by
+      simp only [eval] at h
+      split at h
+      · rename_i x y ha hb
+        split at h
+        · split at h
+          · rename_i hle
+            simp only [eeval, eeval_erase cf fu a η δ ρ _ ha,
+              eeval_erase cf fu b η δ ρ _ hb, Val.erase]
+            rw [if_pos hle]; exact eeval_erase cf fu t η δ ρ v h
+          · rename_i hle
+            simp only [eeval, eeval_erase cf fu a η δ ρ _ ha,
+              eeval_erase cf fu b η δ ρ _ hb, Val.erase]
+            rw [if_neg hle]; exact eeval_erase cf fu f η δ ρ v h
+        · exact absurd h (by simp)
       · exact absurd h (by simp)
   | fu, _, _, .log a, η, δ, ρ, v, h => by
       simp only [eval] at h

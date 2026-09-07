@@ -780,6 +780,13 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   row space `w / δ_V(·)` for `w = δ_W(i)`, which is exactly the vector
   `mcons` consumes, so extraction and introduction meet on the nose. -/
   | mrow {j k} : Tm B D j k → ℕ → Tm B D j k
+  /-- **Compare and branch**, fused so that no `Bool` type is needed. The
+  scrutinees are compared at a common unit, which is what keeps the form
+  parametric: a rescaling multiplies both by the same positive factor and the
+  ordering survives (`Num.OrderedNum.le_scale`). Comparing across units does
+  not typecheck, so the observation that could detect a rescaling is
+  unreachable by construction. -/
+  | ifle {j k} : Tm B D j k → Tm B D j k → Tm B D j k → Tm B D j k → Tm B D j k
   | mapp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   | comp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   /-- The empty vector, at the empty space. -/

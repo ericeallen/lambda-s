@@ -476,6 +476,13 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
   | mrow {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e V W i w} :
       HasTy Δ Γ e (.lin V W) → W[i]? = some w →
       HasTy Δ Γ (.mrow e i) (.vec (V.map fun u => Term.div w u))
+  /-- **Compare and branch.** Scrutinees at a common unit, branches at a common
+  type. The shared unit is the whole invariance argument: both sides scale by
+  the same positive factor, so the branch taken is the same one. -/
+  | ifle {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {a b t f u τ} :
+      HasTy Δ Γ a (.Q u) → HasTy Δ Γ b (.Q u) →
+      HasTy Δ Γ t τ → HasTy Δ Γ f τ →
+      HasTy Δ Γ (.ifle a b t f) τ
   | mapp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f x V W} :
       HasTy Δ Γ f (.lin V W) → HasTy Δ Γ x (.vec V) → HasTy Δ Γ (.mapp f x) (.vec W)
   | comp {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {f g U V W} :
@@ -584,6 +591,14 @@ def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm
           | some _ => some ⟨_, .idx d hv⟩
           | none => none
       | _ => none
+  | _, _, Δ, Γ, .ifle a b t f =>
+      match check Δ Γ a, check Δ Γ b, check Δ Γ t, check Δ Γ f with
+      | some ⟨.Q u, da⟩, some ⟨.Q u', db⟩, some ⟨τ, dt⟩, some ⟨τ', df⟩ =>
+          if hu : u' = u then
+            if hτ : τ' = τ then some ⟨τ, .ifle da (hu ▸ db) dt (hτ ▸ df)⟩
+            else none
+          else none
+      | _, _, _, _ => none
   | _, _, Δ, Γ, .mrow e i =>
       match check Δ Γ e with
       | some ⟨.lin _ W, d⟩ =>
@@ -677,6 +692,7 @@ theorem check_eq : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm 
     split
     · next x h => obtain rfl : x = _ := Option.some.inj (h.symm.trans hu); rfl
     · next h => exact absurd (h.symm.trans hu) (by simp)
+  | ifle _ _ _ _ iha ihb iht ihf => simp [check, iha, ihb, iht, ihf]
   | mrow _ hw ih =>
     simp only [check, ih]
     split

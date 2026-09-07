@@ -124,6 +124,7 @@ def Tm.Inert : {j k : ℕ} → Tm B D j k → Prop
   | _, _, .mul a b => a.Inert ∧ b.Inert
   | _, _, .div a b => a.Inert ∧ b.Inert
   | _, _, .add a b => a.Inert ∧ b.Inert
+  | _, _, .ifle a b t f => a.Inert ∧ b.Inert ∧ t.Inert ∧ f.Inert
   | _, _, .pow _ a => a.Inert
   | _, _, .idx a _ => a.Inert
   | _, _, .mrow a _ => a.Inert
@@ -152,6 +153,9 @@ theorem Tm.inert_of_convertFree : ∀ {j k : ℕ} (e : Tm B D j k), e.ConvertFre
   | _, _, .mul a b, h => ⟨Tm.inert_of_convertFree a h.1, Tm.inert_of_convertFree b h.2⟩
   | _, _, .div a b, h => ⟨Tm.inert_of_convertFree a h.1, Tm.inert_of_convertFree b h.2⟩
   | _, _, .add a b, h => ⟨Tm.inert_of_convertFree a h.1, Tm.inert_of_convertFree b h.2⟩
+  | _, _, .ifle a b t f, h =>
+      ⟨Tm.inert_of_convertFree a h.1, Tm.inert_of_convertFree b h.2.1,
+       Tm.inert_of_convertFree t h.2.2.1, Tm.inert_of_convertFree f h.2.2.2⟩
   | _, _, .pow _ a, h => Tm.inert_of_convertFree a h
   | _, _, .idx a _, h => Tm.inert_of_convertFree a h
   | _, _, .mrow a _, h => Tm.inert_of_convertFree a h
@@ -224,6 +228,17 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
     obtain ⟨b', db, hf2, hp2, hd2⟩ := ihb hi.2
     refine ⟨_, .add da db, ⟨hf1, hf2⟩, fun h => ⟨hp1 h.1, hp2 h.2⟩, fun V ρ => ?_⟩
     show _ + _ = _ + _; rw [hd1, hd2]
+  | ifle a b t f iha ihb iht ihf =>
+    intro hi
+    obtain ⟨a', da, hf1, hp1, hd1⟩ := iha hi.1
+    obtain ⟨b', db, hf2, hp2, hd2⟩ := ihb hi.2.1
+    obtain ⟨t', dt, hf3, hp3, hd3⟩ := iht hi.2.2.1
+    obtain ⟨f', df, hf4, hp4, hd4⟩ := ihf hi.2.2.2
+    refine ⟨_, .ifle da db dt df, ⟨hf1, hf2, hf3, hf4⟩,
+      fun h => ⟨hp1 h.1, hp2 h.2.1, hp3 h.2.2.1, hp4 h.2.2.2⟩, fun V ρ => ?_⟩
+    show (if den V da ρ ≤ den V db ρ then den V dt ρ else den V df ρ)
+        = if den V a ρ ≤ den V b ρ then den V t ρ else den V f ρ
+    rw [hd1, hd2, hd3, hd4]
   | pow a ih =>
     intro hi
     obtain ⟨a', da, hf, hp, hd⟩ := ih hi

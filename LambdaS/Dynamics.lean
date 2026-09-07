@@ -163,6 +163,14 @@ def eval (cf : UExp B 0 → UExp B 0 → R) :
       | some (.scalar x), some (.scalar y) =>
           if x.unit = y.unit then some (.scalar ⟨Num.add x.mag y.mag, x.unit⟩) else none
       | _, _ => none
+  | fu, j, k, η, δ, ρ, .ifle a b t f =>
+      match eval cf fu j k η δ ρ a, eval cf fu j k η δ ρ b with
+      | some (.scalar x), some (.scalar y) =>
+          if x.unit = y.unit then
+            (if Num.le x.mag y.mag then eval cf fu j k η δ ρ t
+             else eval cf fu j k η δ ρ f)
+          else none
+      | _, _ => none
   | fu, j, k, η, δ, ρ, .pow q a =>
       match eval cf fu j k η δ ρ a with
       | some (.scalar x) => some (.scalar ⟨Num.npow q x.mag, Term.rpow x.unit q⟩)

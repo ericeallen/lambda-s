@@ -374,6 +374,19 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       {da : HasTy Δ Γ a (.Q u)} {db : HasTy Δ Γ b (.Q u)} {s t : Tw B k Θ .scalar}
       (heq : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ s θρ = Tw.eval ψ t θρ) :
       Twist p Θ da s → Twist p Θ db t → Twist p Θ (.add da db) s
+  /-- **Compare and branch**: the `add` agreement, twice over. The scrutinees
+  must carry the same ratio, or the branch taken would depend on the
+  conversion table, which is a control-flow bug from a wrong declaration and
+  not merely a wrong number. The branches must carry the same ratio, or the
+  result has no single ratio to report. Either failure declines. -/
+  | ifle {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {u a b t f τ p Θ}
+      {da : HasTy Δ Γ a (.Q u)} {db : HasTy Δ Γ b (.Q u)}
+      {dt : HasTy Δ Γ t τ} {df : HasTy Δ Γ f τ}
+      {sa sb : Tw B k Θ .scalar} {st sf : Tw B k Θ (Ty.shape τ)}
+      (hab : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ sa θρ = Tw.eval ψ sb θρ)
+      (htf : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ st θρ = Tw.eval ψ sf θρ) :
+      Twist p Θ da sa → Twist p Θ db sb → Twist p Θ dt st → Twist p Θ df sf →
+      Twist p Θ (.ifle da db dt df) st
   | convert {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {u v a p Θ}
       {da : HasTy Δ Γ a (.Q u)} {s : Tw B k Θ .scalar} (h : SameDim Δ u v) :
       Twist p Θ da s → Twist p Θ (.convert da h) (.mul s (.div (.unit u) (.unit v)))
@@ -677,6 +690,28 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
         = _ * _ * (den V da ρ + den V db ρ)
     rw [h1, h2, heq φ θρ, heq ψ θρ']
     ring
+  | @ifle _ _ _ _ u _ _ _ _ _ _ _ da db dt df sa sb st sf hab htf hta htb htt htf' iha ihb iht ihf =>
+    intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
+    have h1 := iha V φ ψ θρ θρ' hOnes hOnes' hr
+    have h2 := ihb V φ ψ θρ θρ' hOnes hOnes' hr
+    have h3 := iht V φ ψ θρ θρ' hOnes hOnes' hr
+    have h4 := ihf V φ ψ θρ θρ' hOnes hOnes' hr
+    simp only [TwRel] at h1 h2
+    rw [← hab φ θρ, ← hab ψ θρ'] at h2
+    have hc : 0 < ψ.scale u * ((Tw.eval φ sa θρ : ℝ) * (Tw.eval ψ sa θρ' : ℝ)) :=
+      mul_pos (ψ.scale_pos u) (mul_pos (Tw.eval φ sa θρ).2 (Tw.eval ψ sa θρ').2)
+    have hle : den (V.comp φ) da ρ' ≤ den (V.comp φ) db ρ' ↔ den V da ρ ≤ den V db ρ := by
+      rw [h1, h2]
+      exact ⟨fun h => le_of_mul_le_mul_left h hc, fun h => mul_le_mul_of_nonneg_left h hc.le⟩
+    show TwRel _ (Tw.eval φ st θρ) (Tw.eval ψ st θρ') φ ψ
+      (if den V da ρ ≤ den V db ρ then den V dt ρ else den V df ρ)
+      (if den (V.comp φ) da ρ' ≤ den (V.comp φ) db ρ' then den (V.comp φ) dt ρ'
+       else den (V.comp φ) df ρ')
+    by_cases h : den V da ρ ≤ den V db ρ
+    · rw [if_pos h, if_pos (hle.mpr h)]; exact h3
+    · rw [if_neg h, if_neg (mt hle.mp h)]
+      rw [← htf φ θρ, ← htf ψ θρ'] at h4
+      exact h4
   | @convert _ _ _ _ u v _ _ _ da st h hta ih =>
     intro V φ ψ θρ θρ' hOnes hOnes' ρ ρ' hr
     have h1 := ih V φ ψ θρ θρ' hOnes hOnes' hr
@@ -1559,6 +1594,36 @@ theorem Tw.normEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
   rw [Tw.normN_of_atomFree _ a ha, Tw.normN_of_atomFree _ b hb]
   exact Tw.scalarEq_iff_eval_eq a b ha hb
 
+/-- **Agreement of two ratios at a shape**, the check `ifle` runs on its
+branches. At scalar shape it is `Tw.normEq`, the `add` check; at vector and
+matrix shapes it is `Tw.normEq` per component, exactly as `mapp` and `comp`
+check per output component, with entries extracted by `projE`/`rowE` so that
+literals compare by their components; at the function and binder shapes,
+which have no first-order normal form, it is syntactic identity. -/
+def Tw.agree {k : ℕ} {Θ : List Shape} : {s : Shape} → Tw B k Θ s → Tw B k Θ s → Bool
+  | .scalar, a, b => Tw.normEq a b
+  | .vec _, a, b => decide (∀ i, Tw.normEq (Tw.projE a i) (Tw.projE b i) = true)
+  | .mat _ _, a, b =>
+      decide (∀ j i, Tw.normEq (Tw.projE (Tw.rowE a j) i) (Tw.projE (Tw.rowE b j) i) = true)
+  | .arrow _ _, a, b => Tw.beq a b
+  | .bind _, a, b => Tw.beq a b
+
+/-- Ratios that agree evaluate equally, in every scaling and environment. -/
+theorem Tw.agree_sound {k : ℕ} {Θ : List Shape} : ∀ {s : Shape} (a b : Tw B k Θ s),
+    Tw.agree a b = true →
+    ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ
+  | .scalar, a, b, h => Tw.normEq_sound a b h
+  | .vec _, a, b, h => fun ψ θρ => by
+      have h' := of_decide_eq_true h
+      funext i
+      simpa [Tw.eval_projE] using Tw.normEq_sound _ _ (h' i) ψ θρ
+  | .mat _ _, a, b, h => fun ψ θρ => by
+      have h' := of_decide_eq_true h
+      funext j i
+      simpa [Tw.eval_projE, Tw.eval_rowE] using Tw.normEq_sound _ _ (h' j i) ψ θρ
+  | .arrow _ _, a, b, h => fun _ _ => by rw [Tw.beq_sound a b h]
+  | .bind _, a, b, h => fun _ _ => by rw [Tw.beq_sound a b h]
+
 /-- The drift of a matrix application, when the analysis can name one. Per
 output row `a`, the products of an entry drift with the matching argument
 drift must agree across the row up to β-reduction and the unit algebra
@@ -1667,6 +1732,17 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
       let ⟨tb, htb⟩ ← twistOf p Θ hΘ db
       if hb : Tw.normEq ta tb then
         some ⟨ta, .add (Tw.normEq_sound ta tb hb) hta htb⟩
+      else none
+  | _, _, _, _, _, _, p, Θ, hΘ, .ifle da db dt df => do
+      let ⟨ta, hta⟩ ← twistOf p Θ hΘ da
+      let ⟨tb, htb⟩ ← twistOf p Θ hΘ db
+      let ⟨tt, htt⟩ ← twistOf p Θ hΘ dt
+      let ⟨tf, htf⟩ ← twistOf p Θ hΘ df
+      if hab : Tw.normEq ta tb then
+        if hbr : Tw.agree tt tf then
+          some ⟨tt, .ifle (Tw.normEq_sound ta tb hab) (Tw.agree_sound tt tf hbr)
+            hta htb htt htf⟩
+        else none
       else none
   | _, _, _, _, _, _, p, Θ, hΘ, .convert (u := u) (v := v) da hsd => do
       let ⟨ta, hta⟩ ← twistOf p Θ hΘ da

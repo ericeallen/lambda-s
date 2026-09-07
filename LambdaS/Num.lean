@@ -104,6 +104,10 @@ class Num (R : Type) where
   npow : ℚ → R → R
   nlog : R → R
   nexp : R → R
+  /-- **Comparison.** The one observation a conditional makes. Quantities are
+  comparable only at a common unit (`T-IfLe`), which is what keeps this
+  invariant: rescaling multiplies both sides by the same positive factor. -/
+  le : R → R → Bool
   /-- Inner product. Defaulted to a fold; carriers with a native kernel override
   it. -/
   dot : List R → List R → R := fun xs ys =>
@@ -126,6 +130,58 @@ noncomputable instance : Num ℝ where
   npow q x := x ^ ((q : ℚ) : ℝ)
   nlog := Real.log
   nexp := Real.exp
+  le x y := decide (x ≤ y)
+
+/-- **Carriers whose comparison survives a rescaling.**
+
+Separate from `Num` on purpose: the evaluator needs `le` to run, but only the
+abstraction theorems need it to be *invariant*, and `Float` cannot supply that.
+Multiplication rounds, so `c * x` and `c * y` can compare differently from `x`
+and `y` at subnormals and near overflow. Making this a field of `Num` would
+therefore have forced either a false law or a `sorry`.
+
+The split is the honest one and it is the same split the development already
+draws elsewhere: theorems over `ℝ`, binary over `Float`, with the places they
+part ways pinned rather than papered over (`QM.boundaryChecks`). The
+abstraction theorems live in the denotational semantics over `ℝ` and never
+mention this class, so nothing here is newly unproved; `Float` has never
+satisfied an arithmetic identity and was never asked to.
+
+What differs is the *consequence* of rounding. In `add` and `mul` it perturbs a
+number. In `le` it changes which branch runs, so a unit change can alter
+control flow rather than the last bits, and that is the failure a user would
+actually be ambushed by.
+
+The guarantee worth telling a user is sharper than this law. Multiplication by
+a power of two is exact in IEEE 754, so a rescaling by `2^k` preserves
+comparisons on the nose and this law does hold at `Float` in that case. It is
+also the case that matters: a compiler rescaling to keep magnitudes near 1
+picks binary powers because they are free and exact. Rescale by `2^k` and
+control flow is preserved; rescale by `3.28` and it need not be. Outside that
+case a branch can flip only when the two sides are within rounding of each
+other, which means the comparison was ill-conditioned regardless of units.
+
+Positivity is not decoration. At `c = 0` both products collapse to zero and the
+comparison is decided by reflexivity rather than by `x` and `y`, so the law is
+false without it. Rescalings are positive by construction, `Scaling` living in
+log space, so the hypothesis is discharged wherever this is used. -/
+class OrderedNum (R : Type) extends Num R where
+  le_scale : ∀ (c x y : R), le c (ofRat 0) = false →
+    le (mul c x) (mul c y) = le x y
+
+/-- `ℝ` is the carrier the abstraction theorems are stated over, so it is the
+one that has to satisfy the law. -/
+noncomputable instance : OrderedNum ℝ where
+  le_scale := by
+    intro c x y hc
+    have hc' : (0 : ℝ) < c := by
+      simp only [Num.le, Num.ofRat, Rat.cast_zero, decide_eq_false_iff_not,
+        not_le] at hc
+      exact hc
+    simp only [Num.le, Num.mul, decide_eq_decide]
+    exact ⟨fun h => le_of_mul_le_mul_left h hc',
+           fun h => mul_le_mul_of_nonneg_left h hc'.le⟩
+
 
 /-- Real double precision.
 
@@ -144,6 +200,7 @@ instance : Num Float where
   npow q x := Float.pow x (Float.ofInt q.num / Float.ofNat q.den)
   nlog := Float.log
   nexp := Float.exp
+  le x y := x ≤ y
   dot xs ys := ddot ⟨xs.toArray⟩ ⟨ys.toArray⟩
   matVec M x := (dgemv M.length x.length ⟨M.flatten.toArray⟩ ⟨x.toArray⟩).data.toList
   matVec_length := by intro M x; simp
