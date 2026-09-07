@@ -170,6 +170,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.QM.hamiltonianTm
 #print axioms LambdaS.QM.phase
 #print axioms LambdaS.QM.expectation
+#print axioms LambdaS.scaleLaw_lin_of_driftFree
 #print axioms LambdaS.QM.twoStateChecks
 #print axioms LambdaS.Algorithms.ydPerFt
 #print axioms LambdaS.Algorithms.ydPerFtIn1

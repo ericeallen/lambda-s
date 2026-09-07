@@ -2,3 +2,4 @@
 *.olean
 .DS_Store
 .junk/
+__pycache__/

@@ -965,6 +965,29 @@ theorem Twist.law {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
     (TwEnv.onesFrom_oneTwEnv 0) (twRelEnv_scaleEnv (D := D) (j := j) φ ψ us ρ)
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] in
+/-- **The twisted scaling law at a matrix result.** The same law as
+`Twist.law`, over a context of scalars but a program that returns a map. The
+conclusion is `TwRel` at `.lin` unfolded: entry `(a,i)` rescales by the factor
+its *type* predicts, `ψ(W a) / ψ(V i)`, times that entry's own ratio under each
+axis. Hart's rank-one form is what makes the prediction a ratio of two space
+factors rather than a table.
+
+Nothing new is proved here. `Twist.scaling` was always stated at an arbitrary
+context and type; this is its instantiation at the shape the linear-algebra
+section is about, which `Twist.law` never took. -/
+theorem Twist.law_lin {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {V W : Sp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.lin V W)}
+    {t : Tw B k (us.map fun _ => Shape.scalar) (.mat V.length W.length)}
+    (ht : Twist 0 _ d t) (V₀ φ ψ : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    ∀ a i, den (V₀.comp φ) d (scaleEnv ψ us ρ) a i
+      = (ψ.scale (W.get a) / ψ.scale (V.get i))
+        * ((Tw.eval φ t (oneTwEnv _) a i : ℝ) * (Tw.eval ψ t (oneTwEnv _) a i))
+        * den V₀ d ρ a i :=
+  ht.scaling V₀ φ ψ (oneTwEnv _) (oneTwEnv _) (TwEnv.onesFrom_oneTwEnv 0)
+    (TwEnv.onesFrom_oneTwEnv 0) (twRelEnv_scaleEnv (D := D) (j := j) φ ψ us ρ)
+
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **Invariance under all scalings forces the ratio's value to `1`.**
 
 The general converse for any term of scalar type over a context of scalars,
@@ -1840,6 +1863,49 @@ def unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {u : UExp B k
     {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.Q u)) : Option (UExp B k) :=
   (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
     fun p => Tw.nfOne p.1
+
+/-- **Unit drift at a matrix result**: one normal ratio per entry.
+
+A scalar program has a drift; a map-valued one has a drift *table*, because
+`TwRel` at `.lin` charges each entry separately. Reporting a single ratio would
+be a lie unless the entries happened to agree, so this reports the table and
+lets the caller ask what it wants of it. Invariance is the table constantly
+`1`, which is `scaleLaw_lin_of_driftFree` below. -/
+def unitDriftLin {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {V W : Sp B k}
+    {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.lin V W)) :
+    Option (Fin W.length → Fin V.length → UExp B k) :=
+  (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
+    fun p => fun a i => Tw.nfOne (Tw.projE (Tw.rowE p.1 a) i)
+
+omit [Fintype D] [DecidableEq D] in
+/-- **A drift-free map obeys its type's scaling law, entry by entry.**
+
+The matrix analogue of `scaleLaw_of_driftFree`, and the theorem that puts the
+linear-algebra section and the diagnostic in the same room. When every entry of
+the drift table is trivial, rescaling the arguments moves entry `(a,i)` by
+exactly `ψ(W a) / ψ(V i)`, the factor Hart's rank-one form assigns it, and by
+nothing else. -/
+theorem scaleLaw_lin_of_driftFree {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {V W : Sp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.lin V W)}
+    {w : Fin W.length → Fin V.length → UExp B k}
+    (hd : unitDriftLin d = some w) (h1 : ∀ a i, w a i = 1)
+    (V₀ ψ : Scaling B k) (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    ∀ a i, den V₀ d (scaleEnv ψ us ρ) a i
+      = (ψ.scale (W.get a) / ψ.scale (V.get i)) * den V₀ d ρ a i := by
+  intro a i
+  unfold unitDriftLin at hd
+  rcases hopt : twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d with _ | p
+  · rw [hopt] at hd; exact absurd hd (by simp)
+  · rw [hopt] at hd
+    simp only [Option.map_some, Option.some.injEq] at hd
+    subst hd
+    have hone : ∀ (χ : Scaling B k), Tw.eval χ p.1 (oneTwEnv _) a i = 1 := by
+      intro χ
+      have := (Tw.nfOne_eq_one_iff (Tw.projE (Tw.rowE p.1 a) i)).mp (h1 a i) χ
+      simpa using this
+    have hl := Twist.law_lin p.2 V₀ Scaling.zero ψ ρ a i
+    rw [hone Scaling.zero, hone ψ] at hl
+    simpa using hl
 
 omit [Fintype D] [DecidableEq D] in
 /-- **The diagnostic is exact.** When `unitDrift` answers, invariance under
