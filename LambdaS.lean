@@ -30,6 +30,7 @@ import LambdaS.Twist
 import LambdaS.Conversion
 import LambdaS.Declare
 import LambdaS.Examples
+import LambdaS.PiExamples
 import LambdaS.QM
 import LambdaS.Algorithms
 

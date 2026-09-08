@@ -150,7 +150,10 @@ invariance under *all* rescalings holds exactly when its ratio
 evaluates to 1 under every rescaling (`Twist.invariant_iff`).
 The nonzero hypothesis is the standing zero exception, in the same place
 Atkey et al. [2013] patch their relational interpretation for polymorphic
-zero.
+zero. This characterization assumes the analysis assigns a ratio. A decline
+is conservative: `0 * (x in ft) + y` is invariant because it denotes `y`,
+but its branch ratios disagree and the analysis declines. No completeness
+theorem for the decline verdict is claimed.
 
 ### Deciding Triviality
 
@@ -237,13 +240,17 @@ can instantiate. A first-order program's ratios consequently carry no
 atoms, and there the comparison is exact in both directions: for
 atom-free ratios, syntactic agreement coincides with equal evaluation
 under every rescaling (`Tw.normEq_iff_eval_eq`), so a
-first-order sum is declined precisely when its branches genuinely
-disagree. The artifact checks both sides of the line:
+once both summands have been assigned atom-free ratios, the sum is declined
+precisely when those ratios disagree. A summand whose own analysis declines
+also makes the sum decline. The artifact checks both sides of the line:
 (x in ft) + (y in ft) over two
 meter inputs is accepted at drift m/ft
 (`addTwoVars`), while (x in ft) + y
-against a foot input is declined (`addMixed`), and that program
-is sensitive to the declarations.
+against a foot input is declined (`addMixed`). Its executable Float guard
+illustrates sensitivity to two constant oracles, not a kernel theorem about
+valuation-induced rescalings. Exact ratio comparison does not imply that a
+declined whole program fails invariance: a mismatched branch can be multiplied
+by zero, or two conditional arms can denote the same value.
 
 Under binders the analysis
 reduces every ratio redex it can see, so a visible application analyzes
@@ -1127,10 +1134,12 @@ agree, and the common value is the component's drift; disagreement declines,
 exactly as at `add`. Under the frees-at-one assignment the program's own
 context variables contribute the literal ratio `1` rather than atoms, so the
 ratio of a first-order program without abstractions of its own is atom-free
-and the check is *exact* there (`Tw.normEq_iff_eval_eq`): its only declines
-at `add`, `mapp` and `comp` are genuine drift disagreements, such as
-`(x in ft) + y`. The residual incompleteness is that atoms are never
-identified with anything but themselves. Atoms arise under `lam` binders
+and the ratio-equality check is exact there (`Tw.normEq_iff_eval_eq`). Once
+all operands have ratios, the comparison at `add`, `mapp` and `comp` declines
+only on a genuine ratio disagreement, such as `(x in ft) + y`. A decline
+inside an operand propagates, and a disagreement need not imply a dependence
+of the whole denotation: multiplication by zero can erase it. Another source
+of incompleteness is that atoms are identified only with themselves. Atoms arise under `lam` binders
 only; an abstraction applied inside the program leaves none behind, since
 the comparison reduces every redex, the ones substitution creates included
 (`LambdaS.Examples.hoSum` is accepted). At `log` and `exp` the same check runs against

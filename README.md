@@ -22,8 +22,8 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is 9,400 lines of definitions and proofs and 5,900 lines
-of documentation (17,600 lines of source in all; `scripts/count_lines.py`
+The development is 9,400 lines of definitions and proofs and 6,000 lines
+of documentation (17,700 lines of source in all; `scripts/count_lines.py`
 is the method, and CI checks these figures and the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
 vectors over ℚ, so substitution is a linear map, every substitution lemma is
@@ -38,8 +38,8 @@ exists anywhere in the system.
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
 | lines of definitions and proofs | 9,400 |
-| lines of documentation | 5,900 |
-| theorem and lemma declarations | 480 |
+| lines of documentation | 6,000 |
+| theorem and lemma declarations | 484 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
@@ -72,8 +72,10 @@ is required, and the binary reports which backend it is running.
 
 **The algebra.** `Uom` defines a unit as a ℚ-valued exponent vector and
 proves the group laws. `Scaling` gives rescalings and the pullback laws that
-make substitution commute with them. `Unify` is unification modulo the
-equational theory of abelian groups, so inference has principal solutions.
+make substitution commute with them. `Unify` verifies elimination and
+solution preservation for rational unit equations. It has no assembled unifier
+or principal-type inference theorem; inference with conversion's dimension
+constraints remains open in this development.
 `Space`, `Map`, and `Density` give dimensioned vectors, Hart-style
 rank-one matrices, and densities.
 
@@ -101,11 +103,13 @@ arithmetic, `Ratio` the
 first-order syntax of accumulated ratios, and `Twist` the drift analysis and
 its decision procedure.
 
-**Dimensional analysis.** `Pi` and `PiTheorem` derive Buckingham's counting
-as a corollary of parametricity, including the bridge from the term-level
-multiplicative scaling law to the log-coordinate Pi theorem (positivity is
-the hypothesis the logarithm needs). `Definability` and `NonDefinability`
-prove that rational powers must be primitive.
+**Dimensional analysis.** `Pi` and `PiTheorem` derive Buckingham factorization
+and descent to `n - rank A` rational dimensionless coordinates. The factorization
+allows arbitrary signed outputs on positive inputs. `PiCoherent` supplies the
+dimension-level law for converting programs in closed external unit/dimension
+scope, including internal polymorphism. The stronger unit-level law applies to
+parametric convert-free or drift-free programs. `Definability` and `NonDefinability` prove
+that rational powers must be primitive.
 
 **Programs.** `Examples`, `QM`, and `Algorithms` are the worked examples,
 including the yard/foot/meter declarations end to end and the pendulum.

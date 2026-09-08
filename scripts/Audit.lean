@@ -194,3 +194,10 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.dimensionMatrix
 #print axioms LambdaS.Pi.den_mulScaleLaw_coherent
 #print axioms LambdaS.Pi.den_pi_coherent
+
+-- Predicted Pi boundary cases, checked by the kernel
+#print axioms LambdaS.Examples.addMixed_coherent
+#print axioms LambdaS.Examples.instantiatedCasterDeriv
+#print axioms LambdaS.Examples.instantiatedCaster_coherent
+#print axioms LambdaS.Pi.fullRank_descends
+#print axioms LambdaS.Pi.zeroRank_descends

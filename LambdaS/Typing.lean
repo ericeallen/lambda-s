@@ -73,9 +73,10 @@ The calculus is explicitly typed (lambdas are annotated, `Λu.e` and `e[μ]` are
 written rather than inferred), so typing is syntax-directed and types are
 *unique*. `infer` therefore returns **the** type or nothing, with no
 most-general-type caveat, and `infer_complete` holds. Inferring the `Λu` and
-`[μ]` instead would require let-generalization and hence the abelian-group
-unification in `LambdaS.Unify`, where the guarantee weakens from uniqueness to
-principality.
+`[μ]` instead would require a separate inference development, including unit
+unification and the dimension constraints contributed by conversion.
+`LambdaS.Unify` verifies elimination for unit equations; it does not establish
+principal types for this calculus.
 -/
 
 /-!
@@ -136,9 +137,8 @@ base units, with integer exponents; here they form the free
 ℚ-vector space on the same generators (see note 1).
 The difference propagates everywhere downstream: the group is *divisible*,
 every unit having an `n`-th root for nonzero `n` (`Uom.rpow_nth_root`),
-so √(·) of a dimensioned quantity is well-typed
-(√(m²) = m) where systems with integer
-exponents must reject it; and consistency of unit declarations is
+so √(m³) has unit m^(3/2) in the fixed meter basis, whereas integer
+exponents allow √(m²) but cannot express m^(3/2) in that basis; and consistency of unit declarations is
 consistency of a linear system over a *field*, solved by Gaussian
 elimination rather than Smith normal form, the integer-matrix analogue of
 diagonalization (“Unit Declarations” (`Declare.lean`)).
@@ -325,11 +325,11 @@ quantity has no scale-invariant logarithm, so log of a probability density
 is rejected while log of a ratio of densities is accepted.
 
 > **Note 3.** What is a quantity of dimension
-> Length^(1/2)? We do not know either, but the type system has no
-> reason to prejudge the question: quantum mechanics already uses
-> Length^(-1/2),
-> and rejecting √(m²) to forbid the unfamiliar
-> √m would get the priority backwards.
+> Length^(1/2)? The type system need not restrict roots to those whose
+> exponents happen to integralize in the library's chosen basis. Quantum
+> mechanics already uses Length^(-1/2). A finite collection of rational
+> exponents can be integralized by rebasing, but a library fixes its basis
+> before it knows which fractional powers its clients will require.
 
 Measurements are compound, not primitive: a literal is dimensionless
 (q : Q 1) and a unit constant is one of its unit

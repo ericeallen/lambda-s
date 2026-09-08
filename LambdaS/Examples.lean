@@ -295,8 +295,10 @@ This is the case that matters, and it is *not* like the Planck length. There the
 half-powers cancel inside the root: `ħG/c³` is already `m²`, so every
 intermediate has integer exponents and F# types it fine after grouping. A
 fermion field carries `3/2` **standing alone**, appearing by itself in every
-interaction term with nothing to group against. No integer-exponent units system
-can write its type. -/
+interaction term with nothing to group against. An integer-exponent units
+system cannot write this type in the fixed mass basis. Rebasing at a square
+root of mass would integralize it; the modularity problem is that a library
+chooses its basis before seeing all of its clients' exponent requirements. -/
 def fermionField : Term₀ := .pow (1/2) (.mul (.ucon kg) (.mul (.ucon kg) (.ucon kg)))
 
 #guard typeOf fermionField == some (.Q (Term.rpow (Term.mul kg (Term.mul kg kg)) (1/2)))
@@ -842,9 +844,11 @@ def addMixedDeriv : HasTy Δ₀ (scalarCtx [m, ft]) addMixed (.Q ft) :=
 /- Declined: the branch drifts disagree. -/
 #guard (unitDrift addMixedDeriv).isNone
 
-/- And the decline is no false alarm: `addMixed`'s *value* depends on the
-declared conversion factor. Two constant conversion oracles, one environment
-(magnitudes `1.0` at `m` and `ft`), two different results. -/
+/- An executable sensitivity demonstration for this term: two constant
+conversion oracles and one environment (magnitudes `1.0` at `m` and `ft`)
+produce different results. These oracles are not valuation quotients, and this
+Float guard is not a kernel proof of invariance failure or of completeness
+for the diagnostic's decline verdict. -/
 #guard (match evalC (D := Dim) (fun _ _ => (2.0 : Float)) 10
               [.scalar ⟨1.0, m⟩, .scalar ⟨1.0, ft⟩] addMixed,
              evalC (D := Dim) (fun _ _ => (3.0 : Float)) 10
@@ -1639,9 +1643,10 @@ The rotation algebra above is not merely *typeable* on a uniform space; it is
 typeable **only** there. On a non-uniform space the two diagonal entries carry
 different units, so the numerator of `tau` is an addition at unequal units and
 the term is rejected before any question of correctness arises. Hart's
-uniformity condition for the singular value decomposition (`svd_entry_const`)
-is thus not a hypothesis a programmer must remember: it is the condition under
-which the kernel can be written at all. -/
+uniformity condition is visible here as a typing constraint of this particular
+Jacobi kernel. `svd_entry_const` supplies the unit identity; the checker guard
+under `ΓN` below demonstrates the rejection. No typed general SVD algorithm
+is mechanized. -/
 
 def N2 : Sp Base 0 := [m, sec]
 def N2d : Sp Base 0 := [Term.div 1 m, Term.div 1 sec]
@@ -1652,17 +1657,18 @@ def ΓN : Ctx Base Dim 0 0 := [.lin N2 N2d]
 /-! ### What the units say about the stopping test
 
 A convergence test compares the off-diagonal to a tolerance, and the tolerance
-must carry the entries' unit. There are two ways to supply one and the type
-system separates them.
+must carry the entries' unit. Both forms below typecheck; parametricity
+distinguishes how their tolerances are supplied.
 
 A **relative** tolerance scales a quantity already in hand by a dimensionless
 factor. It names no unit, so it stays inside the parametric fragment and
 Theorem 6.1 applies to the kernel.
 
-An **absolute** tolerance has to name the unit, and the only term that can is
-`ucon`. That is exactly what `Tm.Parametric` excludes. The kernel still
-typechecks and still runs; it simply falls out of the invariance theory, and
-rescaling can change the iteration it stops at. -/
+The **fixed absolute** tolerance below is written using a named unit
+constant `ucon`, which `Tm.Parametric` excludes. The kernel still typechecks
+and runs, but the abstraction theorem no longer applies. An absolute tolerance
+passed as an input could remain parametric and would rescale with the inputs;
+absolute tolerances are not excluded in general. -/
 
 def stopRelative : Term₀ :=
   .ifle ⟪ (%0 !! 0) ! 1 ⟫ ⟪ 0.000000001 * (%0 !! 0) ! 0 ⟫ (.var 0) sweep
@@ -1683,9 +1689,9 @@ example : Tm.Parametric stopRelative := by
   simp [stopRelative, sweep, rotT, rot, cosRot, sinRot, tanRot, tau,
     Tm.Parametric]
 
-/-- **The absolute test is not.** The tolerance has to name the unit, and a
-term that names a unit can detect a rescaling. Same type, same behavior on any
-one unit system, outside the invariance theory. -/
+/-- **This fixed absolute test is not parametric.** Its tolerance is written
+as a unit constant. Supplying a tolerance as an argument would be a different,
+potentially parametric program. -/
 example : ¬ Tm.Parametric stopAbsolute := by
   simp [stopAbsolute, Tm.Parametric]
 

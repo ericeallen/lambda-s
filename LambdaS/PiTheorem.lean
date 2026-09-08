@@ -46,8 +46,9 @@ is Buckingham's conclusion.
 
 Kennedy reduces the matrix to **Smith Normal Form**, which is what ℤ forces.
 Here the orbit subspace is `range Aᵀ` over a field, its dimension is `rank A`,
-and the quotient has dimension `n − r` by rank-nullity (Mathlib's, off the
-shelf). The rational-exponent decision keeps paying in places it was not made for.
+and `invariant_descends` obtains `n − r` coordinates from a rational basis
+of the kernel, using linear extension with values in ℝ to separate the orbits.
+The coordinate count is rank-nullity (Mathlib's). The rational-exponent decision keeps paying in places it was not made for.
 -/
 
 /-!
@@ -883,9 +884,9 @@ every rescalable symbol in scope: base units and unit variables alike,
 enumerated by `Fin m ≃ B ⊕ Fin k`.
 
 Together with `mulScaleLaw_factorization` this closes the chain from a
-well-typed Λs term to Buckingham's factorization, with no positivity
-assumption anywhere: the term supplies the multiplicative law, and the
-factorization is signed. `mulScaleLaw_dichotomy` adds the other half: a
+well-typed Λs term to Buckingham's factorization on positive inputs, with
+no sign restriction on the output. The term supplies the multiplicative law,
+and the factorization is signed. `mulScaleLaw_dichotomy` adds the other half: a
 signature whose system is unsolvable forces the denotation to vanish.
 
 The law quantifies over the **full scaling group** of the signature: a

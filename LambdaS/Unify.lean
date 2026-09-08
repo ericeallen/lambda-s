@@ -44,8 +44,9 @@ argument to discharge.
 Proved here:
 
 * the per-base decomposition (`Term.solves_iff`);
-* single-equation elimination, **sound** (`Term.solves_elim`) and **principal**
-  (`Term.elim_eq_of_solves`: any solution is *forced* to agree with it);
+* single-equation elimination, sound (`Term.solves_elim`), with every ground
+  solution fixed by elimination when its other coordinates are supplied
+  (`Term.elim_eq_of_solves`);
 * row reduction kills the pivot and preserves solutions (`Term.reduce_pivot`,
   `Term.solves_reduce_iff`);
 * multi-equation systems, with reduction preserving the solution set
@@ -57,12 +58,16 @@ Proved here:
 * the rigid residual case, decided by inspection with no search
   (`System.solves_of_no_vars`, `System.solves_of_pivot_none`).
 
-Not proved here: the **constructor**. Forward elimination and back-substitution
-are each verified, but they are not yet composed into a function
-`System B V → Option (Assign B V)` returning a most general unifier, with a
-proof that it does. Every ingredient is in place; the assembly is not. The rest
-of the development takes from this file only `Term`, the representation of unit
-expressions (`UExp` in `LambdaS.Syntax` abbreviates `Term B (Fin k)`); no result
+Not proved here: a solver constructor, a symbolic most-general substitution,
+or principal-type inference for Λs. `Assign B V` assigns ground units; a single
+such assignment does not represent the full family of solutions. The file has
+no concrete faithful pivot or composition of elimination with back-substitution.
+It also has no constraint generation from unannotated terms and no solver for
+the two-level dimension constraints introduced by conversion. Whether the full
+calculus admits decidable principal-type inference is open in this development;
+this file proves neither existence nor failure of principal types. The calculus
+is fully annotated. The rest of the development uses only `Term`, the unit
+expression representation (`UExp` abbreviates `Term B (Fin k)`); no result
 elsewhere rests on the solver.
 -/
 
@@ -161,11 +166,10 @@ theorem solves_elim (t : Term B V) (v₀ : V) (h : t.vars v₀ ≠ 0) (rest : As
   field_simp
   ring
 
-/-- **Principality.** Any solution is *forced* to agree with `elim` on `v₀`.
-
-So the solution set is exactly `elim` applied to the free variables: `v₀` is
-determined, and everything else is a parameter. That is what makes the solution
-most general, and it is why unit inference has principal types. -/
+/-- **Single-equation solution characterization.** Every ground solution is
+fixed by `elim`: its pivot value is determined by its other coordinates.
+Together with `solves_elim`, this parameterizes the solutions of one equation.
+It is not a theorem about principal types or symbolic most-general unifiers. -/
 theorem elim_eq_of_solves (t : Term B V) (v₀ : V) (h : t.vars v₀ ≠ 0)
     (τ : Assign B V) (hτ : Solves τ t) : τ = elim t v₀ τ := by
   funext v

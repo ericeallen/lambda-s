@@ -120,8 +120,10 @@ isomorphic, to the dimensionless space scaled by its unit
 uniform spaces carries the same unit w/u (`svd_entry_const`).
 The singular value decomposition factors a matrix through a diagonal of
 nonnegative scale factors; sorting and truncating those factors requires
-that they share a unit, so a
-non-uniform argument to SVD is a type error, not a failed side condition.
+that they share a unit. These identities identify the applicable unit
+shapes; they do not constitute a typed SVD implementation. The concrete
+Jacobi kernel in `Examples` is accepted on its uniform space and rejected
+under the non-uniform context `ΓN`, as executable checker guards record.
 
 Hart lists “left uniform” as a separate requirement for the Moore–Penrose
 pseudo-inverse (the least-squares inverse of a rectangular matrix); it is
