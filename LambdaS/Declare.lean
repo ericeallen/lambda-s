@@ -59,8 +59,13 @@ A base unit with no declaration is a primitive, and its magnitude is free. So
 `meter` and `foot` as bare generators are same-dimension units with **no**
 determined conversion factor: `convert` between them typechecks, but its value
 is whatever the valuation says. Declaring `unit foot = 0.3048 meter` is exactly
-what pins it. That is the sense in which declarations, not the type system, give
-conversion its content.
+what pins it. `DeclSolver.check` in `LambdaS.DeclareSolver` now enforces the
+execution obligation: declarations must be dimensionally sound, consistent,
+and determine every same-dimension factor. `DeclSolver.conversionExact` also
+supports individual lookup, returning none for an undetermined ratio. It
+returns exact radicals for determined ratios; it does not silently supply an
+arbitrary missing factor. The semantic criterion below is linked to those
+executable checks by soundness and completeness proofs.
 -/
 
 /-!
@@ -346,7 +351,8 @@ end Decl
 
 A declaration set is a linear system in log coordinates. It is solvable exactly
 when the factors respect every dependency among the unit parts, and that is the
-whole content of "the declarations determine a valuation". -/
+criterion for the declarations to have a satisfying valuation. Uniqueness of
+conversion factors is the separate determinacy question in `LambdaS.Determinacy`. -/
 
 open Decl
 

@@ -12,7 +12,7 @@ Prints the axiom dependencies of every declaration `THEOREMS.md` indexes
 (every artifact identifier the paper cites, and the supporting results behind
 them), grouped by module. The intended output mentions only `propext`,
 `Classical.choice`, and `Quot.sound`; any occurrence of `sorryAx` is a
-failure, and CI greps for it. `scripts/verify_theorems_index.py` fails when an
+failure, and CI validates each complete report. `scripts/verify_theorems_index.py` fails when an
 indexed declaration is missing from this file, so the list cannot drift from
 the index.
 
@@ -201,3 +201,24 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Examples.instantiatedCaster_coherent
 #print axioms LambdaS.Pi.fullRank_descends
 #print axioms LambdaS.Pi.zeroRank_descends
+
+-- Executable declaration solving and determinacy
+#print axioms LambdaS.RationalSolver.solve
+#print axioms LambdaS.RationalSolver.solve_sound
+#print axioms LambdaS.RationalSolver.solve_isSome_iff
+#print axioms LambdaS.RationalSolver.solvable_map_iff
+#print axioms LambdaS.LogFactor.isZero_iff
+#print axioms LambdaS.LogFactor.interpret_injective
+#print axioms LambdaS.LogFactor.radical_exp
+#print axioms LambdaS.Decl.determined_iff_coefficients
+#print axioms LambdaS.DeclarationComplete.check_iff_all_conversions_determined
+#print axioms LambdaS.DeclSolver.solve_isSome_iff
+#print axioms LambdaS.DeclSolver.solve_sound
+#print axioms LambdaS.DeclSolver.conversion_isSome_iff
+#print axioms LambdaS.DeclSolver.conversionExact_correct
+#print axioms LambdaS.DeclSolver.check_isSome_iff
+#print axioms LambdaS.DeclSolver.Checked.conversionExact_isSome
+#print axioms LambdaS.DeclarationSolverExamples.Length.linkedFactor_returned
+#print axioms LambdaS.DeclarationSolverExamples.Length.linkedFactor_correct
+#print axioms LambdaS.DeclarationSolverExamples.Root.rootFactor_returned
+#print axioms LambdaS.DeclarationSolverExamples.Root.rootFactor_correct

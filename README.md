@@ -22,8 +22,8 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is 9,400 lines of definitions and proofs and 5,900 lines
-of documentation (17,700 lines of source in all; `scripts/count_lines.py`
+The development is 10,500 lines of definitions and proofs and 6,100 lines
+of documentation (19,100 lines of source in all; `scripts/count_lines.py`
 is the method, and CI checks these figures and the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
 vectors over ℚ, so substitution is a linear map, every substitution lemma is
@@ -37,9 +37,9 @@ exists anywhere in the system.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| lines of definitions and proofs | 9,400 |
-| lines of documentation | 5,900 |
-| theorem and lemma declarations | 484 |
+| lines of definitions and proofs | 10,500 |
+| lines of documentation | 6,100 |
+| theorem and lemma declarations | 568 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
@@ -99,8 +99,18 @@ moving the numbers.
 
 **Conversion.** `Conversion` gives the operator, `Declare` the consistency
 criterion for declaration sets, proved in both directions in exact rational
-arithmetic, `Ratio` the
-first-order syntax of accumulated ratios, and `Twist` the drift analysis and
+arithmetic. `RationalSolver` performs executable elimination and back-substitution
+with a decidable rational-module right-hand side. `LogFactor` implements exact
+symbolic logarithms using denominator clearing and rational product equality;
+no logarithm or root is evaluated while deciding consistency.
+`Determinacy` and `DeclarationComplete` prove and execute the span tests for
+individual factors and global coverage of the dimension kernel. `DeclareSolver`
+combines dimensional soundness, consistency, and completeness into a checked
+certificate, and returns inspectable exact conversion factors as positive
+rational radicands with positive root degrees. Rejection is proved complete.
+The solver may choose reference magnitudes, but a queried factor is returned
+only when declarations determine it in every satisfying valuation.
+`Ratio` gives the first-order syntax of accumulated ratios, and `Twist` the drift analysis and
 its decision procedure.
 
 **Dimensional analysis.** `Pi` and `PiTheorem` derive Buckingham factorization
@@ -113,6 +123,11 @@ that rational powers must be primitive.
 
 **Programs.** `Examples`, `QM`, and `Algorithms` are the worked examples,
 including the yard/foot/meter declarations end to end and the pendulum.
+`DeclarationSolverExamples` executes disconnected/linked units, redundant and
+conflicting cycles, dimension errors, empty bases, dependent dimension rows,
+and exact rational and square-root factors. Its four kernel theorems connect
+actual returned factors to every satisfying valuation. The native executable
+runs this battery and exits nonzero if it fails.
 
 Each module carries a header docstring explaining what it is for and why it
 exists; those are the intended entry points for a reader, and the groups

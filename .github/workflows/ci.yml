@@ -39,29 +39,14 @@ jobs:
           # `shell: bash` above sets pipefail, so a failing `lean` fails the step
           # instead of leaving an empty axioms.txt that the greps would pass.
           lake env lean scripts/Audit.lean | tee axioms.txt
-          if grep -q sorryAx axioms.txt; then
-            echo "::error::a headline theorem depends on sorryAx"
-            exit 1
-          fi
-          if grep 'depends on axioms' axioms.txt | grep -vE "^'[^']+' depends on axioms: \\[(propext|Classical\\.choice|Quot\\.sound)(, (propext|Classical\\.choice|Quot\\.sound))*\\]$"; then
-            echo "::error::a theorem depends on axioms beyond the standard three"
-            exit 1
-          fi
-          # Every `#print axioms` must have reported: a renamed declaration would
-          # otherwise be an error message the greps above do not see. A
-          # declaration with no axioms reports "does not depend on any axioms".
-          expected=$(grep -c '^#print axioms' scripts/Audit.lean)
-          reported=$(grep -cE 'depends on axioms|does not depend on any axioms' axioms.txt || true)
-          if [ "$expected" != "$reported" ]; then
-            echo "::error::Audit.lean lists $expected declarations but $reported reported"
-            exit 1
-          fi
+          python3 scripts/check_axioms.py axioms.txt
 
       - name: Run the compiled binary and assert its numeric checks
         run: |
           out=$(.lake/build/bin/lambdas) || { echo "::error::binary exited nonzero: run-time validation failed"; exit 1; }
           echo "$out"
           echo "$out" | grep -Eq "all numeric checks pass +=[[:space:]]*true" || { echo "::error::binary numeric self-checks failed"; exit 1; }
+          echo "$out" | grep -Eq "declaration solver:.*all=true" || { echo "::error::declaration solver validation missing or failed"; exit 1; }
           echo "$out" | grep -Eq "literals through dgemv +=[[:space:]]*pass" || { echo "::error::literal-program validation missing or failed"; exit 1; }
           echo "$out" | grep -q "300.000000 ft" || { echo "::error::yard-to-feet line missing from the binary output"; exit 1; }
           echo "$out" | grep -Eq "via ft.*91\.440000 m" || { echo "::error::path-independence line missing from the binary output"; exit 1; }

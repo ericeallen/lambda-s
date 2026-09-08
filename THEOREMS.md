@@ -23,17 +23,17 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Consistency, necessity (log form) | `LambdaS.dependency_forces` | [`LambdaS/Declare.lean:361`](LambdaS/Declare.lean#L361) |
-| Consistency, necessity (product form) | `LambdaS.dependency_forces_mul` | [`LambdaS/Declare.lean:392`](LambdaS/Declare.lean#L392) |
-| Consistency, sufficiency | `LambdaS.dependency_sufficient` | [`LambdaS/Declare.lean:434`](LambdaS/Declare.lean#L434) |
-| Consistency characterized (log form) | `LambdaS.consistent_iff_dependencies` | [`LambdaS/Declare.lean:462`](LambdaS/Declare.lean#L462) |
-| Consistency characterized (Theorem 3.1) | `LambdaS.consistent_iff_dependencies_mul` | [`LambdaS/Declare.lean:476`](LambdaS/Declare.lean#L476) |
-| Redundant factor forced | `LambdaS.factor_chain_consistent` | [`LambdaS/Declare.lean:540`](LambdaS/Declare.lean#L540) |
-| One-dimension well-formedness | `LambdaS.Decl.Sound` | [`LambdaS/Declare.lean:314`](LambdaS/Declare.lean#L314) |
+| Consistency, necessity (log form) | `LambdaS.dependency_forces` | [`LambdaS/Declare.lean:367`](LambdaS/Declare.lean#L367) |
+| Consistency, necessity (product form) | `LambdaS.dependency_forces_mul` | [`LambdaS/Declare.lean:398`](LambdaS/Declare.lean#L398) |
+| Consistency, sufficiency | `LambdaS.dependency_sufficient` | [`LambdaS/Declare.lean:440`](LambdaS/Declare.lean#L440) |
+| Consistency characterized (log form) | `LambdaS.consistent_iff_dependencies` | [`LambdaS/Declare.lean:468`](LambdaS/Declare.lean#L468) |
+| Consistency characterized (Theorem 3.1) | `LambdaS.consistent_iff_dependencies_mul` | [`LambdaS/Declare.lean:482`](LambdaS/Declare.lean#L482) |
+| Redundant factor forced | `LambdaS.factor_chain_consistent` | [`LambdaS/Declare.lean:546`](LambdaS/Declare.lean#L546) |
+| One-dimension well-formedness | `LambdaS.Decl.Sound` | [`LambdaS/Declare.lean:319`](LambdaS/Declare.lean#L319) |
 | The yard set is satisfiable | `LambdaS.Examples.yard_satisfiable` | [`LambdaS/Examples.lean:584`](LambdaS/Examples.lean#L584) |
 | A benign declaration cycle is satisfiable | `LambdaS.Examples.cycle_satisfiable` | [`LambdaS/Examples.lean:614`](LambdaS/Examples.lean#L614) |
-| Dimension abbreviations elaborate by scoping alone | `LambdaS.DimAbbrev.elabDimDefs` | [`LambdaS/Declare.lean:584`](LambdaS/Declare.lean#L584) |
-| Primary units: the declaration determines the dimension | `LambdaS.DimAbbrev.elabPrimary` | [`LambdaS/Declare.lean:595`](LambdaS/Declare.lean#L595) |
+| Dimension abbreviations elaborate by scoping alone | `LambdaS.DimAbbrev.elabDimDefs` | [`LambdaS/Declare.lean:590`](LambdaS/Declare.lean#L590) |
+| Primary units: the declaration determines the dimension | `LambdaS.DimAbbrev.elabPrimary` | [`LambdaS/Declare.lean:601`](LambdaS/Declare.lean#L601) |
 | The cyclic dimension pair, rejected at its second line | `LambdaS.Examples.dimCycle` | [`LambdaS/Examples.lean:513`](LambdaS/Examples.lean#L513) |
 | A vicious declaration cycle is rejected | `LambdaS.Examples.cycle_conflict` | [`LambdaS/Examples.lean:620`](LambdaS/Examples.lean#L620) |
 | The mistyped yard set is refuted | `LambdaS.Examples.yard_conflict` | [`LambdaS/Examples.lean:483`](LambdaS/Examples.lean#L483) |
@@ -212,3 +212,27 @@ result would fail the build.
 | Coherent valuation changes preserve scalar denotation | `LambdaS.den_eq_of_coherent` | [`LambdaS/PiCoherent.lean:92`](LambdaS/PiCoherent.lean#L92) |
 | Converting programs obey the dimension-level scaling law | `LambdaS.Pi.den_mulScaleLaw_coherent` | [`LambdaS/PiCoherent.lean:135`](LambdaS/PiCoherent.lean#L135) |
 | Converting programs factor through n minus dimension-rank groups | `LambdaS.Pi.den_pi_coherent` | [`LambdaS/PiCoherent.lean:159`](LambdaS/PiCoherent.lean#L159) |
+
+## Executable declaration solving and determinacy
+
+| Paper claim | Lean name | Location |
+|---|---|---|
+| Executable rational elimination | `LambdaS.RationalSolver.solve` | [`LambdaS/RationalSolver.lean:197`](LambdaS/RationalSolver.lean#L197) |
+| Rational solver soundness | `LambdaS.RationalSolver.solve_sound` | [`LambdaS/RationalSolver.lean:206`](LambdaS/RationalSolver.lean#L206) |
+| Rational solver completeness | `LambdaS.RationalSolver.solve_isSome_iff` | [`LambdaS/RationalSolver.lean:211`](LambdaS/RationalSolver.lean#L211) |
+| Solvability reflects through exact log interpretation | `LambdaS.RationalSolver.solvable_map_iff` | [`LambdaS/RationalSolver.lean:291`](LambdaS/RationalSolver.lean#L291) |
+| Executable exact logarithmic equality | `LambdaS.LogFactor.isZero_iff` | [`LambdaS/LogFactor.lean:84`](LambdaS/LogFactor.lean#L84) |
+| Exact factor semantics is injective | `LambdaS.LogFactor.interpret_injective` | [`LambdaS/LogFactor.lean:207`](LambdaS/LogFactor.lean#L207) |
+| Inspectable radical output is exact | `LambdaS.LogFactor.radical_exp` | [`LambdaS/LogFactor.lean:75`](LambdaS/LogFactor.lean#L75) |
+| Semantic determinacy is span membership | `LambdaS.Decl.determined_iff_coefficients` | [`LambdaS/Determinacy.lean:114`](LambdaS/Determinacy.lean#L114) |
+| Global completeness decides all legal factors | `LambdaS.DeclarationComplete.check_iff_all_conversions_determined` | [`LambdaS/DeclarationComplete.lean:129`](LambdaS/DeclarationComplete.lean#L129) |
+| Executable declaration consistency is exact | `LambdaS.DeclSolver.solve_isSome_iff` | [`LambdaS/DeclareSolver.lean:103`](LambdaS/DeclareSolver.lean#L103) |
+| Computed declaration solutions satisfy valuations | `LambdaS.DeclSolver.solve_sound` | [`LambdaS/DeclareSolver.lean:92`](LambdaS/DeclareSolver.lean#L92) |
+| Factor lookup decides determinacy | `LambdaS.DeclSolver.conversion_isSome_iff` | [`LambdaS/DeclareSolver.lean:161`](LambdaS/DeclareSolver.lean#L161) |
+| Extracted radical agrees with every satisfying valuation | `LambdaS.DeclSolver.conversionExact_correct` | [`LambdaS/DeclareSolver.lean:210`](LambdaS/DeclareSolver.lean#L210) |
+| Full declaration checker sound and complete | `LambdaS.DeclSolver.check_isSome_iff` | [`LambdaS/DeclareSolver.lean:259`](LambdaS/DeclareSolver.lean#L259) |
+| Checked systems supply every legal conversion | `LambdaS.DeclSolver.Checked.conversionExact_isSome` | [`LambdaS/DeclareSolver.lean:276`](LambdaS/DeclareSolver.lean#L276) |
+| Rational factor actually computed | `LambdaS.DeclarationSolverExamples.Length.linkedFactor_returned` | [`LambdaS/DeclarationSolverExamples.lean:54`](LambdaS/DeclarationSolverExamples.lean#L54) |
+| Computed rational factor semantic correctness | `LambdaS.DeclarationSolverExamples.Length.linkedFactor_correct` | [`LambdaS/DeclarationSolverExamples.lean:68`](LambdaS/DeclarationSolverExamples.lean#L68) |
+| Irrational factor actually computed | `LambdaS.DeclarationSolverExamples.Root.rootFactor_returned` | [`LambdaS/DeclarationSolverExamples.lean:92`](LambdaS/DeclarationSolverExamples.lean#L92) |
+| Computed irrational factor semantic correctness | `LambdaS.DeclarationSolverExamples.Root.rootFactor_correct` | [`LambdaS/DeclarationSolverExamples.lean:106`](LambdaS/DeclarationSolverExamples.lean#L106) |

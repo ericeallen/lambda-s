@@ -29,6 +29,8 @@ import LambdaS.Definability
 import LambdaS.Twist
 import LambdaS.Conversion
 import LambdaS.Declare
+import LambdaS.DeclareSolver
+import LambdaS.DeclarationSolverExamples
 import LambdaS.Examples
 import LambdaS.PiExamples
 import LambdaS.QM
@@ -51,8 +53,8 @@ here, converted to Markdown, so the documentation develops what the paper
 now summarizes. Section references name the module that carries the
 section; theorem references name the declaration.
 
-The development is about eight thousand lines of Lean 4 [de Moura and Ullrich 2021] definitions and proofs, with as much again in documentation,
-building with no `sorry` (Lean's placeholder for an unproved
+The measured size of the Lean 4 [de Moura and Ullrich 2021] development is
+recorded in the README by `scripts/count_lines.py`. It builds with no `sorry` (Lean's placeholder for an unproved
 obligation) and no axioms beyond the three of Lean's
 standard library (propositional extensionality, choice, and quotient
 soundness; the check by Lean's kernel is
