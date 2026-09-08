@@ -43,7 +43,7 @@ jobs:
             echo "::error::a headline theorem depends on sorryAx"
             exit 1
           fi
-          if grep -v 'propext, Classical.choice, Quot.sound' axioms.txt | grep -q 'depends on axioms'; then
+          if grep 'depends on axioms' axioms.txt | grep -vE "^'[^']+' depends on axioms: \\[(propext|Classical\\.choice|Quot\\.sound)(, (propext|Classical\\.choice|Quot\\.sound))*\\]$"; then
             echo "::error::a theorem depends on axioms beyond the standard three"
             exit 1
           fi
