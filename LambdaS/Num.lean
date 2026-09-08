@@ -30,15 +30,13 @@ type system or a single theorem.
 
 `npow` and `nlog` are meaningful on positive arguments. Λs's `pow` is applied
 to positive magnitudes in practice, but the language does not enforce it,
-because enforcing it would exclude signed quantities from the calculus. A
-non-integer power of a negative argument is an undefined point of the
-classical operation, and the two carriers treat it as they treat division by
-zero and the logarithm of a nonpositive: at `ℝ`, `npow` reads through
-`Real.rpow`, a total function whose value there is Mathlib's convention (the
-real part of the principal complex power, so `(-8) ^ (1/3 : ℝ)` denotes `1`,
-not a root); at `Float` it is C's `pow`, which returns `NaN`. No theorem
-constrains the compiled number at such a point, and the binary says so
-loudly rather than printing a conventional value. The invariance theory
+because enforcing it would exclude signed quantities from the calculus. For negative arguments, the two carriers use different conventions for
+non-integer powers. `Real.rpow` is the real part of the principal complex
+power, so `(-8) ^ (1/3 : ℝ)` denotes `1`, not the real cube root. `Float.pow`
+returns `NaN` for a negative base and a non-integer floating-point exponent.
+This is a choice of totalization, not a claim that real odd roots do not
+exist. No theorem equates the compiled result with the real semantics.
+The invariance theory
 needs no positivity (`relQ_rpow` carries no sign hypothesis, because a
 positive scale factor distributes over `rpow` at every real base); Kennedy's
 Pi theorem still does.
@@ -185,13 +183,12 @@ noncomputable instance : OrderedNum ℝ where
 
 /-- Real double precision.
 
-`npow` is bare `Float.pow`, so the carriers agree wherever the classical
-power is defined (a positive base, or an integer exponent) and part ways at
-its undefined points exactly as they do for division: C's `pow` returns `NaN`
-on a negative base with a fractional exponent where `Real.rpow` returns the
-real part of the principal complex power, and Mathlib has `0 ^ q = 0` for
-nonzero `q` and `x / 0 = 0` where IEEE has infinities. `QM.boundaryChecks`
-pins these conventions in the binary. -/
+`npow` is bare `Float.pow`: even on positive bases its result is a
+floating-point approximation, not an equality with `Real.rpow`. On a negative
+base with a non-integer exponent it returns `NaN`, while `Real.rpow` uses
+the real part of the principal complex power. Mathlib also has `0 ^ q = 0`
+for nonzero `q` and `x / 0 = 0`, unlike floating-point infinities and NaNs.
+`QM.boundaryChecks` tests selected conventions in the binary. -/
 instance : Num Float where
   ofRat q := Float.ofInt q.num / Float.ofNat q.den
   add := (· + ·)

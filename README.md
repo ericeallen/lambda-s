@@ -22,7 +22,7 @@ program with nonzero denotation is invariant under *all* rescalings precisely
 when its accumulated conversion ratio is trivial: a decidable condition,
 which the development turns into a compiler diagnostic.
 
-The development is 9,400 lines of definitions and proofs and 6,000 lines
+The development is 9,400 lines of definitions and proofs and 5,900 lines
 of documentation (17,700 lines of source in all; `scripts/count_lines.py`
 is the method, and CI checks these figures and the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
@@ -38,7 +38,7 @@ exists anywhere in the system.
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
 | lines of definitions and proofs | 9,400 |
-| lines of documentation | 6,000 |
+| lines of documentation | 5,900 |
 | theorem and lemma declarations | 484 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
@@ -146,12 +146,14 @@ A reader who believes a theorem trusts the Lean kernel and the three
 axioms above. A reader who believes a number the binary prints trusts, in
 addition, Lean's compiler and runtime, the `Float` carrier, and the three C
 functions in `c/lambdas_blas.c` (`lambdas_ddot`, `lambdas_dgemv`,
-`lambdas_blas_backend`) that reach BLAS. The theorems are stated at carrier
-ℝ; nothing proved here constrains the compiled arithmetic at the points
-where IEEE arithmetic and the classical operations part ways (division by
-zero, the logarithm of a nonpositive, a non-integer power of a negative
-argument), and at those points the binary gives IEEE's answer (an infinity
-or `NaN`), never a conventional number.
+`lambdas_blas_backend`) that reach BLAS. The abstraction and adequacy theorems use real
+arithmetic and do not equate it with compiled floating-point arithmetic.
+Rounding affects defined operations. The carriers also totalize partial
+operations differently: for example, `Float.pow` returns `NaN` on negative
+bases with non-integer exponents, while `Real.rpow` uses the real part of
+the principal complex power. Concrete `#guard` checks execute through Lean's
+compiler; they are distinct from kernel-checked theorem proofs. The binary
+checks selected arithmetic and boundary cases, not a general correspondence.
 
 ## License
 

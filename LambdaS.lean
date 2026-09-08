@@ -149,20 +149,16 @@ where the binary computes; the FFI-reaching reports are checked by the
 binary itself when it runs.
 
 **The carrier boundary.**
-The two instances agree, up to rounding and
-overflow, wherever the classical operations are defined, and at negative
-bases of the power primitive, where the `Float` instance computes
-the semantics' principal-power value |x|^qcos(qπ) rather than C's
-NaN: that totalization is the extension the covariance
-identity of “The Price of Conversion” (`Fundamental.lean`) is proved for. Where the classical
-operations are undefined (division by zero, log of a nonpositive,
-0^q at negative q) the instances deliberately differ: the
-ℝ side follows Mathlib's total-function conventions, which
-serve the proofs, and the `Float` side follows IEEE's specials,
-which announce failure at run time. No theorem that constrains the
-compiled numbers reaches these points, and the binary asserts both
-sides of the boundary at start-up, so a platform's deviation in either
-convention fails the run. We claim no IEEE
+The abstraction and adequacy theorems use real arithmetic, not a proof
+that floating-point evaluation equals it. Rounding affects defined operations.
+For negative bases and non-integer exponents, `Float.pow` returns NaN,
+whereas `Real.rpow` uses the real part of the principal complex power,
+|x|^qcos(qπ). The carriers also choose different totalizations for division
+by zero and logarithms. The covariance identity in `Fundamental.lean`
+concerns the real operation; it is not a theorem about the compiled number.
+The binary checks selected boundary cases, including these differing
+power conventions, at startup.
+We claim no IEEE
 conformance, and a claim would say little: the
 standard [IEEE 2019] requires correct rounding of the field
 operations but only recommends it for `pow`, log, and exp,

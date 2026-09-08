@@ -224,14 +224,11 @@ and the side condition is the cost. Zero alone is scale-invariant (see note 2), 
 the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) and throughout “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`).
 
 > **Note 2.** Whether there is one zero or many is
-> the subject of Russell's Chapter XXII [§§175–176, Russell 1903].
-> Treating magnitudes that are distances, he observes that zero admits a
-> per-class definition (identity with a member of the class the distances
-> relate), so that each kind of magnitude gets its own zero. He judges the
-> definition clear and rejects it anyway: zero has a meaning common to all
-> classes, and a zero distance is not really the concept of identity. The limit
-> construction he prefers instead makes zero single and, in his phrase, “not
-> one among the magnitudes whose zero it is.” Λs takes both sides, and
+> the subject of Russell's Chapter XXII [§§172–178, Russell 1903].
+> He canvasses a limit construction that makes zero single and, in his
+> phrase, “not one among the magnitudes whose zero it is” (§176), then
+> concludes that each kind of magnitude has its own zero (§177).
+> Λs takes both sides, and
 > the seam is exactly the one between types and semantics: 0 : Q m
 > and 0 : Q s are distinct terms at distinct types, but they
 > denote the same real number, the unique fixed point of every rescaling. The
@@ -246,7 +243,7 @@ the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) and thro
 > relational interpretation acquires an explicit x = 0 disjunct for
 > polymorphic zero.
 
-Powers, which Kennedy's standing positivity assumption existed to police,
+Powers, restricted to positive values in Kennedy's 2008 Coq model,
 need no exclusion. For a positive factor k, the identity
 (k· x)^q = k^q· x^q holds at *every* real x
 under the artifact's semantics
@@ -254,11 +251,11 @@ under the artifact's semantics
 denotes the real part of the principal complex power,
 |x|^qcos(qπ). On negative
 arguments that value is not a root: (-8)^(1/3) denotes 1, and the binary
-returns NaN there, as it does at division by zero. The theorem
+returns NaN there. The theorem
 therefore certifies covariance of the total function, not root-ness. The
 two concerns are separable: covariance is what abstraction theorems trade
-in, and a non-integer power of a negative argument is an undefined point
-of the classical operation. And the artifact instantiates the strengthened
+in, and the real-part convention differs from real odd roots as well as
+from floating-point NaNs. And the artifact instantiates the strengthened
 statement at λ x:Q u · u. √x (`sqrt_scales`).
 
 For terms that *do* convert, invariance under all rescalings is false

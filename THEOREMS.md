@@ -56,14 +56,14 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 
 | Paper claim | Lean name | Location |
 |---|---|---|
-| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:950`](LambdaS/Fundamental.lean#L950) |
-| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:860`](LambdaS/Fundamental.lean#L860) |
-| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:1119`](LambdaS/Fundamental.lean#L1119) |
-| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:969`](LambdaS/Fundamental.lean#L969) |
+| Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:947`](LambdaS/Fundamental.lean#L947) |
+| Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:857`](LambdaS/Fundamental.lean#L857) |
+| Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:1116`](LambdaS/Fundamental.lean#L1116) |
+| Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:966`](LambdaS/Fundamental.lean#L966) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:1151`](LambdaS/Examples.lean#L1151) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:379`](LambdaS/Parametricity.lean#L379) |
-| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1433`](LambdaS/Fundamental.lean#L1433) |
-| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1278`](LambdaS/Fundamental.lean#L1278) |
+| The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1430`](LambdaS/Fundamental.lean#L1430) |
+| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1275`](LambdaS/Fundamental.lean#L1275) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:454`](LambdaS/Conversion.lean#L454) |
 
 ## Accumulated ratios and the drift diagnostic
