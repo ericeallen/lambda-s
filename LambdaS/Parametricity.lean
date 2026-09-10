@@ -78,7 +78,8 @@ the two types are definitionally equal.
 
 ## Where this leads
 
-The **fundamental theorem** (every well-typed term related to itself) needs a
+The **fundamental theorem** (every parametric well-typed term related to
+itself) needs a
 denotation of *terms*, hence recursion over typing **derivations**. `HasTy` is
 `Type`-valued for exactly that reason, and `LambdaS.Fundamental` does the work:
 `den` interprets derivations, and `fundamental` and `fundamental_free` are the

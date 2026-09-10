@@ -9,20 +9,24 @@ import LambdaS.Conversion
 /-!
 # The fundamental theorem, and what conversion costs
 
-Every well-typed term is related to itself. This is what makes the logical
-relation say anything: without it, `Rel` is a definition and the free theorems
-are unproved conjectures about particular functions.
+Every *parametric* well-typed term is related to itself. This is what makes the
+logical relation say anything: without it, `Rel` is a definition and the free
+theorems are unproved conjectures about particular functions. A term is
+parametric (`Tm.Parametric`) when it names no unit constant `ucon u`; a term
+that can name a unit can detect a scaling, so `ucon` is outside both theorems
+below.
 
 ## The point of this file
 
 There are two fundamental theorems here, and the difference between them is the
 whole story about conversion.
 
-* `fundamental_free`: a **convert-free** term is related to itself under
-  *every* scaling. This is Kennedy's theorem, and it is what the Pi theorem
-  consumes.
-* `fundamental`: an **arbitrary** term is related to itself under every
-  **coherent** scaling, one that factors through dimension.
+* `fundamental_free`: a parametric **convert-free** term is related to itself,
+  by `Rel`, under *every* scaling. This is Kennedy's theorem, and it is what
+  the Pi theorem consumes.
+* `fundamental`: a parametric term, conversions included, is related to itself
+  by `RelCo` under every scaling that **factors through** a dimension scaling,
+  which is coherence.
 
 Conversion is the only operation in Λs that can observe a unit, so it is the
 only operation that can pay. And `cvt_rel_iff_coherent` shows the price is
@@ -110,10 +114,12 @@ pays with the undefined point.
 /-!
 ## From the paper's long form: The Price of Conversion
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 In this section, we develop the denotational semantics of Λs and prove
 two abstraction theorems. The first says that a parametric, convert-free
@@ -168,7 +174,7 @@ and the Pi theorem of “Dimensional Analysis” (`PiTheorem.lean`) consumes it 
 form.
 
 The denotation ⟦𝒟⟧_V is defined by recursion on typing
-derivations 𝒟 (which the theorem “Completeness” (`check_eq`, `Typing.lean`) makes a
+derivations 𝒟 (which the completeness theorem (`check_eq`) makes a
 recursion on terms), parameterized by a
 valuation V giving each base unit its declared magnitude. Valuations,
 like
@@ -354,11 +360,15 @@ def denDapp {j k : ℕ} {τ : Ty B D (j + 1) k} (d : DExp D j)
 /-- **The denotation**, over typing derivations. Units are erased; only
 magnitudes remain.
 
-The valuation `V` is read by `convert` and by nothing else; `ucon` denotes `1`
-without consulting it.
-Under a unit binder it is extended by `Scaling.cons`, which is what gives
-`Λu:δ. e` its family: the body is denoted once for each magnitude the bound unit
-might be declared to have, and `e[μ]` selects the one at `V`'s reading of `μ`.
+The valuation `V` is consulted in two places, and they consult it for different
+things. `convert` reads `V` for a numerical factor, the ratio of two
+magnitudes. Unit application reads `V` to select an index: under a unit binder
+`V` is extended by `Scaling.cons`, which is what gives `Λu:δ. e` its family,
+the body denoted once for each magnitude the bound unit might be declared to
+have, and `e[μ]` selects the member at `V`'s reading of `μ`. Only the first of
+these turns a magnitude into a different magnitude, which is why `den_indep`
+excludes `convert` and not unit application. `ucon` denotes `1` without
+consulting `V` at all.
 
 Unit and dimension application transport along `Ty.den_subst` and
 `Ty.den_substDim`. Those casts are the erasure content of the definition: they
@@ -850,10 +860,16 @@ theorem indepEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv 
 omit [Fintype D] in
 /-- **A convert-free term cannot read the valuation.**
 
+Stated as an independence relation rather than as an equation: at two
+valuations, over environments related by `IndepEnv`, the two denotations are
+related by `Indep`. It is not equality of denotations under arbitrary
+unrelated environments.
+
 Note that `ucon` is *not* excluded: naming a unit breaks parametricity, but it
-does not read how big that unit is: `ucon u` denotes `1` whatever `u` is worth.
-Only `convert` consults the valuation, which is the precise sense in which units
-are static. -/
+does not read how big that unit is, since `ucon u` denotes `1` whatever `u` is
+worth. Unit application also consults the valuation, to select a family's index
+rather than to scale a magnitude (see `den`), so it too is compatible with
+independence. `convert` is the operation this theorem excludes. -/
 theorem den_indep : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     {e : Tm B D j k} {τ : Ty B D j k} (d : HasTy Δ Γ e τ), e.ConvertFree →
     ∀ (V V' : Scaling B k) {ρ ρ' : Env Γ}, IndepEnv Γ ρ ρ' →

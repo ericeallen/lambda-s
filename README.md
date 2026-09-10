@@ -18,12 +18,14 @@ The practical literature provides conversion, which is what programmers ask
 of units, and no invariance theory, because conversion breaks the
 parametricity such theories rest on. Λs has both. Every parametric term is
 invariant under the rescalings that respect dimension, and a first-order
-program with nonzero denotation is invariant under *all* rescalings precisely
-when its accumulated conversion ratio is trivial: a decidable condition,
-which the development turns into a compiler diagnostic.
+program with nonzero denotation *to which the analysis assigns a ratio* is
+invariant under *all* rescalings precisely when that accumulated conversion
+ratio is trivial: a decidable condition, which the development turns into a
+compiler diagnostic. The analysis is conservative and may decline to assign a
+ratio, in which case it reports no invariance verdict either way.
 
-The development is 10,500 lines of definitions and proofs and 6,100 lines
-of documentation (19,100 lines of source in all; `scripts/count_lines.py`
+The development is 10,500 lines of definitions and proofs and 6,200 lines
+of documentation (19,300 lines of source in all; `scripts/count_lines.py`
 is the method, and CI checks these figures and the table below against it), and stays that small
 because of one representational decision: units and dimensions are exponent
 vectors over ℚ, so substitution is a linear map, every substitution lemma is
@@ -38,16 +40,18 @@ exists anywhere in the system.
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
 | lines of definitions and proofs | 10,500 |
-| lines of documentation | 6,100 |
+| lines of documentation | 6,200 |
 | theorem and lemma declarations | 568 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
 drift analysis, and the evaluator **at build time** through `#guard`; if a
-stated result were different, the library would not compile. The two
-demonstrations whose arithmetic reaches the BLAS stubs (the particle in a
-box and the two-state system, both in `QM.lean`) cannot run at build time,
-so the compiled binary checks them instead, and CI asserts its output.
+stated result were different, the library would not compile. The particle in
+a box is checked this way, numerically as well as dimensionally: its
+uncertainty product and its ground-state energy are `#guard` assertions. The
+two-state system reaches the BLAS stubs, whose arithmetic does not run at
+build time, so the compiled binary checks its numbers instead and CI asserts
+that output.
 
 ## Build
 

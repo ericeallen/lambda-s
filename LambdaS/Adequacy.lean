@@ -10,21 +10,24 @@ import LambdaS.Declare
 /-!
 # Adequacy: the evaluator computes the denotation, at the declared factors
 
-Two halves of the conversion story have been proved separately and never joined.
+This file connects the evaluator's conversion oracle to a satisfying valuation.
 
-`LambdaS.Declare` says when a set of unit declarations determines a valuation,
-and rejects the sets that do not. `LambdaS.Conversion` says a valuation makes
-conversion path-independent. `LambdaS.Fundamental` gives the denotational
-semantics, in which `convert` reads that valuation for its factor. (Unit
-application also consults it, but only to pick the index at which a family is
-sampled.)
+`LambdaS.Declare` and `LambdaS.DeclareSolver` decide whether a set of unit
+declarations is consistent, meaning some valuation satisfies every declared
+equation, and whether it determines each same-dimension conversion factor. A
+consistent set need not pin a unique valuation; what the solver guarantees is
+that every satisfying valuation assigns a determined factor the same value.
+`LambdaS.Conversion` says a valuation makes conversion path-independent.
+`LambdaS.Fundamental` gives the denotational semantics, in which `convert`
+reads that valuation for its factor. (Unit application also consults it, but
+only to pick the index at which a family is sampled.)
 `LambdaS.Dynamics` gives the evaluator, which takes the conversion factor from
 an **abstract oracle** `cf`, constrained by nothing at all.
 
 So the declarations determine a number, and the evaluator multiplies by a
 number, and nothing but `eval_adeq` says they are the same number.
-Every worked example elsewhere passes `fun _ _ => 1.0`; this file is where the
-conversion oracle is finally pinned.
+`Algorithms.cfDecl` is a worked oracle of exactly this kind, built from
+declared magnitudes rather than from the constant `1`.
 
 `eval_adeq` is the join. Take the oracle to be `conv V` (the conversion the
 valuation determines, hence the one the declarations determine), and evaluation
@@ -800,10 +803,10 @@ theorem eval_adeq (V : Scaling B 0) :
 
 /-! ## What the declarations buy
 
-`LambdaS.Declare` decides whether a set of unit declarations determines a
-valuation, and rejects the sets that do not. `eval_adeq` says what a valuation
-is worth to the evaluator. Composing them is the point of this file: the number
-the evaluator multiplies by is the number the declarations name.
+`LambdaS.Declare` decides whether a set of unit declarations is satisfiable,
+and rejects the sets that are not. `eval_adeq` says what a satisfying
+valuation is worth to the evaluator. Composing them is the point of this file:
+the number the evaluator multiplies by is the number the declarations name.
 
 And when the declarations conflict, `not_satisfiable_of_chain` says no valuation
 exists, so there is no oracle to run with, rather than a choice of oracles to

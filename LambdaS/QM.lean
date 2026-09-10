@@ -47,7 +47,9 @@ all of which fix exponents to ℤ. `pow` is primitive here for the reason
 
 CODATA values, written as exact rationals and converted to `Float` once per
 literal by `Num.ofRat`. The box is 1 nm wide and holds an electron; the ground
-state comes out near 0.376 eV, which is the textbook answer.
+state comes out near 0.376 eV, which is the textbook answer. An
+**electronvolt** (eV) is the energy unit conventional at this scale, about
+1.602e-19 joules.
 -/
 
 namespace LambdaS.QM
@@ -216,7 +218,9 @@ the calculus: spaces, linear maps, and the rank-one condition that makes their
 units cheap.
 
 The system is a symmetric two-level system (an ammonia molecule, a spin in a
-transverse field, a qubit) with Hamiltonian
+transverse field, a qubit). Its **Hamiltonian** `H` is the linear map sending a
+state to its energy content; what we compute below, `⟨ψ|H|ψ⟩`, is the expected
+energy of the state `ψ`. Here
 
 ```
 H = [ 0  -A ]        A = 10⁻⁴ eV

@@ -46,12 +46,32 @@ calculus, the evaluator with its erasure, unit declarations, and the worked
 examples. `THEOREMS.md` in the repository maps every identifier the paper
 cites to its module.
 
+## Vocabulary
+
+Four terms recur throughout, two of them specific to this development.
+
+* A term is **parametric** when it names no unit constant `ucon u`. Naming a
+  unit lets a term detect a rescaling, so the abstraction theorems exclude it
+  (`Tm.Parametric`).
+* A term is **convert-free** when it contains no `convert` node
+  (`Tm.ConvertFree`).
+* A program's **accumulated conversion ratio**, or **drift**, is the element
+  of the unit group recording how its value moves under a rescaling beyond
+  what its type predicts. A conversion from `u` to `v` contributes `u/v`, and
+  a program whose conversions cancel has the trivial drift `1`. The analysis
+  is conservative and may decline to assign a ratio (`LambdaS.Twist`).
+* Lean tooling: `sorry` is Lean's placeholder for an unproved obligation, and
+  none appears here; `#guard` is an assertion the compiler executes at build
+  time, so a false one breaks the build.
+
 ## From the paper's long form: Mechanization notes
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 The measured size of the Lean 4 [de Moura and Ullrich 2021] development is
 recorded in the README by `scripts/count_lines.py`. It builds with no `sorry` (Lean's placeholder for an unproved
@@ -61,7 +81,7 @@ soundness; the check by Lean's kernel is
 part of the build, and no result adds an
 axiom). The compiled evaluator calls BLAS where the platform supplies it,
 falling back to portable C loops elsewhere. The
-examples of “Unit Declarations” (`Declare.lean`) through “Dimensioned Linear Algebra” (`Map.lean`) run as
+examples from `Declare.lean` through `Map.lean` run as
 build-time assertions; the two numerical demonstrations whose
 arithmetic reaches the foreign-function interface are checked by the
 compiled binary when it runs. In this section we report what made the
@@ -69,7 +89,7 @@ mechanization small, one thing it caught, and what a reader must trust
 beyond the kernel.
 
 **Exponent vectors make the metatheory linear algebra.**
-The decision of “Units and Dimensions” (`Typing.lean`) propagates through every file.
+The representation decision made in `Typing.lean` propagates through every file.
 Substitution of units is a linear map; simultaneous substitution, weakening,
 and their composition laws are equalities of finite sums, proved by
 reordering summation rather than by structural induction. The one genuinely
@@ -84,8 +104,8 @@ ground type) rather than by a metalanguage type, never needs such coercions. Whe
 because their host type system cannot reduce
 L·T⁻¹·T,
 our equality is *definitional*: no datatype of unit expressions exists
-anywhere in the mechanization (“Units and Dimensions” (`Typing.lean`)), so a unit
-expression is its own normal form.
+anywhere in the mechanization, so a unit
+expression is its own normal form (`Typing.lean`).
 
 **Derivations as data collapse the trusted base.**
 Making the typing judgment Type-valued and the checker
@@ -97,7 +117,7 @@ soundness (`elabConvert`, which elaborates the
 e in v form, returns the core term *with* its
 derivation), and every “reconstruct the derivation”
 lemma. Derivation uniqueness came free from
-the theorem “Completeness” (`check_eq`, `Typing.lean`), and with it the right to define semantics
+the completeness theorem (`check_eq`), and with it the right to define semantics
 by recursion on derivations while stating side conditions on terms.
 
 **An environment-passing normalizer avoids Kripke structure.**
@@ -142,7 +162,7 @@ enough to be useful would exclude the instance that runs. The
 carrier-generic theorems (type soundness, strong normalization, erasure)
 therefore hold of the compiled evaluator and constrain its units, array extents,
 and control flow; the theorems that pin down *which number* comes out
-(adequacy, the theorem “Declared factors reach the compiled evaluator” (`one_yard_in_meters`, `Erasure.lean`), drift independence)
+(adequacy, declared factors reaching the compiled evaluator (`one_yard_in_meters`), drift independence)
 are stated at the ℝ instance. The binary's printed numbers are
 checked by assertion instead. The yard report's 300 and 91.44 are
 checked at build

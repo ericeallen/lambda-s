@@ -19,14 +19,17 @@ elegance.
 
 **Unit expressions are exponent vectors, not trees.** A unit expression with `k`
 unit variables in scope is a `Term B (Fin k)`: the very structure
-`LambdaS.Unify` solves systems over. Units form a free abelian group, so a
-normal form *is* an exponent vector, and equality is vector equality with no
+`LambdaS.Unify` solves systems over. Exponents are rational, so the units form
+a free ℚ-vector space written multiplicatively (`LambdaS.Uom`), and a normal
+form *is* an exponent vector: equality is vector equality, with no
 normalization pass to write or verify. `m * s / m` and `s` are literally the
 same object.
 
 **Scope is a type index.** `Ty B D j k` and `Tm B D j k` carry the numbers of
 enclosing `∀δ` and `∀u:d` binders, so well-scopedness is a typing invariant
-rather than a side condition, and substitution has nowhere to go wrong.
+rather than a side condition, and a substitution that captured a variable or
+left an index dangling would not typecheck in the metalanguage. The
+mechanization caught exactly such a capture bug, which the tests had missed.
 
 **A space is the list of units its components carry.** This is `LambdaS.Space`
 at a finite index type, written structurally: a space *is* its unit
@@ -356,8 +359,9 @@ theorem entry_toSpace (V W : Sp B 0) (j : Fin W.length) (i : Fin V.length) :
 /-! ## Dimensions
 
 A dimension expression has exactly the structure a unit expression does: the
-dimension group is free abelian on base dimensions, just as the unit group is
-free abelian on base units. So `DExp` *is* `UExp` at the dimension alphabet, and
+dimensions form a free ℚ-vector space on base dimensions, written
+multiplicatively, just as the units do on base units. So `DExp` *is* `UExp` at
+the dimension alphabet, and
 every operation (multiplication, division, rational powers, substitution,
 weakening, decidable equality) is reused rather than rebuilt.
 
@@ -381,8 +385,11 @@ into one:
   `∀u. τ`  ≡  `∀δ. ∀u:δ. τ`
 
 Unbounded quantification is bounded quantification at a dimension variable.
-`dimOf` stays total, `convert` under `∀u` is rejected because `δ` matches
-nothing, and there is a single quantifier rule to state and prove.
+`dimOf` stays total and there is a single quantifier rule to state and prove.
+Under `∀δ. ∀u:δ`, conversion out of `u` to a *concrete* unit is rejected,
+because no concrete unit has dimension `δ`. Conversion to another variable
+bounded by the same `δ` is not rejected: that is the generic caster, which
+typechecks (`Examples.caster`).
 -/
 
 /-- A dimension expression with `j` dimension variables in scope. Literally a
@@ -778,7 +785,7 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   /-- Row extraction: the elimination form for `Lin`, dual to `mcons` as
   `idx` is to `vcons`. Row `i` of a map at `Lin V W` is a vector over the
   row space `w / δ_V(·)` for `w = δ_W(i)`, which is exactly the vector
-  `mcons` consumes, so extraction and introduction meet on the nose. -/
+  `mcons` consumes, so extraction and introduction agree exactly. -/
   | mrow {j k} : Tm B D j k → ℕ → Tm B D j k
   /-- **Compare and branch**, fused so that no `Bool` type is needed. The
   scrutinees are compared at a common unit, which is what keeps the form

@@ -19,9 +19,8 @@ rank of the matrix of unit-variable exponents.
 
 He mechanized the extensional semantics in Coq (WMM 2008) but listed the Pi
 theorem's proof as **work in progress**, along with the non-definability results
-and the higher-order generalization. No completion appears in the eighteen years
-since. This file is progress on that, and it is important to be precise about
-how much.
+and the higher-order generalization. This file is progress on that, and it is
+important to be precise about how much.
 
 ## What is proved here
 

@@ -52,18 +52,23 @@ space and `List.length_map` is likewise a theorem.
 /-!
 ## From the paper's long form: Accumulated Ratios, and a Decidable Diagnostic
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 With the abstraction theorems in hand, we now ask what many conversions
-accumulate to. The theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`, `Fundamental.lean`) characterizes one conversion,
+accumulate to. The single-conversion invariance theorem (`cvt_rel_iff_coherent`) characterizes one conversion,
 but programs convert many times: a meter-to-feet round trip is harmless, a
-one-way conversion is not. In this section we assign every program its *accumulated
-conversion ratio*, prove that the ratio measures the program's
-departure from scale-invariance, and show that the resulting condition is
-decidable, which turns the abstraction theory into a compiler diagnostic.
+one-way conversion is not. In this section we assign a program its *accumulated
+conversion ratio* where the analysis succeeds, prove that the ratio measures
+the program's departure from scale-invariance, and show that the resulting
+condition is decidable, which turns the abstraction theory into a compiler
+diagnostic. The analysis is conservative: at a sum, a comparison, `mapp` and
+`comp` it can decline to assign a ratio, and a decline is not a verdict of
+non-invariance.
 
 ### Ratios as Syntax
 
@@ -81,25 +86,19 @@ substitution, had nowhere to send the ratio of a polymorphic term, and
 triviality of a ratio could be defined but not decided. We therefore make
 ratios first-order syntax.
 
-*(Figure omitted here; see the ratio calculus (`Shape`, `Tw`, `SemTw`, and `Tw.eval` in `Ratio.lean`). Its caption: The ratio calculus Tw (top), the semantic ratios at each
-shape (middle), and evaluation (bottom), transcribed from the artifact's
-`Shape`, `Tw`, `SemTw`, and `Tw.eval`. A ratio
-is indexed by a unit scope, a context of shapes (one ratio variable, a
-de Bruijn index, per term variable), and a shape; the shape of Q u is
-scalar, the shape of a unit quantifier is bind applied
-to its body's shape, and a dimension binder leaves the shape unchanged.
-Evaluation reads a ratio under a rescaling ψ and an environment ρ
-of semantic ratios; (a,ρ) extends the environment, and (ψ,a)
-extends the rescaling, assigning log-factor a to the newly bound unit
-variable. The clause for t [u] performs the recorded instantiation
-semantically, reading the family at logψ(u). The two conses and two
-projections are distinguished by their shapes, and the vector and matrix
-formers evaluate componentwise. Semantic ratios are *positive* reals:
-every ratio denotes a product of scale factors, and positivity is what
-makes cancellation across the fraction bar sound (`Tw.scalarEq`).)*
+The definitions are `Shape`, `Tw`, `SemTw` and `Tw.eval`, all in `Ratio.lean`.
+Read them in that order; the notation needed here is this. A ratio is indexed
+by a unit scope, a context of shapes (one ratio variable, a de Bruijn index,
+per term variable), and a shape. Evaluation reads a ratio under a rescaling ψ
+and an environment ρ of semantic ratios, where (a,ρ) extends the environment
+and (ψ,a) extends the rescaling, assigning log-factor a to the newly bound
+unit variable. The clause for t [u] performs the recorded instantiation
+semantically, reading the family at logψ(u). Semantic ratios are *positive*
+reals: every ratio denotes a product of scale factors, and positivity is what
+makes cancellation across the fraction bar sound (`Tw.scalarEq`).
 
-the ratio calculus (`Shape`, `Tw`, `SemTw`, and `Tw.eval` in `Ratio.lean`) presents the resulting calculus Tw of ratio
-expressions and its interpretation, transcribed from the artifact. Ratios
+`Tw` is the calculus of ratio
+expressions and `Tw.eval` its interpretation. Ratios
 are indexed not by the program's type but by its *shape*: the type's
 skeleton, which records where the ratio is a unit expression
 (scalar), where it maps ratios to ratios (an arrow), where it
@@ -112,11 +111,12 @@ quantifier preserves it, so a ratio indexed by a type equally indexes every
 instantiation of that type, and no transport is needed. Unit instantiation
 is then *recorded* by the syntax rather than performed: t [u]
 stores the instantiating unit, and the interpretation reads the ratio
-family at that unit's log-factor. No substitution lemma for ratios
-exists.
+family at that unit's log-factor. So no unit substitution acts on a ratio.
+Reduction of a ratio *application* is ordinary syntactic substitution
+(`Tw.subst0`, interpreted by `Tw.eval_subst0`).
 
 A judgment Twist relates a typing derivation to its ratio, and
-the scaling law generalizes the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) with the ratio as the measured
+the scaling law generalizes the convert-free abstraction theorem (`fundamental_free`) with the ratio as the measured
 defect:
 
 **Theorem (The scaling law, twisted; `Twist.scaling`).** The law has two
@@ -137,7 +137,7 @@ four: the input x, a length in meters, doubles, and the conversion factor
 V(m)/V(ft) doubles with it, while the result type
 Q ft promises only ψ(ft) = 1; the excess 2²
 is ψ(m/ft)². At trivial ratio this is
-the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`); the extra factor is visible to every rescaling,
+the convert-free abstraction theorem (`fundamental_free`); the extra factor is visible to every rescaling,
 not only the incoherent ones. Holding one parameter trivial in turn gives
 the two statements a drift diagnosis is for (`unitDrift_law`): with the
 values fixed, a program of drift w is multiplied by φ(w) when the
@@ -239,9 +239,9 @@ scale factors, so the positive carrier excludes nothing the scaling law
 can instantiate. A first-order program's ratios consequently carry no
 atoms, and there the comparison is exact in both directions: for
 atom-free ratios, syntactic agreement coincides with equal evaluation
-under every rescaling (`Tw.normEq_iff_eval_eq`), so a
-once both summands have been assigned atom-free ratios, the sum is declined
-precisely when those ratios disagree. A summand whose own analysis declines
+under every rescaling (`Tw.normEq_iff_eval_eq`). So once both summands have
+been assigned atom-free ratios, the sum is declined precisely when those
+ratios disagree. A summand whose own analysis declines
 also makes the sum decline. The artifact checks both sides of the line:
 (x in ft) + (y in ft) over two
 meter inputs is accepted at drift m/ft
@@ -262,13 +262,16 @@ arguments will drift alike is a fact about call sites, which a
 compositional analysis refuses to consult.
 
 The analysis declines one term form unconditionally:
-1_u, which the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) places outside the
+1_u, which the convert-free abstraction theorem (`fundamental_free`) places outside the
 invariance theory. The decline also keeps the report single-voiced. A unit constant's defect is a failure of covariance, not
 a dependence on the declarations: 1_u/1_u depends
 on nothing, and x · 1_u never consults the valuation.
-Tracking it is possible (the relation forces the ratio u^(-1/2): the
-defect is incurred once where conversion's is incurred twice, hence the
-half exponent), but it would make the
+An earlier account claimed the ratio u^(-1/2) tracks it. That works only on
+the diagonal φ = ψ, where the valuation and the inputs are rescaled together:
+the twisted law's factor is ψ(u)·φ(w)·ψ(w), which at w = u^(-1/2) is
+ψ(u)^(1/2)·φ(u)^(-1/2), equal to 1 exactly when φ(u) = ψ(u). The law's two
+parameters are independent, so no single ratio in the unit group accepts
+1_u in general. Even were one available, tracking it would make the
 exhibited ratio mean two different things. With 1_u declined, conversion remains
 the only analyzed construct that reads the valuation, so a reported
 drift names dependence on the declared magnitudes and nothing else. log and exp accept an argument whose ratio is
@@ -1579,9 +1582,12 @@ theorem Tw.scalarEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
 
 A redex that substitution creates (a `lam`-bound variable in head position,
 instantiated by an abstraction) is an `app` node to `Tw.flat`, hence an atom.
-Comparing normal forms (`Tw.norm`) removes every such residue: after
-normalization the only atoms left are `lam`-bound variables themselves and
-their projections, which stand for arguments not yet supplied. -/
+Comparing after `Tw.norm` removes such a residue whenever the bounded
+reduction reaches it (`Ratio.lean` states what that bound does and does not
+guarantee). What then remains as atoms are `lam`-bound variables themselves
+and their projections, which stand for arguments not yet supplied, together
+with any redex the fuel did not reach; the comparison declines on the
+latter. -/
 
 /-- The branch comparison, run on β-normal forms. -/
 def Tw.normEq {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar) : Bool :=
@@ -1852,13 +1858,14 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
           (Tw.normEq_sound t (.unit 1) h1 ψ θρ).trans
             (Tw.eval_one ψ .scalar θρ)) ht⟩
       else none
-  -- `ucon` is the one unconditional decline, by design rather than necessity.
-  -- The relation would accept it at ratio `u^(-1/2)` (its defect is incurred
-  -- once where conversion's is incurred twice, hence the half exponent), but a
-  -- unit constant's defect is a covariance failure with no dependence on the
-  -- declarations, and tracking it would make a reported drift mean two
-  -- different things. With `ucon` declined, conversion remains the only
-  -- analyzed construct that reads the valuation.
+  -- `ucon` is the one unconditional decline. The ratio `u^(-1/2)` accepts it
+  -- only on the diagonal `φ = ψ`, since the law's factor `ψ(u)·φ(w)·ψ(w)` is
+  -- then `ψ(u)^(1/2)·φ(u)^(-1/2)`, which is `1` iff `φ(u) = ψ(u)`; the two
+  -- parameters are independent here. Separately, a unit constant's defect is a
+  -- covariance failure with no dependence on the declarations, so tracking it
+  -- would make a reported drift mean two different things. With `ucon`
+  -- declined, conversion remains the only analyzed construct that reads the
+  -- valuation.
   | _, _, _, _, _, _, _, _, _, .ucon => none
 
 /-! ## The diagnostic, end to end -/

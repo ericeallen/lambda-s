@@ -34,7 +34,7 @@ conversion multiplies by `conv V u u = 1`, so it is denotationally invisible;
 into a convert-free term with the same denotation.
 
 The converse is `cvt_invariant_iff_eq`: a single conversion applied to a nonzero
-argument is invariant under *all* scalings if and only if `u = v` on the nose.
+argument is invariant under *all* scalings if and only if `u = v` exactly.
 Not "same dimension": literally the same exponent vector. The mechanism is
 `scale_eq_iff`: scalings separate points of the unit group, so `∀ψ, ψ.scale u =
 ψ.scale v` collapses to `u = v`.

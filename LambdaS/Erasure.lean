@@ -23,7 +23,7 @@ spaces). Nothing is checked because there is nothing
 left to check against, which is the point: the erased evaluator is the one a
 compiler would emit.
 
-Two things deliberately survive erasure, and neither is a unit.
+Two things deliberately survive erasure, and neither is a unit tag on a value.
 
 **Shape** survives: a vector is still a list, and a matrix keeps its column
 count, without which the composite of a zero-row matrix has no width. That is
@@ -52,18 +52,23 @@ normalization and adequacy. `erasure_correct` says a well-typed closed scalar
 term evaluates on **both** evaluators, to the same magnitude, at the unit the type
 predicts, so the type system knows statically everything the erased evaluator no
 longer carries. `eeval_den` says the erased evaluator computes the denotation,
-with the conversion oracle the valuation determines: the compiled program's
-output is the mathematical meaning, with the units gone from the values and
-alive in the types.
+with the conversion oracle the valuation determines: the output is the
+mathematical meaning, with the units gone from the values and alive in the
+types. That equality is stated for the evaluator instantiated at `ℝ`. The
+simulation itself is generic in the carrier, but no theorem here relates a
+`Float` run of the compiled binary to the real denotation; see
+`LambdaS.Num` for what the two carriers do differently.
 -/
 
 /-!
 ## From the paper's long form: Adequacy and Erasure
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 Two theorems remain to close the system end to end: that the
 evaluator of “Dynamics” (`Normalization.lean`) computes the denotation of
@@ -118,7 +123,7 @@ evaluators to the same magnitude, at the unit u the type predicts.
 The simulation needs *no typing hypothesis*: the instrumented
 evaluator's success already witnesses that every skipped check would have
 passed. Typing enters only in the corollary (`erasure_correct`), where
-the theorem “Unit soundness” (`unit_soundness_total`, `Normalization.lean`) supplies termination and the predicted unit.
+the unit soundness theorem (`unit_soundness_total`) supplies termination and the predicted unit.
 
 Two things deliberately survive erasure, and neither is a unit tag on a
 value. The array extents survive: a matrix keeps its column count, because
@@ -516,10 +521,11 @@ theorem erasure_correct (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
   obtain ⟨n, m, hm⟩ := unit_soundness_total cf d
   exact ⟨n, m, hm, eeval_erase cf n e (nilU B) (nilU D) [] _ hm⟩
 
-/-- **The erased evaluator computes the denotation.** With the conversion oracle
-the valuation determines, the compiled program's output is the mathematical
-meaning: units gone from the values, alive in the types. Adequacy composed
-with the simulation. -/
+/-- **The erased evaluator computes the denotation**, at the carrier `ℝ`. With
+the conversion oracle the valuation determines, the erased evaluator's output
+is the mathematical meaning: units gone from the values, alive in the types.
+Adequacy composed with the simulation. A `Float` run of the same program is
+not proved equal to this denotation. -/
 theorem eeval_den (V : Scaling B 0) {e : Tm B D 0 0} {u : UExp B 0}
     (d : HasTy (DCtx.nil D) ([] : Ctx B D 0 0) e (.Q u)) :
     ∃ n : ℕ, eeval (conv V) n 0 0 (nilU B) (nilU D) [] e

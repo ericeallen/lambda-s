@@ -1231,7 +1231,7 @@ value of its consed component, magnitude and unit both. -/
 /-! ### Row extraction
 
 `mrow` is the elimination form for `Lin`, dual to `mcons` as `idx` is to
-`vcons`. Introduction and elimination meet on the nose: row `0` of
+`vcons`. Introduction and elimination meet exactly: row `0` of
 `mcons w r M` has exactly the type `r` was checked at. Without it a matrix
 could be built and applied but never read, so no closed term could name a
 matrix element, a column, or a transpose. -/

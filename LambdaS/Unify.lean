@@ -122,7 +122,7 @@ theorem solves_iff [Fintype V] (σ : Assign B V) (t : Term B V) :
     simpa using h b
 
 /-- **Rigid mismatch.** When no variable occurs, the equation is solvable exactly
-when it already holds on the nose. This is the error case of unification, and it
+when it already holds exactly. This is the error case of unification, and it
 is decidable pointwise. -/
 theorem solves_of_no_vars [Fintype V] (t : Term B V) (hv : t.vars = fun _ => 0)
     (σ : Assign B V) : Solves σ t ↔ t.base = fun _ => 0 := by

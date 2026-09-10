@@ -22,8 +22,8 @@ extravagance and is not:
 
 * It is **forced by the domain.** A normalized three-dimensional wavefunction
   carries `m ^ (-3/2)`; volatility carries `Time ^ (-1/2)`. Neither is
-  expressible with integer exponents, which is why no existing static units
-  system can type either one.
+  expressible with integer exponents, so a system whose exponents are integral,
+  such as Kennedy's, cannot type either one without a change of basis.
 * It makes the solver **simpler**, not harder. Over `ℤ` the unit group is a
   lattice and unification needs Hermite or Smith normal form; over `ℚ` it is a
   vector space and unification is Gaussian elimination.

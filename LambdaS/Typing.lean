@@ -32,7 +32,7 @@ is determined by the judgment it proves.
 
 ## Where the units bite
 
-Five rules do the work, and each corresponds to something argued for in the
+Six rules do the work, and each corresponds to something argued for in the
 design:
 
 * `add` requires the two units to be **equal**. This is where dimensional errors
@@ -82,10 +82,12 @@ principal types for this calculus.
 /-!
 ## From the paper's long form: The Calculus
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 In this section, we present the syntax and statics of Λs. The design is
 governed by a single decision from which nearly everything else follows: units
@@ -206,16 +208,12 @@ decided by comparing their entries.
 
 ### Types and Terms
 
-*(Figure omitted here; see Figure 1 of the paper (the `UExp`, `DExp`, `Ty`, and `Tm` inductives of `Syntax.lean`). Its caption: Syntax of Λs. Types and terms are indexed by the number of
-enclosing dimension binders j and unit binders k; unit and dimension
-variables are de Bruijn indices into those
-scopes [de Bruijn 1972]. Function application
-e e and linear-map application e ⊙ e are distinct term forms, as in
-the artifact. Unit and dimension expressions satisfy the laws of a
-ℚ-vector space written multiplicatively, by construction: each is
-represented as its exponent vector.)*
-
-The types and terms of Λs appear in Figure 1 of the paper (the `UExp`, `DExp`, `Ty`, and `Tm` inductives of `Syntax.lean`). When
+The types and terms are the `UExp`, `DExp`, `Ty` and `Tm` inductives of
+`Syntax.lean`. Two conventions there matter for what follows. Types and terms
+are indexed by the number of enclosing dimension binders j and unit binders k,
+with unit and dimension variables as de Bruijn indices into those scopes. And
+function application and linear-map application are distinct term forms, `app`
+and `mapp`. When
 describing Λs we use the following metavariables:
 
 - Unit expressions: u, v, w; dimension expressions: d; spaces
@@ -384,19 +382,16 @@ T-Cvt is the only rule in Λs that can observe a unit, and
 
 ### Statics
 
-*(Figure omitted here; see Figure 2 of the paper (the constructors of `HasTy`). Its caption: Typing: the full rule set, transcribed from the artifact's
-`HasTy`. Γ^(↑) and Δ^(↑) weaken a context
-past a new binder: each index in the context is shifted so that it refers to
-the same variable in the extended scope. In T-Idx, the premise
-u⃗_i = u abbreviates a successful bounds-checked lookup, as in the
-artifact. In T-Con, u ranges over all unit expressions,
-variables included. (u, u⃗) prepends a component to a space, and in
-T-MCons, w/u⃗ is the pointwise quotient, entry j at
-w/u_j.)*
+The rules are the constructors of `HasTy`, below. Reading them needs three
+local conventions. Γ^(↑) and Δ^(↑) weaken a context past a new binder, shifting
+each index so that it refers to the same variable in the extended scope. At
+`idx`, a premise of the form u⃗_i = u abbreviates a successful bounds-checked
+lookup. And (u, u⃗) prepends a component to a space, while at `mcons` the
+pointwise quotient w/u⃗ has entry j at w/u_j.
 
 The typing judgment Δ;Γ ⊢ e : τ carries a dimension
 context Δ (the declared dimension of each unit variable in scope)
-alongside the usual Γ; the rules appear in Figure 2 of the paper (the constructors of `HasTy`),
+alongside the usual Γ; the rules are the constructors of `HasTy`,
 they are syntax-directed, and types are unique. We highlight what the
 artifact makes of this, because the
 arrangement is unusual and we recommend it. The checker does not return a

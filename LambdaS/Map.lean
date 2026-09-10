@@ -8,11 +8,14 @@ import LambdaS.Space
 /-!
 # Linear maps between dimensioned spaces, and the collapse of Hart's taxonomy
 
-George Hart's *Multidimensional Analysis* (1995) is the only serious theory of
-dimensioned matrices. Its central observation is that an array of dimensioned
-entries is only well-behaved when its exponent structure is **rank one**
-(entry `(j,i)` must carry `aⱼ · bᵢ`), and from there Hart derives a taxonomy of
-five classes, each licensing a different set of operations:
+George Hart's *Multidimensional Analysis* (1995) is the standard reference on
+dimensioned matrices, and this file follows it. Its central observation is that
+an array of dimensioned entries is only well-behaved when the array of **entry
+units** is multiplicatively separable: entry `(j,i)` must carry `aⱼ · bᵢ`, so
+that two vectors of units determine every entry. Hart calls this rank one, and
+so do we; it is a statement about the entry units and says nothing about the
+numerical rank of the matrix. From there Hart derives a taxonomy of five
+classes, each licensing a different set of operations:
 
 | Hart's class        | operations licensed                    |
 |---------------------|----------------------------------------|
@@ -20,7 +23,7 @@ five classes, each licensing a different set of operations:
 | endomorphic         | powers, `exp`, `det`, `trace`          |
 | squarable           | eigendecomposition                     |
 | dimensionally symm. | Cholesky, weighted norms               |
-| uniform             | SVD, pseudo-inverse                    |
+| uniform             | singular value decomposition, pseudo-inverse |
 
 Hart needed the rank-one condition because he worked with raw arrays.
 
@@ -36,10 +39,12 @@ The theorems below are that argument, one class at a time.
 /-!
 ## From the paper's long form: Dimensioned Linear Algebra
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 In this section we present the unit algebra the artifact proves for the
 Vec and Lin types of “The Calculus” (`Typing.lean`),
@@ -134,10 +139,12 @@ dual, and a self-dual space is dimensionless
 equations, the equations AᵀA x = Aᵀb that least squares
 solves, need a metric g : Lin w⃗ w⃗⁻¹: an inner
 product on the codomain, which is to say a choice of weights. A
-uniform space carries a canonical one, with constant entry u⁻²
-(`uniform_canonical_metric`): residuals all measured in meters get
-the metric with entries m⁻², and the weighted norm of a
-residual vector is a plain number. A non-uniform space carries no canonical
+uniform space determines the *entry unit* such a metric must have, constantly
+u⁻² (`uniform_canonical_metric`): residuals all measured in meters admit a
+metric with entries at m⁻², under which the weighted norm of a residual
+vector is a plain number. That is an identity of unit assignments. It does not
+construct the numerical matrix, nor prove it positive definite, nor single one
+out; choosing the numbers is additional structure the caller supplies. A non-uniform space carries no canonical
 metric, and
 rightly so: least squares over components of differing units *is*
 weighted least squares, and the weighting is a modeling choice.
@@ -299,13 +306,16 @@ theorem transpose_comp_direct_iff (W : Space B J) :
   · exact cholesky_factor_dimensionless
   · rintro rfl; funext j; simp
 
-/-- A **uniform** space carries a canonical metric, with constant entry `u⁻²`.
+/-- On a **uniform** space, a metric has constant entry unit `u⁻²`.
 
-This is where Hart's "left uniform" condition comes from: it is the case in
-which the metric the pseudo-inverse needs exists canonically. For a non-uniform
-space no canonical metric exists and one must be supplied, which is exactly
-right, since least squares on components of differing units *is* weighted least
-squares, and the weighting is a modeling choice rather than a default. -/
+The statement is about entry units only: it fixes the unit every entry of such
+a metric carries, and says nothing about which numbers fill it, whether they
+are positive definite, or whether one choice is canonical. This is where
+Hart's "left uniform" condition comes from: it is the case in which the entry
+unit the pseudo-inverse's metric needs is determined by the space alone. On a
+non-uniform space the entry units differ across components, so the weighting
+must be supplied, which is exactly right, since least squares on components of
+differing units *is* weighted least squares. -/
 theorem uniform_canonical_metric (u : Uom B) (j i : J) :
     entry (Space.triv B J ⊗ u) (Space.triv B J ⊗ u).dual j i = (u * u)⁻¹ := by
   ext b; simp; ring

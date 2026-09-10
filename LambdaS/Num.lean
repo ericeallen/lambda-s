@@ -138,9 +138,9 @@ Multiplication rounds, so `c * x` and `c * y` can compare differently from `x`
 and `y` at subnormals and near overflow. Making this a field of `Num` would
 therefore have forced either a false law or a `sorry`.
 
-The split is the honest one and it is the same split the development already
-draws elsewhere: theorems over `ℝ`, binary over `Float`, with the places they
-part ways pinned rather than papered over (`QM.boundaryChecks`). The
+The split is the same one the development already draws elsewhere: theorems
+over `ℝ`, binary over `Float`, with the places they part ways pinned rather
+than papered over (`QM.boundaryChecks`). The
 abstraction theorems live in the denotational semantics over `ℝ` and never
 mention this class, so nothing here is newly unproved; `Float` has never
 satisfied an arithmetic identity and was never asked to.
@@ -150,14 +150,25 @@ number. In `le` it changes which branch runs, so a unit change can alter
 control flow rather than the last bits, and that is the failure a user would
 actually be ambushed by.
 
-The guarantee worth telling a user is sharper than this law. Multiplication by
-a power of two is exact in IEEE 754, so a rescaling by `2^k` preserves
-comparisons on the nose and this law does hold at `Float` in that case. It is
-also the case that matters: a compiler rescaling to keep magnitudes near 1
-picks binary powers because they are free and exact. Rescale by `2^k` and
-control flow is preserved; rescale by `3.28` and it need not be. Outside that
-case a branch can flip only when the two sides are within rounding of each
-other, which means the comparison was ill-conditioned regardless of units.
+There is a useful sufficient condition, and it is narrower than "rescale by a
+power of two". Multiplication by `2^k` shifts the exponent and leaves the
+significand alone, so it is exact **provided both scaled results are finite
+and normal**. Under that proviso the comparison is preserved. It is the case
+that matters in practice: a compiler rescaling to keep magnitudes near 1 picks
+binary powers because they are free and exact.
+
+The proviso is not decoration. Both counterexamples below are rescalings by a
+power of two, and both flip the comparison:
+
+* Overflow. `1.7e308 ≤ 1e308` is `false`; after multiplying both by `2` each
+  operand is `inf`, and `inf ≤ inf` is `true`.
+* Underflow. `1e-323 ≤ 5e-324` is `false`; after multiplying both by `0.25`
+  each operand is `0.0`, and `0.0 ≤ 0.0` is `true`.
+
+Note what these refute besides the unconditional law: the operands differ by
+seventy percent in the first case, so it is not true that a branch can flip
+only when the two sides are within rounding of each other. Rounding to a
+common `inf` or a common `0.0` destroys a wide separation in one step.
 
 Positivity is not decoration. At `c = 0` both products collapse to zero and the
 comparison is decided by reflexivity rather than by `x` and `y`, so the law is

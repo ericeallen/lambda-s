@@ -54,10 +54,12 @@ The coordinate count is rank-nullity (Mathlib's). The rational-exponent decision
 /-!
 ## From the paper's long form: Dimensional Analysis
 
-The paper's tag `long-form` carries this section in full; it is reproduced
-here, converted to Markdown, so the documentation develops what the paper
-now summarizes. Section references name the module that carries the
-section; theorem references name the declaration.
+This is the developed explanation that the paper's corresponding section
+summarizes and cites; the paper is the summary and this is the long form, so
+where the two differ in detail this one governs. It is maintained against the
+current development rather than left at the state the paper's `long-form` tag
+recorded. The brief mission statement above says what the module is for; read
+that first and this when you want the argument.
 
 The abstraction theorems of “The Price of Conversion” (`Fundamental.lean`) have two further
 consequences, which the programmer never asks for but a numerical
@@ -74,7 +76,7 @@ at type Q u² → Q u
 inhabit the type, by naming a unit,
 λ x. 1_u; the Newton paragraph below prices that seed.) Note that the scaling law
 alone cannot deliver this. Applied to a hypothetical
-f : Q u² → Q u, the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) gives
+f : Q u² → Q u, the convert-free abstraction theorem (`fundamental_free`) gives
 f(k² x) = k · f(x), an equation square root satisfies; parametricity
 says that any such f is a constant multiple of square root, not that none
 exists. What excludes the function is a span argument on the syntax. From an
@@ -88,7 +90,7 @@ conclusion stronger than uncomputability
 (`sqrt_not_definable`, over a self-contained arithmetic grammar;
 `arith_of_hasTy` lifts the statement to the
 calculus's own typing derivations). The primitive is also a permitted one:
-powers are parametric, so the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`) covers them
+powers are parametric, so the convert-free abstraction theorem (`fundamental_free`) covers them
 (`sqrt_scales`, instantiated at λ x. √x). Atkey et al. [2013]
 prove stronger results of this kind (cube root remains undefinable even
 given square root); we include ours because the exponent-vector
@@ -102,8 +104,9 @@ the non-definability theorem itself (`no_newton_seed`; at the
 term grammar, `no_newton_seed_tm`). The full calculus offers
 the seed 1_u, at a price the theory names: every finite run
 of the constant-seeded program depends on the unit system, boundedly
-under a relative tolerance (an absolute one is not even writable
-parametrically), while a seed passed as an argument rescales with
+under a relative tolerance (an absolute tolerance written as a literal
+times 1_u is not writable parametrically, though one supplied as an
+input is), while a seed passed as an argument rescales with
 everything else and restores parametricity wholesale. The artifact's
 documentation develops the full analysis, seeds, tolerances, and the
 piecewise-rational argument that no recursive program computes square
@@ -150,7 +153,7 @@ mass, a fact usually credited to the mechanics, follows from the type of
 f. Mechanics contributes only the function G, with
 G(θ) → 2π in the small-amplitude limit.
 
-The general statement is the scaling law of the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`)
+The general statement is the scaling law of the convert-free abstraction theorem (`fundamental_free`)
 handed to linear algebra, and the artifact carries the handoff as theorems.
 For a first-order program (n scalar arguments, one scalar result),
 instantiating the scaling law at every rescaling of the unit symbols in
@@ -215,15 +218,18 @@ proposed [Kennedy 1997] and, for one variable, Atkey et al. [2013]
 mechanized. Ours is the general n-variable statement with the rank
 condition, mechanized and connected to the calculus; we claim the
 mechanization, not the mathematics. The
-standing hypotheses are the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`)'s: the
+standing hypotheses are the convert-free abstraction theorem (`fundamental_free`)'s: the
 program must be parametric (no unit constants) and convert-free;
 solvability's failure is the dichotomy's other half, settled above. Neither
 syntactic hypothesis is redundant. A program that converts obeys the
 scaling law only for coherent rescalings, and the Pi argument quantifies
-over all rescalings; the drift analysis of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`)
-suggests the sharper hypothesis, drift-free rather than convert-free,
-and we leave that weakening to future work
-(the paper's conclusion). Parametricity cannot be dropped even for
+over all rescalings. The drift analysis (`Twist.lean`) supplies the sharper
+hypothesis, drift-free rather than convert-free, and that weakening is
+proved: `den_mulScaleLaw_driftFree`, below, reaches the same conclusion for a
+program whose conversions cancel. It keeps the theorem's other hypotheses,
+and it does not subsume the convert-free statement, since the two are
+incomparable: a drift-free program may convert, and a convert-free one may be
+declined by the analysis. Parametricity cannot be dropped even for
 convert-free
 terms: λ x. (x/1_u)·1_v is convert-free,
 denotes the identity at Q u → Q v, and violates the unrestricted

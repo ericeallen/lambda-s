@@ -30,7 +30,7 @@ So there are three things, and they are complementary rather than competing:
 | `eeval_erase` (`LambdaS.Erasure`) | dropping units **does not change the numbers** |
 | scaling parametricity, i.e. invariance of results under a change of units (`LambdaS.Fundamental`) | units have **observable meaning** |
 
-Kennedy did the third column. This file defines the instrumented evaluator; its
+Kennedy did the third row. This file defines the instrumented evaluator; its
 soundness lives in `LambdaS.Soundness` and `LambdaS.Normalization`, and erasure
 in `LambdaS.Erasure`; all three are stated at the whole language.
 -/

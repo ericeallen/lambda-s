@@ -10,9 +10,11 @@ import LambdaS.Dynamics
 /-!
 # Numeric algorithms, as a sanity check on the calculus
 
-Λs is pure and total: no recursion, no conditionals, no mutable state. The
-question this file answers is whether that leaves enough to write recognizable
-numerical methods, or only formulas.
+Λs is pure and total: no recursion and no mutable state. It has a
+compare-and-branch form, `ifle`, but no general boolean type, and the methods
+in this file are straight-line terms that use neither. The question this file
+answers is whether that leaves enough to write recognizable numerical methods,
+or only formulas.
 
 The answer is that **straight-line numerical methods transcribe directly**, and
 their types are their specifications. A central difference has type
@@ -26,7 +28,8 @@ Unit equality here is decided by *arithmetic on exponent vectors*, not by
 normalizing syntax. In the Runge–Kutta step below, the intermediate
 `(h/2)·k₁` has unit `t · (y/t)`, and `add` demands it equal `y`. As exponent
 vectors those are `t + (y − t)` and `y`, and the checker settles it by adding
-rationals. There is no normalization pass, so there is nothing to get wrong.
+rationals. There is no normalization pass, so the class of bugs that lives in
+one, an incomplete or non-confluent rewrite on unit syntax, cannot arise.
 -/
 
 namespace LambdaS.Algorithms
@@ -257,7 +260,8 @@ def ydPerFtIn1 : Term₀ :=
 #guard runDecl ydPerFt == some 1.0
 #guard (runDecl ydPerFtIn1).any (fun x => Float.abs (x - 3.0) < 1e-12)
 -- Exactly 3 at the real carrier, by `evalC_convert_declared`; the Float
--- oracle divides 0.9144 by 0.3048 in binary and lands within an ulp.
+-- oracle divides 0.9144 by 0.3048 in binary and lands within one unit in the
+-- last place, the spacing between adjacent representable floats there.
 
 /-- The other route to the same number: convert one operand before dividing,
 `(1_yd in ft) / 1_ft`. The quotient is at unit `ft/ft = 1` with no conversion

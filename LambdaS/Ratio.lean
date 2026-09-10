@@ -28,9 +28,14 @@ choice, an obstruction.
 This file makes ratios first-order instead. Two things fall out beyond
 covering the quantifiers.
 
-Substitution disappears rather than becoming structural: `Tw.uapp` **records**
-the instantiating unit instead of performing it, and the interpretation does the
-work. So there is no ratio-substitution lemma at all, and no transport.
+Unit substitution disappears rather than becoming structural: `Tw.uapp`
+**records** the instantiating unit instead of performing it, and the
+interpretation does the work, so no unit substitution is applied to a ratio
+and no transport is needed. Substitution of ratios into ratios is a separate
+matter and is present: reducing a ratio application uses `Tw.subst` and
+`Tw.subst0`, whose interpretation lemmas are `Tw.eval_subst` and
+`Tw.eval_subst0`. The point is which substitution the design avoids, not that
+ratios have none.
 
 And a first-order ratio is *inspectable*. With a function space you can define a
 term's ratio but never decide whether it is trivial; with syntax you can, which
@@ -444,13 +449,17 @@ def Tw.rowE {k : ℕ} {Θ : List Shape} {n : ℕ} :
 another: a `lam`-bound variable in head position, instantiated by an
 abstraction, becomes a redex the construction site never sees. The flat-form
 comparison treats any surviving `app` as an atom, so a residue of this kind
-costs an agreement check its completeness. `Tw.norm` reduces every redex,
-under binders included, before a ratio is compared. It runs on fuel, one unit
-per reduction at a root; the ratio calculus is simply typed, so a normal form
-exists, and the fuel is a bound the normalizer never exhausts on the ratios
-`twistOf` builds, which nest applications no deeper than the program does.
-Exhausting it leaves a redex in place, which the comparison then declines:
-fuel costs completeness, never soundness (`Tw.eval_norm`). -/
+costs an agreement check its completeness. `Tw.norm` reduces redexes, under
+binders included, before a ratio is compared. It runs on fuel derived from the
+term's node count (`Tw.size`), one unit per reduction at a root.
+
+The reduction is therefore *bounded*, not exhaustive, and what is proved about
+it is that it preserves meaning: `Tw.eval_norm` says the value is unchanged.
+No theorem here says the size-derived fuel suffices to reach a normal form on
+the ratios `twistOf` builds, and `normN 0` returns its argument unreduced. If
+the fuel runs out, a redex survives, `Tw.flat` treats it as an atom, and the
+comparison declines. Fuel can thus cost an agreement check its completeness;
+it never costs soundness. -/
 
 /-- Node count of a ratio, the fuel `Tw.norm` runs on. -/
 def Tw.size : {k : ℕ} → {Θ : List Shape} → {s : Shape} → Tw B k Θ s → ℕ

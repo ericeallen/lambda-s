@@ -8,36 +8,55 @@ import LambdaS.Map
 /-!
 # Densities of weight `w`, and why one construction covers three domains
 
-A space with measure unit `μ` induces, for each rational weight `w`, a space of
-**densities of weight `w`** carrying unit `μ^(-w)`. Fixing `w` recovers, one at
-a time, three things usually treated as unrelated:
+Start with the concrete case. A probability density `p` on a line is
+integrated against a length to give a probability, a pure number, so `p`
+carries `Length⁻¹`: the density's unit is the reciprocal of the unit its
+argument is measured in. Change the length unit and the density's numerical
+values change with it.
+
+Generalizing the exponent is the whole construction. A space with measure unit
+`μ` induces, for each rational weight `w`, a space of **densities of weight
+`w`** carrying unit `μ^(-w)`. The density above is the case `w = 1`. Fixing
+other values of `w` recovers things usually treated as unrelated:
 
 | `w` | what it is | domain |
 |-----|------------|--------|
 | `0`   | ordinary scalar functions | – |
-| `1/2` | half-densities: `L2` amplitudes, wavefunctions | quantum mechanics |
+| `1/2` | half-densities (see below) | quantum mechanics |
 | `1`   | probability densities | statistics |
 | `-1`  | the measure itself | – |
 
-The half-density case is a pleasing convergence: the design's L² space was
-derived purely from the normalization condition `∫|ψ|² dx = 1`, and it turns
-out to be the half-density bundle that geometric quantization arrives at from
-entirely different motives.
+A **half-density** is a density of weight `1/2`, the square root of a density:
+the object whose square integrates to a number, which is what a quantum
+mechanical wavefunction is, since `∫|ψ|² dx = 1`.
+
+The sections that follow are connections to particular domains. They are
+independent of each other and of the definitions below, and a reader who wants
+only the construction can skip to it.
+
+## An aside on the half-density case
+
+The design's `L²` space, the space of square-integrable functions, was derived
+purely from the normalization condition `∫|ψ|² dx = 1`, and it turns out to be
+the same half-density bundle that geometric quantization, a construction in
+mathematical physics with entirely different motives, arrives at.
 
 ## What this buys in statistics
 
 Because `log` requires a dimensionless argument, `log p` for a probability
-density `p` **fails to typecheck**. That is the base-measure problem: a density
-only means something relative to the measure it was taken against, and
+density `p` **fails to typecheck**. That is the *base-measure problem*: a
+density only means something relative to the measure it was taken against, and
 representing a distribution by its density silently discards that measure.
 Radul and Alexeev (arXiv:2010.09647) identify exactly this failure in
 probabilistic programming systems, and solve it by library convention:
 standardizing on Hausdorff measure and tracking corrections in a `Bijector`
 architecture. Here it is a *type error* instead, and the tracking is inferred.
 
-The classical consequence falls straight out: differential entropy `-∫ p log p`
-is ill-typed, while KL divergence `∫ p log(p/q)` is fine, because a ratio of
-equal-weight densities has weight `0`. The well-known fact that differential
+The classical consequence falls straight out. Differential entropy,
+`-∫ p log p`, the continuous analogue of Shannon entropy, is ill-typed. The
+Kullback–Leibler divergence `∫ p log(p/q)`, which measures how far one
+distribution sits from another, is fine, because a ratio of equal-weight
+densities has weight `0`. The well-known fact that differential
 entropy is not invariant under a change of units while relative entropy is
 becomes a distinction the checker enforces rather than one you are expected to
 remember.

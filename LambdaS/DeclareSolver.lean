@@ -12,8 +12,28 @@ import LambdaS.DeclarationComplete
 /-!
 # Executable declaration solving
 
-The solver uses an explicit enumeration of the finite base-unit universe.
-This enumeration is input data, rather than a noncomputable choice of order.
+Three entry points, in the order a caller wants them.
+
+* `check` accepts a complete certified system: the declarations are
+  dimensionally sound, some valuation satisfies them all, and every
+  same-dimension conversion has the same factor in every satisfying
+  valuation. Acceptance returns the proofs.
+* `solve` answers the weaker question of consistency alone, whether any
+  valuation satisfies the declarations.
+* `conversionExact` returns a determined factor, as a positive rational
+  radicand and a positive integer root degree, proved equal to `V u / V v`
+  under every satisfying valuation.
+
+`DeclarationSolverExamples` runs all three: disconnected feet and meters are
+rejected, adding `foot = 0.3048 meter` makes the system pass, and the
+dimensionless self-equation `u = 2/u` forces the magnitude `√2`, returned as
+radicand `2` and degree `2`.
+
+The mechanics: the solver works over an explicit enumeration of the finite
+base-unit universe, supplied as input data rather than as a noncomputable
+choice of order, and reduces each declaration to one linear equation in the
+logarithms of the magnitudes (`satisfies_valuation_iff`). `LogFactor` carries
+the exact arithmetic that keeps this decidable.
 -/
 
 namespace LambdaS.DeclSolver
@@ -55,7 +75,11 @@ theorem valuation_coordinates (enum : Fin m ≃ B) (V : Scaling B 0) :
   exact i.elim0
 
 /-- Compute rational witnesses expressing a queried ratio through declarations.
-Failure means that the declarations leave its factor undetermined. -/
+Failure means the ratio is not in the ℚ-span of the declared ratios. For a
+consistent set that is exactly the semantic statement that the declarations
+leave the factor undetermined (`Decl.determined_iff_coefficients`); for an
+inconsistent set no valuation satisfies the declarations at all, so the
+semantic notion is vacuous and only the span statement applies. -/
 def factorCoefficients (enum : Fin m ≃ B) (ds : Fin n → Decl B) (r : UExp B 0) :
     Option (Fin n → ℚ) :=
   RationalSolver.solve (Matrix.of fun j i => (ds i).ratio.base (enum j)) (fun j => r.base (enum j))

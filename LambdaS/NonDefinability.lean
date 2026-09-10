@@ -23,16 +23,19 @@ generous notion of scaling environment (homomorphisms from subgroups of Unt)"*.
 
 ## The shortcut
 
-Λs has no `if` and no `rec`, so for the arithmetic fragment a *syntactic*
-argument suffices and gives a stronger conclusion: the fragment's type is
-**uninhabited**, not merely uncomputable.
+The theorem governs the **arithmetic fragment**: terms built from variables,
+rational literals, and the field operations, with no `pow`, no `ucon`, and no
+recursion. (Λs has no `rec` at all, and its one branching form, `ifle`, is
+outside this fragment.) Over that fragment a *syntactic* argument suffices and
+gives a stronger conclusion: the fragment's type is **uninhabited**, not merely
+uncomputable.
 
 The key observation is that `mul` and `div` add and subtract exponent vectors,
 so the reachable units form the **ℤ**-span of the arguments' units, not the
 ℚ-span. Over ℚ we would have `u = (u²)^(1/2)` and the argument would collapse;
-over ℤ, `u ∉ {u^(2n)}`. The distinction between what the *unit algebra* permits
-and what the *term grammar* can build is the whole content, and it is why
-rational powers have to be given rather than derived.
+over ℤ, `u ∉ {u^(2n)}`. The argument turns entirely on the distinction between
+what the *unit algebra* permits and what the *term grammar* can build, which is
+why rational powers have to be given rather than derived.
 -/
 
 /-!
@@ -86,15 +89,18 @@ f(y) = f(1)√y on the positives, so an exactly invariant definable
 function, being piecewise rational, is identically zero. A relative
 stopping tolerance |x_n² - a|/a < ε, which is dimensionless
 and admissible, bounds the dependence by ε; an absolute
-tolerance |x_n² - a| < ε is not even writable parametrically,
-since ε : Q u² names a unit. That bound is the entire
-dependence. The drift analysis of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`) declines terms
+tolerance |x_n² - a| < ε written as a literal times 1_u is not
+writable parametrically, since that term names a unit. An absolute
+tolerance supplied as an *input* is a different matter: it rescales
+with its unit like any other input and stays parametric, so what the
+criterion distinguishes is how the tolerance is supplied, not whether
+it is absolute. That bound is the entire dependence. The drift analysis of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`) declines terms
 containing 1_u rather than certifying them, which is here the
 correct answer.
 
 Alternatively the
 seed moves into the interface: at Q u² → Q u → Q u the method
-is definable, parametric, and invariant by the theorem “Abstraction, convert-free” (`fundamental_free`, `Fundamental.lean`),
+is definable, parametric, and invariant by the convert-free abstraction theorem (`fundamental_free`),
 because a seed supplied as an argument rescales with everything else. So
 recursion would not invalidate the theorem; it sharpens its content.
 A constant-seeded program with a
@@ -352,9 +358,9 @@ calculus has no operation that reads a unit: **`convert` is a genuine
 primitive**. Any parametric, convert-free function from `Q u` to `Q v` is
 constantly zero whenever some scaling separates `u` from `v`. Parametricity
 matters, since `λx. (x / ucon u) · ucon v` is convert-free and denotes the
-identity at that type. So conversion is not a derived
-operation dressed up as a constructor, and the coherence hypothesis on
-`fundamental` is not the price of a redundant feature.
+identity at that type. So conversion is not definable from the other
+constructs, and the coherence hypothesis on `fundamental` is the price of a
+primitive the calculus needs rather than of a redundant feature.
 
 The proof is the semantic one (apply `fundamental_free` at a scaling that
 fixes `u` and moves `v`), which is exactly AJK's technique, used on a question
