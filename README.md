@@ -43,7 +43,7 @@ sums. Unit equality needs no normalization pass over unit syntax.
 | `sorry` / `admit` | none |
 | lines of definitions and proofs | 10,600 |
 | lines of documentation | 6,200 |
-| theorem and lemma declarations | 568 |
+| theorem and lemma declarations | 569 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the

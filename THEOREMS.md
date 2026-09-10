@@ -72,6 +72,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1441`](LambdaS/Fundamental.lean#L1441) |
 | The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1286`](LambdaS/Fundamental.lean#L1286) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:452`](LambdaS/Conversion.lean#L452) |
+| One base unit per dimension makes every rescaling coherent | `LambdaS.Scaling.coherent_of_dim_equiv` | [`LambdaS/Conversion.lean:466`](LambdaS/Conversion.lean#L466) |
 
 ## Accumulated ratios and the drift diagnostic
 

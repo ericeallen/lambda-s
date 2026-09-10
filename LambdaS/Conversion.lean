@@ -458,6 +458,33 @@ theorem Scaling.coherent_id (Δ : DCtx D j k) : (Scaling.id B k).Coherent Δ := 
   intro u v _
   simp [Scaling.id, scale, logScale]
 
+/-- **One base unit per dimension makes every rescaling coherent.** When `dim`
+is a bijection onto the base dimensions, two units of one dimension are one
+unit, so in closed unit scope coherence holds of every rescaling. Coherence
+bites exactly when a dimension carries several units, which is the situation
+conversion exists to serve. -/
+theorem Scaling.coherent_of_dim_equiv [DecidableEq D] (f : B ≃ D)
+    (hdim : ∀ b, UnitSys.dim (D := D) b = Term.ofBase (f b)) (ψ : Scaling B 0) :
+    ψ.Coherent (DCtx.nil D) := by
+  intro u v huv
+  have hb : ∀ b, u.base b = v.base b := by
+    intro b
+    have h := congrArg (fun t : DExp D 0 => t.base (f b)) huv
+    simp only [dimOf, hdim, Term.ofBase, Finset.univ_eq_empty, Finset.sum_empty, add_zero,
+      mul_ite, mul_one, mul_zero] at h
+    have key : ∀ w : B → ℚ, (∑ x, if f b = f x then w x else 0) = w b := by
+      intro w
+      rw [Finset.sum_eq_single b]
+      · simp
+      · intro x _ hx
+        rw [if_neg (f.injective.ne hx.symm)]
+      · intro hb
+        exact absurd (Finset.mem_univ b) hb
+    rw [key, key] at h
+    exact h
+  have huv' : u = v := Term.ext' (funext hb) (funext fun i => i.elim0)
+  rw [huv']
+
 end Coherence
 
 end LambdaS

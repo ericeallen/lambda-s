@@ -27,6 +27,7 @@ Run with `lake env lean scripts/Audit.lean`.
 
 -- Conversion
 #print axioms LambdaS.Scaling.coherent_iff_factors
+#print axioms LambdaS.Scaling.coherent_of_dim_equiv
 
 -- Declare
 #print axioms LambdaS.dependency_forces
