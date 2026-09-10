@@ -137,16 +137,71 @@ def accepted : Bool :=
   (check (Equiv.refl _) (Equiv.refl (Fin 2)) ![Length.link]).isSome
 end DependentDimensions
 
+namespace RadicalChain
+/-- Three length units linked through a compound rational-power right-hand side,
+so that the radical a conversion needs is derived rather than declared. -/
+local instance : UnitSys (Fin 3) (Fin 1) where
+  dim _ := Term.ofBase 0
+
+def a : UExp (Fin 3) 0 := Term.ofBase 0
+def b : UExp (Fin 3) 0 := Term.ofBase 1
+def c : UExp (Fin 3) 0 := Term.ofBase 2
+/-- The geometric mean of b and c. -/
+def meanBC : UExp (Fin 3) 0 := Term.rpow (Term.mul b c) (1 / 2)
+/-- a = 2 · (b·c)^(1/2). -/
+def viaMean : Decl (Fin 3) := ⟨0, 2, by norm_num, meanBC⟩
+/-- b = 2 · c. -/
+def bToC : Decl (Fin 3) := ⟨1, 2, by norm_num, c⟩
+/-- a = 3 · c, which contradicts the other two: they force a/c = 2^(3/2). -/
+def conflict : Decl (Fin 3) := ⟨0, 3, by norm_num, c⟩
+
+/-- Both declared ratios together span the kernel of `dim`. -/
+def chainAccepted : Bool :=
+  (check (Equiv.refl _) (Equiv.refl (Fin 1)) ![viaMean, bToC]).isSome
+
+/-- log(a/c) = (3/2) log 2, cleared to log 8 / 2. -/
+def exactAC : Bool :=
+  (conversionExact (Equiv.refl _) ![viaMean, bToC] a c).map
+    (fun q => (q.radicand, q.degree)) == some (8, 2)
+
+/-- log(a/b) = (1/2) log 2. -/
+def exactAB : Bool :=
+  (conversionExact (Equiv.refl _) ![viaMean, bToC] a b).map
+    (fun q => (q.radicand, q.degree)) == some (2, 2)
+
+/-- The contradiction is decided exactly: 2 log 3 − log 8 = log (9/8) ≠ 0. -/
+def conflictRejected : Bool :=
+  (solve (Equiv.refl _) ![viaMean, bToC, conflict]).isNone
+
+/-- With the first declaration alone, b/c is undetermined, so the global check fails ... -/
+def incompleteRejected : Bool :=
+  (check (Equiv.refl _) (Equiv.refl (Fin 1)) ![viaMean]).isNone
+
+/-- ... yet the pair the declaration does determine is still extracted exactly ... -/
+def determinedInIncomplete : Bool :=
+  (conversionExact (Equiv.refl _) ![viaMean] a meanBC).map
+    (fun q => (q.radicand, q.degree)) == some (2, 1)
+
+/-- ... and the undetermined pair is refused rather than assigned the solver's free choice. -/
+def undeterminedInIncomplete : Bool :=
+  (conversionExact (Equiv.refl _) ![viaMean] a c).isNone
+
+def allChecks : Bool :=
+  chainAccepted && exactAC && exactAB && conflictRejected && incompleteRejected &&
+  determinedInIncomplete && undeterminedInIncomplete
+end RadicalChain
+
 /-- All declaration regressions, also evaluated by the native artifact executable. -/
 def allChecks : Bool :=
   Length.disconnectedConsistent && Length.disconnectedRejected &&
   Length.disconnectedFactorRejected && Length.linkedAccepted && Length.reciprocalAccepted &&
   Length.conflictRejected && Length.exactLink && Root.accepted && Root.exactRoot &&
-  Unsound.rejected && Empty.accepted && DependentDimensions.accepted
+  Unsound.rejected && Empty.accepted && DependentDimensions.accepted &&
+  RadicalChain.allChecks
 
 /-- A compact runtime reading identifying the declaration checks. -/
 def report : String :=
-  s!"declaration solver: disconnected={Length.disconnectedRejected}, linked={Length.linkedAccepted}, reciprocal={Length.reciprocalAccepted}, conflict={Length.conflictRejected}, unsound={Unsound.rejected}, exact rational={Length.exactLink}, exact sqrt2={Root.exactRoot}, empty={Empty.accepted}, dependent dimensions={DependentDimensions.accepted}; all={allChecks}"
+  s!"declaration solver: disconnected={Length.disconnectedRejected}, linked={Length.linkedAccepted}, reciprocal={Length.reciprocalAccepted}, conflict={Length.conflictRejected}, unsound={Unsound.rejected}, exact rational={Length.exactLink}, exact sqrt2={Root.exactRoot}, empty={Empty.accepted}, dependent dimensions={DependentDimensions.accepted}, radical chain={RadicalChain.allChecks}; all={allChecks}"
 
 #guard Length.disconnectedConsistent
 #guard Length.disconnectedRejected
@@ -160,6 +215,13 @@ def report : String :=
 #guard Unsound.rejected
 #guard Empty.accepted
 #guard DependentDimensions.accepted
+#guard RadicalChain.chainAccepted
+#guard RadicalChain.exactAC
+#guard RadicalChain.exactAB
+#guard RadicalChain.conflictRejected
+#guard RadicalChain.incompleteRejected
+#guard RadicalChain.determinedInIncomplete
+#guard RadicalChain.undeterminedInIncomplete
 #guard allChecks
 
 end LambdaS.DeclarationSolverExamples
