@@ -27,14 +27,12 @@ library carried units of measure.
 
 Once conversion is a ratio, path independence is not a condition to check but a
 theorem: `convChain_eq` says any chain of intermediate conversions collapses to
-the direct one, because the intermediate factors telescope. The multiple-paths
-problem does not arise, and there is nothing an implementation could get wrong.
+the direct one, because the intermediate factors telescope. This proves path
+independence for the specified conversion function.
 
 ## The contrast worth recording
 
-There is a real alternative, and it is the one a unit-conversion programming
-assignment (Rice's Comp 311, Fall 2016)
-adopts: restrict compound units to *at most one named unit per dimension*, so
+Consider a design that restricts compound units to *at most one named unit per dimension*, so
 that lining up two compounds has a unique pairing. That works, and it kills the
 ambiguity, but it buys uniqueness by shrinking the algebra. Under it
 `meter / foot` is illegal, because both are units of Length; yet that is exactly
@@ -284,7 +282,7 @@ def Scaling.Coherent (Δ : DCtx D j k) (ψ : Scaling B k) : Prop :=
 /-- **Conversion factors are invariant under coherent rescaling.**
 
 Change the unit system by any scaling that respects dimensions and every
-conversion factor is unchanged: `1 m = 3.28 ft` whatever reference you measure
+conversion factor is unchanged: `1 m ≈ 3.28 ft` whatever reference you measure
 against. -/
 theorem conv_invariant_of_coherent (V : Scaling B k) {Δ : DCtx D j k} {ψ : Scaling B k}
     (hψ : ψ.Coherent Δ) {u v : UExp B k} (h : SameDim Δ u v) :

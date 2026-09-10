@@ -50,14 +50,7 @@ space and `List.length_map` is likewise a theorem.
 -/
 
 /-!
-## From the paper's long form: Accumulated Ratios, and a Decidable Diagnostic
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Accumulated Ratios, and a Decidable Diagnostic
 
 With the abstraction theorems in hand, we now ask what many conversions
 accumulate to. The single-conversion invariance theorem (`cvt_rel_iff_coherent`) characterizes one conversion,
@@ -204,8 +197,8 @@ demanded at + holds and the branches' shared drift is the program's.
 At +, and at map application and composition per output component, the
 analysis compares ratio terms up to β-reduction and the unit
 algebra (`Tw.normEq`): each ratio is first normalized (`Tw.norm`, a fueled
-β-normalizer that preserves evaluation, `Tw.eval_norm`), and each scalar
-normal form flattens to an
+β-normalizer that preserves evaluation, `Tw.eval_norm`), and each resulting
+scalar ratio flattens to an
 exponent vector holding all of its unit constants, merged by the group
 operations, together with a finitely supported assignment of rational
 exponents to *atoms*, opaque subratios the flattening cannot
@@ -236,9 +229,8 @@ term under analysis, whose future arguments may genuinely drift. A ratio
 variable stands for the accumulated ratio of whatever term an
 application site will supply, and accumulated ratios are products of
 scale factors, so the positive carrier excludes nothing the scaling law
-can instantiate. A first-order program's ratios consequently carry no
-atoms, and there the comparison is exact in both directions: for
-atom-free ratios, syntactic agreement coincides with equal evaluation
+can instantiate. When assigned ratios are atom-free, comparison is exact in
+both directions: syntactic agreement coincides with equal evaluation
 under every rescaling (`Tw.normEq_iff_eval_eq`). So once both summands have
 been assigned atom-free ratios, the sum is declined precisely when those
 ratios disagree. A summand whose own analysis declines
@@ -252,11 +244,11 @@ valuation-induced rescalings. Exact ratio comparison does not imply that a
 declined whole program fails invariance: a mismatched branch can be multiplied
 by zero, or two conditional arms can denote the same value.
 
-Under binders the analysis
-reduces every ratio redex it can see, so a visible application analyzes
-as its redex (`betaShared`), and the comparison normalizes the ratios it
-compares, so a redex that substitution creates is reduced as well
-(`hoSum`). What remains is a boundary:
+Under binders the analysis uses bounded ratio normalization. The concrete
+examples `betaShared` and `hoSum` reduce successfully, including redexes created
+by substitution. Semantic preservation is proved, but no theorem establishes
+that the size-derived fuel reduces every generated ratio to normal form.
+Comparison also has a separate limitation:
 two distinct bound atoms are never identified, because whether two
 arguments will drift alike is a fact about call sites, which a
 compositional analysis refuses to consult.
@@ -324,7 +316,7 @@ under *every* valuation of the base units (`den_indep_of_driftFree`): its
 output provably does not depend on how the units it converts through are
 declared. By the adequacy theorem of
 “Adequacy and Erasure” (`Erasure.lean`), the same holds of a closed program's
-compiled output (`evalC_indep_of_driftFree`). The declared factors along any
+real-valued evaluation (`evalC_indep_of_driftFree`). The declared factors along any
 closed conversion loop cancel, which restates “Unit Declarations”
 (`Declare.lean`)'s consistency criterion as a theorem about programs. With
 the valuation held fixed instead, the same program obeys the unrestricted
@@ -1128,7 +1120,8 @@ derivation, a ratio together with its `Twist` derivation, or `none`.
 
 It fails in exactly two circumstances, and they are different in kind. At `add`
 the two branches' ratios must agree up to β-reduction and the unit algebra
-(`Tw.normEq`, which normalizes both ratios and compares the normal forms):
+(`Tw.normEq`, which applies bounded normalization to both ratios and compares
+the results):
 unit constants merge into one exponent vector and atoms into one rational
 exponent each, so reordered, reassociated and differently split conversions
 are accepted. The same check runs per output component at `mapp` and `comp`,
@@ -1142,10 +1135,10 @@ all operands have ratios, the comparison at `add`, `mapp` and `comp` declines
 only on a genuine ratio disagreement, such as `(x in ft) + y`. A decline
 inside an operand propagates, and a disagreement need not imply a dependence
 of the whole denotation: multiplication by zero can erase it. Another source
-of incompleteness is that atoms are identified only with themselves. Atoms arise under `lam` binders
-only; an abstraction applied inside the program leaves none behind, since
-the comparison reduces every redex, the ones substitution creates included
-(`LambdaS.Examples.hoSum` is accepted). At `log` and `exp` the same check runs against
+of incompleteness is that atoms are identified only with themselves. Unknown
+argument drifts arise under `lam` binders. Bounded normalization reduces internal
+applications in the concrete examples (`LambdaS.Examples.hoSum` is accepted),
+but its fuel is not proved sufficient to remove every residual application. At `log` and `exp` the same check runs against
 the literal ratio `1`: a trivial-ratio argument at `Q 1` is unmoved by every
 rescaling, so its logarithm or exponential is unmoved too, and the result
 carries the trivial ratio (`log ((x in ft)/(x in ft))` is
@@ -1310,9 +1303,9 @@ atom carries the same total exponent on both sides. What the comparison never
 does is identify *distinct* atoms: an atom is the ratio of a `lam`-bound
 variable, standing for a future argument, and nothing relates two arguments'
 ratios. The program's own context variables produce no atoms at all under the
-frees-at-one assignment, which is what makes the comparison complete at first
-order (`Tw.scalarEq_complete`, lifted to normal forms by
-`Tw.normEq_iff_eval_eq`). Soundness of the exponent
+frees-at-one assignment. Comparison is complete when the resulting ratios are
+atom-free (`Tw.scalarEq_complete`, and `Tw.normEq_iff_eval_eq` for bounded
+normalized comparison). Unit variables do not violate this hypothesis. Soundness of the exponent
 arithmetic needs every atom's value positive, which the carrier `SemScalar`
 provides: `x ^ p · x ^ q = x ^ (p + q)` already fails at `x = 0`. -/
 
@@ -1530,19 +1523,21 @@ theorem Tw.scalarEq_sound {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar)
 
 /-! ### Completeness on the atom-free fragment
 
-With the frees-at-one assignment, a first-order program's ratios contain no
-atoms at all: every context variable contributes the literal ratio `1`, so
-the flat form is a bare exponent vector. On that fragment the comparison is
-complete, not merely sound. The separating lemma is `scale_eq_iff`: scalings
+The frees-at-one assignment gives each context variable the literal ratio `1`.
+For ratios built from unit expressions, multiplication, division, and rational
+powers, the flat form is a bare exponent vector. On this atom-free fragment,
+comparison is complete as well as sound. Unit variables are permitted; unknown
+argument drifts and residual applications or projections are excluded. The separating lemma is `scale_eq_iff`: scalings
 tell apart any two distinct exponent vectors, by scaling a base where they
 differ. -/
 
 /-- A scalar ratio is **atom-free** when its flat form carries no atoms:
 the ratio is built from `unit`, `mul`, `div` and `qpow` alone. Under the
-frees-at-one assignment this is the ratio of every first-order program
-without abstractions of its own: `lam`-bound variables are the only
-variables there are, and the comparison normalizes away every redex an
-internal application leaves (`Tw.normN_of_atomFree`). -/
+frees-at-one assignment, context variables contribute `1`. Unit variables
+remain permitted in unit expressions. Unknown argument drifts and residual
+applications or projections fall outside this fragment. `Tw.normN_of_atomFree`
+proves that bounded normalization fixes an already atom-free ratio; it does not
+prove that normalization removes every atom from arbitrary generated ratios. -/
 def Tw.AtomFree {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar) : Prop :=
   t.flat.2 = []
 
@@ -1578,7 +1573,7 @@ theorem Tw.scalarEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
       ↔ ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ :=
   ⟨Tw.scalarEq_sound a b, fun h => Tw.scalarEq_complete a b ha hb fun ψ => h ψ _⟩
 
-/-! ### The comparison on normal forms
+/-! ### Comparison after bounded normalization
 
 A redex that substitution creates (a `lam`-bound variable in head position,
 instantiated by an abstraction) is an `app` node to `Tw.flat`, hence an atom.
@@ -1586,15 +1581,15 @@ Comparing after `Tw.norm` removes such a residue whenever the bounded
 reduction reaches it (`Ratio.lean` states what that bound does and does not
 guarantee). What then remains as atoms are `lam`-bound variables themselves
 and their projections, which stand for arguments not yet supplied, together
-with any redex the fuel did not reach; the comparison declines on the
-latter. -/
+with any redex the fuel did not reach. Such residual atoms can cause
+comparison to decline; matching residual atoms can still cancel. -/
 
-/-- The branch comparison, run on β-normal forms. -/
+/-- The branch comparison, run after bounded β-normalization. -/
 def Tw.normEq {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar) : Bool :=
   Tw.scalarEq a.norm b.norm
 
 /-- `normEq` is sound: normalization preserves evaluation, and `scalarEq` is
-sound on the normal forms. -/
+sound on the resulting ratios. -/
 theorem Tw.normEq_sound {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar)
     (h : Tw.normEq a b = true) :
     ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ a θρ = Tw.eval ψ b θρ :=
@@ -1622,8 +1617,10 @@ theorem Tw.normN_of_atomFree {k : ℕ} {Θ : List Shape} :
   | _ + 1, .proj _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
   | _ + 1, .uapp _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
 
-/-- **The comparison on normal forms is exact on the atom-free fragment**:
-`Tw.scalarEq_iff_eval_eq`, since normalization fixes an atom-free ratio. -/
+/-- **Bounded normalized comparison is exact on the atom-free fragment.**
+Unit variables are permitted; unknown argument drifts and residual applications
+are excluded. This follows from `Tw.scalarEq_iff_eval_eq`, since normalization
+fixes an already atom-free ratio. -/
 theorem Tw.normEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
     (a b : Tw B k Θ .scalar) (ha : a.AtomFree) (hb : b.AtomFree) :
     Tw.normEq a b = true
@@ -1718,16 +1715,17 @@ is `lam`-bound and enters as an atom, a variable at or beyond `p` is a context
 variable of the program and enters at the literal ratio `1`. The exported
 diagnostic runs at `p = 0`.
 
-The `add` check is `Tw.normEq`: branch ratios are β-normalized (`Tw.norm`)
-and their normal forms compare with their unit
+The `add` check is `Tw.normEq`: branch ratios undergo bounded β-normalization (`Tw.norm`)
+and the resulting ratios compare with their unit
 constants merged into one exponent vector and their atoms as coordinates of a
 free ℚ-vector space, one total exponent per atom, so the same conversions
 reordered, reassociated, split into different rational powers, and canceled
 against themselves across the fraction bar are all accepted; the positive
 scalar carrier is what makes `x / x = 1` sound. What the check never does is
 identify *distinct* atoms, since nothing relates two arguments' ratios; but
-atoms arise only under `lam` binders, so a first-order ratio has none and the
-check is exact there (`Tw.normEq_iff_eval_eq`).
+context variables contribute `1`. The check is exact for atom-free ratios
+(`Tw.normEq_iff_eval_eq`), including ratios with unit variables. No theorem
+establishes that bounded normalization makes every generated ratio atom-free.
 `mapp` and `comp` run the same check per output component, across the summed
 index, and `log` and `exp` run it against the literal ratio `1`, accepting
 exactly the arguments whose ratio is identifiably trivial. Everything
@@ -2082,7 +2080,7 @@ open programs as for closed ones. With the valuation held fixed, a drift-free
 program obeys the unrestricted scaling law of `scaleLaw`, which is the
 hypothesis the Pi theorem consumes, now supplied by the drift analysis rather
 than by the absence of conversion. Composed with adequacy, the first
-statement holds of the compiled program: its output is invariant across every
+statement holds of evaluation with real arithmetic: its output is invariant across every
 consistent extension of the declaration set. This is the ratio-level analogue
 of `evalC_convert_declared`: `Twist` joined to `Declare` the way `eval_adeq`
 joined `Dynamics` to `Declare`. -/

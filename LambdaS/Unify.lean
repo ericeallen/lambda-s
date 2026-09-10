@@ -35,9 +35,9 @@ work, and they are the whole content:
 * reducing **preserves the solution set**, given that the pivot equation itself
   holds (`solves_reduce_iff`).
 
-Termination is structural: `triangulate` recurses on a list of equations whose
-length strictly decreases, so there is no measure to invent and no well-founded
-argument to discharge.
+Triangularization uses well-founded recursion on the number of equations.
+Row reduction preserves the tail's length, so each recursive call decreases
+the measure specified by `termination_by`.
 
 ## Status
 
@@ -52,7 +52,7 @@ Proved here:
 * multi-equation systems, with reduction preserving the solution set
   (`System.solves_reduceAll_iff`) and isolating the pivot
   (`System.reduceAll_pivot_zero`);
-* triangularization, terminating structurally, preserving the solution set
+* triangularization, terminating by equation-list length, preserving the solution set
   **exactly**: an `iff`, so nothing is lost and nothing gained
   (`System.solves_triangulate_iff`);
 * the rigid residual case, decided by inspection with no search
@@ -287,12 +287,12 @@ theorem reduceAll_pivot_zero {sys : System B V} {t : Term B V} {v₀ : V}
 /-! ## Triangularization
 
 Repeatedly pivot on the head equation, reducing the tail against it. Recursion is
-on a list whose length strictly decreases, so **termination is structural**: no
-measure to invent, no well-founded argument to discharge. -/
+well-founded on equation-list length: row reduction preserves the tail's
+length, establishing the decrease required by `termination_by`. -/
 
 omit [Fintype V] in
 /-- Reduction preserves the number of equations: it is a row operation, not an
-elimination of rows. This is what makes `triangulate` structurally decreasing. -/
+elimination of rows. This proves the length decrease required by `triangulate`. -/
 @[simp] theorem length_reduceAll (sys : System B V) (t : Term B V) (v₀ : V) :
     (reduceAll sys t v₀).length = sys.length := List.length_map ..
 

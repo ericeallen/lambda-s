@@ -222,3 +222,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.DeclarationSolverExamples.Length.linkedFactor_correct
 #print axioms LambdaS.DeclarationSolverExamples.Root.rootFactor_returned
 #print axioms LambdaS.DeclarationSolverExamples.Root.rootFactor_correct
+
+-- Operational semantics cited by the dynamics figures
+#print axioms LambdaS.eval
+#print axioms LambdaS.Num

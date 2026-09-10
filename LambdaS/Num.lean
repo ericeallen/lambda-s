@@ -12,19 +12,18 @@ The evaluator in `LambdaS.Dynamics` is generic in its numbers, and one
 definition serves both masters: the section below spells out the two
 instances.
 
-Everything about units is carrier-independent, which is why the proofs never
-mention `Num` beyond threading it: unit soundness and erasure are statements
-about which branch an evaluator takes, not about arithmetic.
+Typing is independent of the numeric carrier. Unit soundness, termination,
+and erasure hold for every `Num` instance. Abstraction requires additional
+arithmetic laws, and numerical adequacy is stated at the real instance.
 
 ## What the two instances demonstrate
 
 `ℝ` and `Float` are the same definition read two ways. At `ℝ` the evaluator is
 the object the soundness and erasure theorems are about, and necessarily
-noncomputable since `Real.exp` is. At `Float` it is compiled to C. Nothing about
-units differs between them, which is the point: the dimensional content of the
-calculus is carrier-independent, and a carrier can be swapped (for complex
-amplitudes, intervals, dual numbers for differentiation) without touching the
-type system or a single theorem.
+noncomputable since `Real.exp` is. At `Float` it is compiled to C. Changing the carrier preserves the type system and the carrier-generic
+results above. A new carrier must separately supply the laws required by any
+abstraction theorem; the real adequacy theorem does not establish its numerical
+correspondence with that carrier.
 
 ## Positivity
 
@@ -103,8 +102,8 @@ class Num (R : Type) where
   nlog : R → R
   nexp : R → R
   /-- **Comparison.** The one observation a conditional makes. Quantities are
-  comparable only at a common unit (`T-IfLe`), which is what keeps this
-  invariant: rescaling multiplies both sides by the same positive factor. -/
+  comparable only at a common unit (`T-IfLe`). Positive-rescaling invariance
+  is an additional law supplied by `OrderedNum`, not a requirement of `Num`. -/
   le : R → R → Bool
   /-- Inner product. Defaulted to a fold; carriers with a native kernel override
   it. -/

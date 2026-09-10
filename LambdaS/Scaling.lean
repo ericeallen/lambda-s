@@ -37,14 +37,13 @@ development:
 > *"First attempt in Coq: … This doesn't even type-check! Type-checker needs to
 > know `usem τ = usem (subst ty s τ)`. Solution: explicit equality coercions."*
 
-That pain comes from unit expressions being **syntax trees**, so substitution is
-structural and the semantics has to be transported along it.
+Kennedy also represents units by exponent vectors. The equality coercions arise
+when object-language types are interpreted as Coq types, so unit substitution
+changes the type indexing a denotation (Kennedy, WMM 2008).
 
-Here unit expressions are **exponent vectors** and substitution is a linear map
-on them, so `logScale_subst` is an identity between two sums: pure arithmetic,
-with no coercions and no transport. The representation choice made for
-decidability in `LambdaS.Syntax` pays off again, in a place it was not chosen
-for.
+Here `logScale_subst` is an identity between two sums because substitution on
+exponent vectors is linear. Type interpretation still requires transport; the
+family-indexed denotation in `Fundamental` handles that separately.
 -/
 
 namespace LambdaS

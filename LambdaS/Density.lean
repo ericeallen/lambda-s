@@ -84,8 +84,9 @@ def Density (μ : Uom B) (w : ℚ) (I : Type*) : Space B I := fun _ => μ ^ (-w)
 @[simp] theorem density_apply (μ : Uom B) (w : ℚ) (i : I) :
     Density μ w I i = μ ^ (-w) := rfl
 
-/-- Weight `0` is the dimensionless space. This is why `log` typechecks on
-weight-`0` quantities and on nothing else. -/
+/-- Weight `0` has unit `1`, so `log` accepts its quantities. If `μ ≠ 1`,
+`density_ne_triv` excludes every nonzero weight; if `μ = 1`, every weight has
+unit `1`. -/
 theorem density_zero (μ : Uom B) : Density μ 0 I = Space.triv B I := by
   funext i; simp [Density, Space.triv]
 
@@ -95,16 +96,16 @@ theorem density_mul (μ : Uom B) (w₁ w₂ : ℚ) (i : I) :
   simp only [density_apply, ← Uom.rpow_add]
   ring_nf
 
-/-- **`|ψ|²` of a half-density is a weight-1 density**: that is, exactly the
-thing that can be integrated. The normalization condition of quantum mechanics
-and the defining property of a probability density are the same statement at
-two different weights. -/
+/-- **Squaring the unit of a half-density gives the unit of a weight-1 density.**
+This is the unit identity used when interpreting `|ψ|²` as a probability density;
+it does not define an integration operation or prove normalization. -/
 theorem modulus_sq_of_half (μ : Uom B) (i : I) :
     Density μ (1/2) I i * Density μ (1/2) I i = Density μ 1 I i := by
   rw [density_mul]; norm_num
 
-/-- **Integration is well-typed exactly at weight 1.** A weight-1 density paired
-with the measure is dimensionless. -/
+/-- **A weight-1 density multiplied by its measure has unit `1`.**
+This identity supports the interpretation as integration; the artifact defines
+no integration operator here and proves no iff about its typing. -/
 theorem integrate_weight_one (μ : Uom B) (i : I) :
     Density μ 1 I i * μ = 1 := by
   simp only [density_apply]
@@ -115,13 +116,14 @@ theorem integrate_weight_one (μ : Uom B) (i : I) :
 that weight is.
 
 This is the whole KL-versus-entropy distinction: `log (p/q)` typechecks because
-the ratio lands at weight `0`, while `log p` does not, because `p` does not. -/
+the ratio has unit `1`. In contrast, `log p` is rejected when the weight is
+nonzero and the measure unit is not `1`. -/
 theorem ratio_weight_zero (μ : Uom B) (w : ℚ) (i : I) :
     Density μ w I i / Density μ w I i = Density μ 0 I i := by
   simp
 
-/-- A density of nonzero weight is *not* dimensionless, unless the measure
-itself is. This is the statement that `log p` genuinely fails: the failure is
+/-- A density of nonzero weight does not have unit `1` when the measure
+unit has a nonzero exponent. This is the statement that `log p` genuinely fails: the failure is
 not an artifact of how the weight is written. -/
 theorem density_ne_triv (μ : Uom B) {w : ℚ} (hw : w ≠ 0) (i : I) {b : B}
     (hμ : Uom.exp μ b ≠ 0) : Density μ w I i ≠ Space.triv B I i := by

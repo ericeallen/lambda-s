@@ -39,11 +39,7 @@ why rational powers have to be given rather than derived.
 -/
 
 /-!
-## From the paper's long form: Would recursion rescue square root?
-
-An earlier draft of the paper (the parent of tag `long-form`) carried this
-analysis in full; it is reproduced here, converted to Markdown, so the
-documentation develops what the paper now states in a sentence.
+## Would recursion rescue square root?
 
 We might think the result stands only because Λs lacks recursion:
 given a fixpoint construct, we could write the standard functional
@@ -83,34 +79,24 @@ argument quantifies over the whole program, so it covers seeds tuned by
 hand, computed from a, or supplied as q · 1_u for any
 q.
 
-Sharper still: a scale-invariant f at this type satisfies
-f(k² x) = k f(x) for all k > 0, and setting x = 1 forces
-f(y) = f(1)√y on the positives, so an exactly invariant definable
-function, being piecewise rational, is identically zero. A relative
-stopping tolerance |x_n² - a|/a < ε, which is dimensionless
-and admissible, bounds the dependence by ε; an absolute
-tolerance |x_n² - a| < ε written as a literal times 1_u is not
-writable parametrically, since that term names a unit. An absolute
-tolerance supplied as an *input* is a different matter: it rescales
-with its unit like any other input and stays parametric, so what the
-criterion distinguishes is how the tolerance is supplied, not whether
-it is absolute. That bound is the entire dependence. The drift analysis of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`) declines terms
-containing 1_u rather than certifying them, which is here the
-correct answer.
+For a positive input a, the relative stopping condition
+|x_n² - a|/a < ε bounds the relative squared residual. It does not by itself
+prove a bound on differences between outputs computed in rescaled unit systems.
+An absolute residual threshold must have unit u²: a literal tolerance is a
+multiple of 1_(u²), which contains a unit constant and is not parametric.
+A tolerance supplied as an input instead rescales with its unit. The distinction
+is how the tolerance is supplied, not whether it is absolute. The drift analysis
+of `Twist` declines terms containing unit constants.
 
-Alternatively the
-seed moves into the interface: at Q u² → Q u → Q u the method
-is definable, parametric, and invariant by the convert-free abstraction theorem (`fundamental_free`),
-because a seed supplied as an argument rescales with everything else. So
-recursion would not invalidate the theorem; it sharpens its content.
-A constant-seeded program with a
-relative tolerance is a perfectly serviceable approximation in
-practice; its dependence on the unit system is bounded by the
-ε the programmer chose, the same class of dependence ordinary
-numerical error already imposes. The theorem's content is not that square
-roots cannot be computed but that *the* square root cannot be: what
-the power primitive buys is exactness, a denotation that commutes
-with rescaling pointwise rather than up to tolerance.
+Supplying the seed gives the iteration body type Q u² → Q u → Q u.
+That body, and every fixed finite unrolling of it, is parametric and invariant
+by `fundamental_free`: an input seed rescales with the other inputs. Λs has no
+recursion construct, so extending this result to recursive execution requires
+an additional semantic argument. The discussion of recursive arithmetic above
+is a mathematical interpretation, not a mechanized extension of the calculus.
+The primitive rational power provides an exact real denotation; the numerical
+accuracy of a chosen iteration and stopping rule is a separate question.
+
 -/
 
 namespace LambdaS.NonDef

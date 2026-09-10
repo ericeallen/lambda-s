@@ -26,10 +26,10 @@ normalization pass to write or verify. `m * s / m` and `s` are literally the
 same object.
 
 **Scope is a type index.** `Ty B D j k` and `Tm B D j k` carry the numbers of
-enclosing `∀δ` and `∀u:d` binders, so well-scopedness is a typing invariant
-rather than a side condition, and a substitution that captured a variable or
-left an index dangling would not typecheck in the metalanguage. The
-mechanization caught exactly such a capture bug, which the tests had missed.
+enclosing `∀δ` and `∀u:d` binders. These scope indices rule out dangling unit
+and dimension variables. They do not rule out selecting the wrong variable
+within a scope; the substitution composition law exposed such a capture error.
+Term variables are natural numbers whose scope is checked by context lookup.
 
 **A space is the list of units its components carry.** This is `LambdaS.Space`
 at a finite index type, written structurally: a space *is* its unit
@@ -768,7 +768,7 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   | var {j k} : ℕ → Tm B D j k
   | lam {j k} : Ty B D j k → Tm B D j k → Tm B D j k
   | app {j k} : Tm B D j k → Tm B D j k → Tm B D j k
-  /-- Every literal is dimensionless. There is no unitless *type*, only `1`. -/
+  /-- Every rational literal has unit `1`, including zero. -/
   | lit {j k} : ℚ → Tm B D j k
   /-- A unit constant, so `m : Q m`. This is what makes `1.3 m` work. -/
   | ucon {j k} : UExp B k → Tm B D j k
@@ -790,7 +790,7 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   /-- **Compare and branch**, fused so that no `Bool` type is needed. The
   scrutinees are compared at a common unit, which is what keeps the form
   parametric: a rescaling multiplies both by the same positive factor and the
-  ordering survives (`Num.OrderedNum.le_scale`). Comparing across units does
+  ordering survives (`OrderedNum.le_scale`). Comparing across units does
   not typecheck, so the observation that could detect a rescaling is
   unreachable by construction. -/
   | ifle {j k} : Tm B D j k → Tm B D j k → Tm B D j k → Tm B D j k → Tm B D j k
@@ -811,14 +811,14 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   `w` is needed because a row over an empty column space determines no output
   unit. -/
   | mcons {j k} : UExp B k → Tm B D j k → Tm B D j k → Tm B D j k
-  /-- Logarithm. Requires a **dimensionless** argument, which is what makes the
-  base-measure problem a type error: a probability density is not dimensionless,
-  so `log p` does not typecheck. -/
+  /-- Logarithm. Requires an argument at unit `1`. A probability density whose
+  base measure has nontrivial dimension therefore cannot be passed directly
+  to `log`; it must first be expressed relative to a reference density. -/
   | log {j k} : Tm B D j k → Tm B D j k
-  /-- Exponential. Also requires a dimensionless argument.
+  /-- Exponential. Also requires an argument at unit `1`.
 
-  This is what makes `exp (-i·E·t/ħ)` a *typed* statement: the phase of a
-  quantum time evolution must be dimensionless, and the rule enforces it. -/
+  In the quantum examples, cancellation in `E·t/ħ` yields exactly this unit;
+  dimensional equality alone would not establish the typing premise. -/
   | exp {j k} : Tm B D j k → Tm B D j k
   /-- Unit abstraction, `Λu:d. e`. -/
   | ulam {j k} : DExp D j → Tm B D j (k + 1) → Tm B D j k

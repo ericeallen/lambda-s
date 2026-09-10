@@ -48,10 +48,11 @@ set is rejected rather than silently picking a route.
 
 The criterion is exact rational arithmetic even though valuations are real.
 Declared factors are rationals; a dependency demands `∏ qᵢ^{cᵢ} = 1` with `cᵢ`
-rational, which clearing denominators turns into an identity in ℚ. The
-irrationality that ℚ exponents force (`val(m^(1/2))` is not rational) enters
-only at `log`, which is *after* the check. Declarations live in ℚ⁺, valuations
-in ℝ, and consistency is decided in ℚ⁺.
+rational, which clearing denominators turns into an identity in ℚ. Rational
+powers can require irrational magnitudes: if `V(c) = 2`, then
+`V(c^(1/2)) = √2`. Valuations therefore range over ℝ. The checker manipulates
+symbolic logarithmic expressions exactly; it evaluates no logarithms or roots.
+Declarations live in ℚ⁺, and the consistency tests reduce to equality in ℚ⁺.
 
 ## What is not declared has no factor
 
@@ -69,14 +70,7 @@ executable checks by soundness and completeness proofs.
 -/
 
 /-!
-## From the paper's long form: Unit Declarations
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Unit Declarations
 
 Conversion forces a question the parametric literature never faces: where do
 the factors come from? The answer is unit declarations, in the style
@@ -169,8 +163,9 @@ unknowns log V(b) are real, and necessarily so: valuations are
 real-valued, not merely their logarithms, since rational exponents can
 force irrational magnitudes (declare c = 2 and
 b = c^(1/2), and every satisfying valuation has
-V(b) = √2), and even a rational magnitude has an
-irrational logarithm. The dependencies, by contrast, are rational, so we
+V(b) = √2), and rational magnitudes can have
+irrational logarithms (though log 1 = 0). The dependencies, by contrast, are
+rational, so we
 might fear a real-coefficient dependency imposing a constraint the rational
 ones miss. None does: ℝ is itself a vector space over
 ℚ, its vectors the reals and its scalars the rationals, so
@@ -211,9 +206,9 @@ dependency demands 3 × 0.3048 = 0.9, which is false; the artifact
 refutes the set (`yard_conflict`): *no* valuation satisfies all
 three, the set is rejected at declaration time, and there is never a choice
 of route to get wrong. Because coefficients and factors are rational, the
-test is exact arithmetic; the irrationality that ℚ exponents
-introduce (V(m^(1/2)) is irrational) enters only at log, after
-the check. Note that a satisfied redundant declaration has no freedom in its
+test uses exact arithmetic. Symbolic logarithmic expressions are
+manipulated without numerical evaluation; denominator clearing reduces their
+zero tests to rational product equality. Note that a satisfied redundant declaration has no freedom in its
 factor: any valuation satisfying all three declarations forces
 3 × 0.3048 = 0.9144 (`yard_forced`), and the general lemma
 (`factor_chain_consistent`) states this for an arbitrary third
@@ -239,8 +234,8 @@ is rejected (`Sound`, orthogonal to
 the theorem “Consistency” (`consistent_iff_dependencies_mul`)).
 
 What the declared numbers are worth to running code is the subject of
-“Adequacy and Erasure” (`Erasure.lean`), where the chain from declaration to compiled
-output is closed: the compiled evaluator converts one yard into feet by
+“Adequacy and Erasure” (`Erasure.lean`), where the chain from declaration to real-valued
+evaluation is closed: the evaluator instantiated with real arithmetic converts one yard into feet by
 multiplying by the declared 3 and into meters by the forced
 0.9144 (`one_yard_is_three_feet`; through the forced
 factor, `one_yard_in_meters`).

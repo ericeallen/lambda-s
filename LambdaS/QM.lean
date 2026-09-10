@@ -242,9 +242,9 @@ abbrev En : Sp Base 0 := [joule, joule]
 
 /-- The context: a Hamiltonian and a state, supplied as data.
 
-Matrices and state vectors arrive through the environment for the same reason
-unit constants do (`LambdaS.Fundamental`): a program that could *name* its data
-would not be scale-invariant. A numeric program takes its operators as input. -/
+The dimensioned Hamiltonian arrives through the environment so that its entries
+rescale as input data. The dimensionless state may instead be constructed from
+rational literals without unit constants, as `statePlusTm` demonstrates. -/
 abbrev qmCtx : Ctx Base Dim 0 0 := [.lin St En, .vec St]
 
 /-- `(H|ψ⟩)ᵢ`: an energy. -/
@@ -289,8 +289,8 @@ rather than supplied: its amplitudes are dimensionless literals, so the state
 literal is parametric. A Hamiltonian literal is not: its entries are energies,
 so each is a multiple of `1_J`, and writing the operator down names the joule,
 which is precisely the unit constant the parametric fragment excludes
-(`LambdaS.Fundamental`). That is why this file supplies `H` and `ψ` through
-the environment above. -/
+(`LambdaS.Fundamental`). This is why the parametric program receives `H` as input.
+Supplying `ψ` as input is convenient but is not required for parametricity. -/
 
 /-- `1/√2`, to sixteen places. -/
 abbrev invSqrt2 : ℚ := 7071067811865476 / 10 ^ 16
@@ -300,7 +300,7 @@ def statePlusTm : Term₀ := .vcons (.lit invSqrt2) (.vcons (.lit invSqrt2) .vni
 
 #guard typeOf statePlusTm == some (.vec St)
 
-/- The state literal is parametric: it names no unit. -/
+/- The state literal is parametric: it contains no unit constants. -/
 example : statePlusTm.Parametric := ⟨trivial, trivial, trivial⟩
 
 /-- `H = [[0, −A], [−A, 0]]` as a matrix literal, entry by entry a multiple of

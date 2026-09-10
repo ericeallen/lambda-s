@@ -22,7 +22,7 @@ their types are their specifications. A central difference has type
 time and you get a velocity, by derivation rather than by comment. What is
 missing is iteration: one Runge–Kutta step is expressible, a solver loop is not.
 
-## What the checker is doing that a syntactic system could not
+## Checking unit equality with exponent vectors
 
 Unit equality here is decided by *arithmetic on exponent vectors*, not by
 normalizing syntax. In the Runge–Kutta step below, the intermediate
@@ -194,7 +194,8 @@ transcription by hand, at `Float`, of the valuation `ψyd` that
 from `ψyd`, and the agreement between the two is checked by the numbers
 below rather than by a theorem. `evalC_convert_declared` is the theorem that
 the instrumented evaluator at carrier `ℝ` multiplies by exactly the declared
-factor; this is that theorem's number coming out of the compiled binary.
+factor. The compiled binary executes a separate Float example; these checks
+do not prove a real-to-Float correspondence.
 
 Two routes from yards to meters (direct, and through feet) print the same
 number, which is `convChain_eq` and `yard_forced` made observable: the factors

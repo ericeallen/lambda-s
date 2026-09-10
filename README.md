@@ -16,21 +16,23 @@ The theoretical literature on units, beginning with Kennedy, obtains
 parametricity theorems for calculi in which no operation can observe a unit.
 The practical literature provides conversion, which is what programmers ask
 of units, and no invariance theory, because conversion breaks the
-parametricity such theories rest on. Λs has both. Every parametric term is
-invariant under the rescalings that respect dimension, and a first-order
-program with nonzero denotation *to which the analysis assigns a ratio* is
-invariant under *all* rescalings precisely when that accumulated conversion
-ratio is trivial: a decidable condition, which the development turns into a
-compiler diagnostic. The analysis is conservative and may decline to assign a
-ratio, in which case it reports no invariance verdict either way.
+parametricity such theories rest on. Λs has both. For example, converting a
+measurement from meters to feet and back multiplies it by reciprocal factors;
+the round trip is independent of the declared foot-to-meter ratio.
+
+Every term containing no unit constants is invariant under rescalings that
+respect dimension. For a first-order program with nonzero denotation, an
+assigned accumulated ratio is trivial exactly when the program is invariant
+under all rescalings. Triviality is decidable. The diagnostic reports the
+assigned ratio, or declines to assign one; a decline supplies no invariance
+verdict either way.
 
 The development is 10,500 lines of definitions and proofs and 6,200 lines
 of documentation (19,300 lines of source in all; `scripts/count_lines.py`
-is the method, and CI checks these figures and the table below against it), and stays that small
-because of one representational decision: units and dimensions are exponent
-vectors over ℚ, so substitution is a linear map, every substitution lemma is
-a reordering of finite sums, and no normalization pass over unit syntax
-exists anywhere in the system.
+counts `LambdaS/*.lean`, and CI checks these figures and the table below against
+it). Units and dimensions are exponent vectors over ℚ. Substitution on these
+vectors is a linear map, and its algebraic laws follow by reordering finite
+sums. Unit equality needs no normalization pass over unit syntax.
 
 ## Status
 
@@ -83,8 +85,8 @@ constraints remains open in this development.
 `Space`, `Map`, and `Density` give dimensioned vectors, Hart-style
 rank-one matrices, and densities.
 
-**Statics.** `Syntax` gives types and terms, scope-indexed so ill-scoped
-syntax is unrepresentable. `Typing` gives both the declarative judgment
+**Statics.** `Syntax` gives types and terms, scope-indexed so ill-scoped unit and dimension
+syntax is unrepresentable. Term-variable indices are checked by context lookup. `Typing` gives both the declarative judgment
 `HasTy` and the checker, and the checker *returns derivations*: soundness
 holds by construction, and completeness and decidability are proved.
 `Notation` makes programs readable.
@@ -97,7 +99,8 @@ assumed.
 
 **Semantics.** `Parametricity` builds the logical relation, `Fundamental`
 proves both abstraction theorems and that coherence is the exact price of
-conversion. `Adequacy` joins the declaration oracle to the evaluator, and
+conversion. `Adequacy` joins the declaration oracle to the evaluator instantiated with real
+arithmetic, and
 `Erasure` strips units and every dynamic check from run-time values without
 moving the numbers.
 
@@ -131,11 +134,24 @@ including the yard/foot/meter declarations end to end and the pendulum.
 conflicting cycles, dimension errors, empty bases, dependent dimension rows,
 and exact rational and square-root factors. Its four kernel theorems connect
 actual returned factors to every satisfying valuation. The native executable
-runs this battery and exits nonzero if it fails.
+runs this battery and exits nonzero if it fails. `JacobiChecks` exercises the
+actual Float evaluator and native matrix operations on 125 Jacobi sweep cases
+and 12 stopping cases. It checks off-diagonal elimination, symmetry, trace and
+determinant preservation, unchanged diagonal inputs, and signed residuals.
+These numerical checks run in the executable, separately from typing and drift
+guards; a failed check makes the executable exit nonzero.
 
 Each module carries a header docstring explaining what it is for and why it
 exists; those are the intended entry points for a reader, and the groups
 above are the intended reading order.
+
+## Documentation maintenance
+
+Our paper summarizes the developed explanations in the module headers. These
+explanations originated in an earlier draft preserved by the paper repository's
+`long-form` tag; they now describe the current artifact. Maintain the paper and
+these explanations together, checking both against the definitions and theorem
+statements. The current formal statements determine each claim's scope.
 
 ## Theorem index
 

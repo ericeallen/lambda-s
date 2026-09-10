@@ -16,6 +16,12 @@ with `n − r` dimensionless arguments, where `r` is the rank of the exponent
 matrix. He listed its proof as work in progress on his WMM 2008 slides and no
 completion appears in the eighteen years since.
 
+This module mechanizes equivalences with scale-invariant functions on `n`
+arguments (`piEquiv`, `piEquivSigned`), including both inverse laws. It separately
+reduces those invariants to `n − rank A` orbit coordinates (`invariant_descends`).
+The equivalences themselves do not have reduced-coordinate functions as their
+codomains.
+
 ## The route taken
 
 Kennedy proves it by reducing the exponent matrix through a sequence of
@@ -52,14 +58,7 @@ The coordinate count is rank-nullity (Mathlib's). The rational-exponent decision
 -/
 
 /-!
-## From the paper's long form: Dimensional Analysis
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Dimensional Analysis
 
 The abstraction theorems of “The Price of Conversion” (`Fundamental.lean`) have two further
 consequences, which the programmer never asks for but a numerical

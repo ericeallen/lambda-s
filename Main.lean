@@ -6,6 +6,7 @@ Authors: Eric Allen
 import LambdaS.QM
 import LambdaS.Algorithms
 import LambdaS.DeclarationSolverExamples
+import LambdaS.JacobiChecks
 
 /-!
 The compiled entry point. `lake build lambdas` runs Lean's code generator over
@@ -23,6 +24,10 @@ def main : IO UInt32 := do
   IO.println LambdaS.QM.twoStateReport
   IO.println LambdaS.QM.checksReport
   IO.println LambdaS.DeclarationSolverExamples.report
+  IO.println LambdaS.JacobiChecks.report
+  if !LambdaS.JacobiChecks.allChecks then
+    IO.eprintln "Jacobi checks FAILED"
+    return 1
   if !LambdaS.DeclarationSolverExamples.allChecks then
     IO.eprintln "declaration checks FAILED"
     return 1

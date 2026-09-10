@@ -80,14 +80,7 @@ principal types for this calculus.
 -/
 
 /-!
-## From the paper's long form: The Calculus
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## The Calculus
 
 In this section, we present the syntax and statics of Λs. The design is
 governed by a single decision from which nearly everything else follows: units
@@ -317,10 +310,12 @@ uninhabited by arithmetic terms), and the rule
 accepts every unit, since scaling an exponent vector by q always yields
 a unit. For example, √(m³) is a quantity at
 m^(3/2) (see note 3). Finally log and
-exp demand dimensionless arguments (T-Log, T-Exp), which
+exp demand arguments at unit 1 (T-Log, T-Exp). A dimensionless ratio
+such as m/ft must first be converted to 1. This requirement
 is the type-theoretic face of the base-measure problem: a dimensioned
-quantity has no scale-invariant logarithm, so log of a probability density
-is rejected while log of a ratio of densities is accepted.
+quantity has no scale-invariant logarithm. A probability density with a
+nontrivial measure unit is rejected, while a ratio of equal-weight densities
+has unit 1 and is accepted.
 
 > **Note 3.** What is a quantity of dimension
 > Length^(1/2)? The type system need not restrict roots to those whose
@@ -498,9 +493,10 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
   | mcons {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w r M V W} :
       HasTy Δ Γ r (.vec (V.map fun u => Term.div w u)) → HasTy Δ Γ M (.lin V W) →
       HasTy Δ Γ (.mcons w r M) (.lin V (w :: W))
-  /-- `log` demands a dimensionless argument. This is the rule that makes the
+  /-- `log` and `exp` demand arguments at unit `1`. A dimensionless
+  ratio such as `m/ft` must first be converted to `1`. This is the rule that makes the
   base-measure problem static: a probability density over a space with measure
-  `μ` carries `μ⁻¹`, so `log p` is rejected, while `log (p/q)` for two densities
+  `μ ≠ 1` carries `μ⁻¹`, so `log p` is rejected, while `log (p/q)` for two densities
   of equal weight is fine because the ratio lands at `1`. -/
   | log {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e} :
       HasTy Δ Γ e (.Q 1) → HasTy Δ Γ (.log e) (.Q 1)

@@ -6,7 +6,7 @@ Authors: Eric Allen
 import LambdaS.Space
 
 /-!
-# Linear maps between dimensioned spaces, and the collapse of Hart's taxonomy
+# Unit identities for linear maps between dimensioned spaces
 
 George Hart's *Multidimensional Analysis* (1995) is the standard reference on
 dimensioned matrices, and this file follows it. Its central observation is that
@@ -27,24 +27,15 @@ classes, each licensing a different set of operations:
 
 Hart needed the rank-one condition because he worked with raw arrays.
 
-**This file is the claim that if you type the space, all of it is free.** A
-linear map `V ⊸ W` has entry `(j,i)` at `δ_W(j) / δ_V(i)`, which is rank one by
-construction. Each of Hart's five classes then corresponds to a *type*, and the
-operations it licenses are exactly the ones well-typed at that type. Nothing is
-checked; the taxonomy is derived.
-
-The theorems below are that argument, one class at a time.
+This module proves identities of entry-unit assignments for Hart's classes.
+A linear map `V ⊸ W` has entry `(j,i)` at `δ_W(j) / δ_V(i)`, which is rank one
+by construction. These identities determine the compatible unit shapes.
+Numerical decomposition algorithms require additional definitions, hypotheses,
+and correctness proofs; the identities below do not implement them.
 -/
 
 /-!
-## From the paper's long form: Dimensioned Linear Algebra
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Dimensioned Linear Algebra
 
 In this section we present the unit algebra the artifact proves for the
 Vec and Lin types of “The Calculus” (`Typing.lean`),
@@ -74,8 +65,8 @@ them, written as a literal or received as an argument, is in Hart's form.
 factors as w_j · u_i⁻¹. There is no hypothesis: every well-typed
 map is in Hart's rank-one form.
 
-Each class is then a type, and the operations it licenses are the operations
-well-typed at that type. Composition is the first class entire: the summand
+The classes correspond to unit shapes, and the following identities explain
+their compatibility conditions. For composition, the summand
 A_kj B_ji carries (w_k/v_j)(v_j/u_i) = w_k/u_i, independent of the
 summation index and equal to the composite's entry unit
 (`entry_comp`); “multipliable” is not a condition to check but the
@@ -83,7 +74,8 @@ only composition writable. In an endomorphism type
 Lin u⃗ u⃗, every diagonal entry is dimensionless
 (`entry_id_diag`) and every permutation product
 ∏_i A_(σ(i) i) is dimensionless (`entry_perm_prod`), so
-trace and determinant need no side condition. For example, on the artifact's
+trace and determinant have unit 1. This statement concerns their units, not
+an implementation of either operation. For example, on the artifact's
 state space u⃗ = [m, kg·m/s]
 of position and momentum, an endomorphism has entry units
 with rows (1, s/kg) and (kg/s, 1), and both permutation
@@ -98,7 +90,8 @@ eigenvalue equation Av = λ v the two sides carry u_i · w and
 the unit identity this reading rests on, (u_i · w)/u_i = w uniformly
 in the component (`eigenvalue_uom`): a continuous-time dynamics matrix in
 ẋ = Ax has type Lin u⃗ (u⃗·s⁻¹),
-and the modes of a linear system are frequencies, by typing alone.
+so eigenvalues, when they exist, would carry frequency units. This identity
+does not prove eigenvalue existence or provide an eigenvalue algorithm.
 
 The fourth class is maps into the *dual*, the space that pairs with
 Vec u⃗ to give plain numbers. Write u⃗⁻¹ for the
@@ -109,14 +102,12 @@ xᵀ M x is dimensionless, since
 u_j · (u_j u_i)⁻¹ · u_i = 1
 (`weighted_norm_dimensionless`). If such an M factors as
 Rᵀ ∘ R with R : Lin u⃗ y⃗, composability
-forces y⃗ = y⃗⁻¹, and a self-dual space is
-dimensionless (`cholesky_factor_dimensionless`: the unit group is
-torsion-free, “Units and Dimensions” (`Typing.lean`), so y_i² = 1 forces
-y_i = 1; this one needs torsion-freeness and not the rational exponents,
-which is why it holds over ℤ as well). The Cholesky factor is therefore a whitening transform, a map
-carrying
-dimensioned data into dimensionless coordinates, derived rather
-than asserted.
+forces y⃗ = y⃗⁻¹. The unit group is torsion-free, so y_i² = 1 forces
+y_i = 1: a self-dual space has unit 1 in every component
+(`cholesky_factor_dimensionless`). Torsion-freeness suffices; this argument also
+holds with integer exponents. Such a Cholesky factor would therefore map
+dimensioned data into dimensionless coordinates, the unit shape needed by a
+whitening transform.
 
 The fifth class is maps between *uniform* spaces, in
 which every component carries one unit. A uniform space is equal, not merely
@@ -245,9 +236,8 @@ the paper test surfaced it. -/
 /-- **Eigenvalues.** For `A : V ⊸ V ⊗ d`, the equation `A v = λ v` forces `λ` to
 carry exactly `d`: the unit by which the map fails to be an endomorphism.
 
-"Only squarable matrices have eigenstructure" becomes: a map has eigenvalues
-exactly when it is an endomorphism up to a scalar unit, and that scalar *is* the
-unit of the eigenvalues. Read off the type; nothing declared. -/
+This identifies the unit eigenvalues would carry. It proves neither their
+existence nor the correctness of an eigenvalue algorithm. -/
 theorem eigenvalue_uom (V : Space B I) (d : Uom B) (i : I) : (V ⊗ d) i / V i = d := by
   ext b; simp
 
@@ -311,11 +301,10 @@ theorem transpose_comp_direct_iff (W : Space B J) :
 The statement is about entry units only: it fixes the unit every entry of such
 a metric carries, and says nothing about which numbers fill it, whether they
 are positive definite, or whether one choice is canonical. This is where
-Hart's "left uniform" condition comes from: it is the case in which the entry
-unit the pseudo-inverse's metric needs is determined by the space alone. On a
-non-uniform space the entry units differ across components, so the weighting
-must be supplied, which is exactly right, since least squares on components of
-differing units *is* weighted least squares. -/
+Hart's "left uniform" condition applies: all metric entries share one unit.
+The space determines metric entry units in the non-uniform case too, but those
+units differ across components. Numerical weights must be supplied in either
+case; the unit assignment alone chooses no metric. -/
 theorem uniform_canonical_metric (u : Uom B) (j i : J) :
     entry (Space.triv B J ⊗ u) (Space.triv B J ⊗ u).dual j i = (u * u)⁻¹ := by
   ext b; simp; ring

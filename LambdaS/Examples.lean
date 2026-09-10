@@ -104,7 +104,7 @@ def velocity : Term₀ := .div length duration
 
 /-! ## The error that motivates the whole exercise -/
 
-/-- Adding a length to a duration: the Mars Climate Orbiter failure, in one line. -/
+/-- Adding a length to a duration is a dimension mismatch. -/
 def mismatch : Term₀ := .add length duration
 
 #guard (typeOf mismatch).isNone
@@ -834,8 +834,9 @@ def addTwoVarsDeriv : HasTy Δ₀ (scalarCtx [m, m]) addTwoVars (.Q ft) :=
 other, so the branch drifts are `m/ft` and `1`, distinct exponent vectors,
 and the sum has no uniform drift; indeed the program is not scale-invariant.
 By `Tw.normEq_iff_eval_eq` such disagreements are the *only* declines at
-`add` between atom-free ratios, which is what a first-order program produces
-once its internal applications are normalized away (`hoSum` below). -/
+`add` between atom-free ratios. Internal applications may introduce redexes;
+the bounded normalizer removes them in examples such as `hoSum` below, but
+no theorem guarantees that its fuel always suffices. -/
 def addMixed : Term₀ := .add (.convert (.var 0) m ft) (.var 1)
 
 def addMixedDeriv : HasTy Δ₀ (scalarCtx [m, ft]) addMixed (.Q ft) :=
@@ -962,8 +963,8 @@ the first converts the product once at `m·m`, the second converts each factor
 at `m`. Their ratio terms differ syntactically (the syntactic check `Tw.beq`
 rejects exactly
 this pair), but `Tw.normEq` flattens both to the unit vector `m²/ft²` with
-atom exponent `1` on each of `x` and `y`, so the analysis answers, and the
-answer is the drift the branches share. -/
+no argument-drift atoms: the first-order wrapper assigns `x` and `y` ratio `1`.
+The result is the drift the branches share. -/
 def addAssoc : Term₀ :=
   .add (.convert (.mul (.var 0) (.var 1)) (Term.mul m m) (Term.mul ft ft))
        (.mul (.convert (.var 0) m ft) (.convert (.var 1) m ft))
@@ -1415,8 +1416,8 @@ reporting variants, four verdicts, all decided at build time:
   input and squaring the metric velocity, once by squaring the imperial
   velocity and converting the square at `ft²/s²`. The branch ratios differ
   syntactically (`Tw.beq` rejects the pair), but `Tw.normEq` flattens both
-  to the exponent vector `ft²/m²` with atom exponents `x² / t²`, so the
-  sum is accepted and carries the branches' shared drift.
+  to the exponent vector `ft²/m²`: the first-order inputs have ratio `1`, so
+  the sum is accepted and carries the branches' shared drift.
 * `kernelRoot` takes the speed back out of the energy with a square root,
   and the analysis follows it through: `Tw.qpow` lifts the energy's drift
   `ft²/m²` to the power `1/2`, and the diagnostic names the speed's drift
@@ -1592,13 +1593,29 @@ def tau : Term₀ := ⟪ ((%0 !! 1) ! 1 - (%0 !! 0) ! 0) / (2 * (%0 !! 0) ! 1) �
 
 #guard typeOfIn ΓA tau == some (.Q 1)
 
-/-- `t = sign(τ) / (|τ| + √(1 + τ²))`, the standard stable form, written with
-the two branches the sign requires. This is the term that could not be written
-before `ifle`. -/
+/-- Absolute value, expressed using the existing comparison and arithmetic forms.
+The comparison is between quantities at the same unit and names no unit constant. -/
+def absTm (e : Term₀) : Term₀ :=
+  .ifle e (.mul (.lit (-1)) e) (.mul (.lit (-1)) e) e
+
+/-- The magnitude of the off-diagonal entry. -/
+def offDiagAbs : Term₀ := absTm ⟪ (%0 !! 0) ! 1 ⟫
+
+/-- A nonnegative relative scale: the larger diagonal magnitude. -/
+def diagonalScale : Term₀ :=
+  let a := absTm ⟪ (%0 !! 0) ! 0 ⟫
+  let d := absTm ⟪ (%0 !! 1) ! 1 ⟫
+  .ifle a d d a
+
+/-- `t = sign(τ) / (|τ| + √(1 + τ²))` when the off-diagonal is nonzero.
+An already diagonal input uses `t = 0`, before evaluating the division in `tau`.
+The zero in the comparison is obtained by multiplying the entry by zero, so
+it carries the entry's unit without introducing a unit constant. -/
 def tanRot : Term₀ :=
-  .ifle (.lit 0) tau
-    ⟪ 1 / (tau + √2 (1 + tau * tau)) ⟫
-    ⟪ (0 - 1) / ((0 - 1) * tau + √2 (1 + tau * tau)) ⟫
+  .ifle offDiagAbs (.mul (.lit 0) offDiagAbs) (.lit 0)
+    (.ifle (.lit 0) tau
+      ⟪ 1 / (tau + √2 (1 + tau * tau)) ⟫
+      ⟪ (0 - 1) / ((0 - 1) * tau + √2 (1 + tau * tau)) ⟫)
 
 #guard typeOfIn ΓA tanRot == some (.Q 1)
 
@@ -1611,10 +1628,11 @@ def sinRot : Term₀ := ⟪ tanRot * cosRot ⟫
 
 /-- The rotation itself, an endomorphism of the uniform space. Its entries
 carry `V j / V i = 1`, so a rotation is a matrix of plain numbers, which is
-`entry_id_diag` and `entry_perm_prod` seen from the term side. -/
+`entry_id_diag` and `entry_perm_prod` seen from the term side. Its signs are
+`[[c, s], [-s, c]]`, matching `tau = (d - a)/(2b)` in the congruence `Rᵀ A R`. -/
 def rot : Term₀ :=
-  .mcons m (.vcons cosRot (.vcons ⟪ (0 - 1) * sinRot ⟫ .vnil))
-    (.mcons m (.vcons sinRot (.vcons cosRot .vnil))
+  .mcons m (.vcons cosRot (.vcons sinRot .vnil))
+    (.mcons m (.vcons ⟪ (0 - 1) * sinRot ⟫ (.vcons cosRot .vnil))
       (.mnil U2))
 
 #guard typeOfIn ΓA rot == some (.lin U2 U2)
@@ -1656,7 +1674,7 @@ def ΓN : Ctx Base Dim 0 0 := [.lin N2 N2d]
 
 /-! ### What the units say about the stopping test
 
-A convergence test compares the off-diagonal to a tolerance, and the tolerance
+A convergence test compares the off-diagonal magnitude to a tolerance, and the tolerance
 must carry the entries' unit. Both forms below typecheck; parametricity
 distinguishes how their tolerances are supplied.
 
@@ -1671,10 +1689,10 @@ passed as an input could remain parametric and would rescale with the inputs;
 absolute tolerances are not excluded in general. -/
 
 def stopRelative : Term₀ :=
-  .ifle ⟪ (%0 !! 0) ! 1 ⟫ ⟪ 0.000000001 * (%0 !! 0) ! 0 ⟫ (.var 0) sweep
+  .ifle offDiagAbs (.mul (.lit 0.000000001) diagonalScale) (.var 0) sweep
 
 def stopAbsolute : Term₀ :=
-  .ifle ⟪ (%0 !! 0) ! 1 ⟫
+  .ifle offDiagAbs
     (.mul (.lit 0.000000001) (.ucon (Term.div (Term.div 1 m) m)))
     (.var 0) sweep
 
@@ -1684,16 +1702,16 @@ def stopAbsolute : Term₀ :=
 
 /-- **The relative test is parametric.** Theorem 6.1 applies to the kernel: a
 rescaling moves its inputs and its output and changes nothing else, including
-which iteration it stops at. -/
+whether this stopping test takes its return branch. -/
 example : Tm.Parametric stopRelative := by
   simp [stopRelative, sweep, rotT, rot, cosRot, sinRot, tanRot, tau,
-    Tm.Parametric]
+    offDiagAbs, diagonalScale, absTm, Tm.Parametric]
 
 /-- **This fixed absolute test is not parametric.** Its tolerance is written
 as a unit constant. Supplying a tolerance as an argument would be a different,
 potentially parametric program. -/
 example : ¬ Tm.Parametric stopAbsolute := by
-  simp [stopAbsolute, Tm.Parametric]
+  simp [stopAbsolute, offDiagAbs, absTm, Tm.Parametric]
 
 /-! ### The diagnostic at the sweep
 
@@ -1709,38 +1727,19 @@ the guard that says so. -/
       | none => false
   | _ => false)
 
-/-! ### What the experiment found
+/-! ### What the experiment checks
 
-Three things the kernel confirms, one of which took a generalization to
-reach.
+`unitDriftGen` accepts an arbitrary context and a matrix result. The guard above
+assigns the sweep ratio `1` at every entry; `scaleLaw_lin_of_driftFree_gen`
+connects this result to the real scaling law. The non-uniform typing rejection
+and the two tolerance proofs test separate parts of the unit discipline.
 
-Confirmed: uniformity is not a hypothesis but a precondition for writing the
-code at all, and the parametric fragment separates a relative tolerance from
-an absolute one. Both were predicted before the kernel was written.
-
-Not confirmed at first: **the drift analysis did not reach this program.**
-`unitDrift` is typed
-`HasTy Δ (scalarCtx us) e (.Q u) → Option (UExp B k)`,
-so it wanted scalar arguments and a scalar result, and `sweep` has a matrix
-argument and a matrix result. No rearrangement of the kernel helped, because
-the restriction was on the shape of the judgment rather than on the term.
-
-That was a coverage gap between two parts of the development rather than an
-unsoundness, and the diagnosis said where to look: `twistOf`, the analysis
-underneath, is indexed by `Ctx.shapes` and already handled vector and matrix
-shapes, which is why `Tw.agree` needed cases at those shapes at all. Only the
-wrapper was scalar-only. The gap mattered because it fell exactly between two
-claims the development makes: `LambdaS.Map` classifies dimensioned linear
-operators, the diagnostic decides invariance, and the kernels motivating the
-first sat outside the second.
-
-The wrapper did generalize, on both axes. `unitDriftLin` reports one ratio per
-entry of a matrix result, and `unitDriftGen` drops the scalar-context
-restriction as well, so it applies to `sweep` exactly as written. The guard
-above runs it and finds every entry trivial, which is the answer the
-congruence of rotations should have: the kernel converts nowhere, so nothing
-drifts. Neither axis needed a new theorem, and `Twist.scaling` turned out to
-have been fully general already. -/
+`LambdaS.JacobiChecks` executes these terms in the native binary, including the
+matrix products that reach the C dot-product implementation. It checks
+annihilation of both off-diagonal entries, symmetry, trace and determinant,
+and stopping decisions for both signs. These numerical checks are separate
+from the typing and drift guards. They cover finite test matrices, not a
+floating-point correctness theorem for all inputs. -/
 
 /-! ### The kernel restated over scalar arguments
 

@@ -61,20 +61,13 @@ simulation itself is generic in the carrier, but no theorem here relates a
 -/
 
 /-!
-## From the paper's long form: Adequacy and Erasure
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Adequacy and Erasure
 
 Two theorems remain to close the system end to end: that the
 evaluator of “Dynamics” (`Normalization.lean`) computes the denotation of
 “The Price of Conversion” (`Fundamental.lean`) *at the declared conversion factors*, and
 that the units it carries at run time can be erased. The first connects the
-declarations to the compiled evaluator; the second discharges the obligation
+declarations to the evaluator instantiated with real arithmetic; the second discharges the obligation
 that an instrumented semantics incurs.
 
 ### Adequacy at the Declared Factors
@@ -82,7 +75,8 @@ that an instrumented semantics incurs.
 The evaluator takes its conversion factors from an oracle (an arbitrary
 function from pairs of ground units to magnitudes), because it should not fix
 a unit system. Adequacy pins the oracle down: take it to be
-conv_V for a valuation V, and evaluation agrees with
+conv_V for a valuation V and instantiate the evaluator with real arithmetic.
+Then evaluation agrees with
 denotation, magnitude and unit both, at every type and scope
 (`eval_adeq`). The proof relates closures behaviorally: two closures
 are related when they send related arguments to related results at every
@@ -91,10 +85,10 @@ is needed. Composing
 adequacy with the declaration theory of “Unit Declarations” (`Declare.lean`) closes
 the chain from source text to evaluator:
 
-**Theorem (Declared factors reach the compiled evaluator;
+**Theorem (Declared factors reach the real-valued evaluator;
 `evalC_convert_declared`).** Let V satisfy a declaration unit b = q w relating units of
 one dimension. Then converting a well-typed e : Q b to w, evaluated
-with oracle conv_V, multiplies e's value by q.
+with real arithmetic and oracle conv_V, multiplies e's value by q.
 
 The number the evaluator multiplies by *is* the number the declaration
 names, not a number equal to it up to a chain of intermediate steps. In the
@@ -145,7 +139,7 @@ the finitely many scope entries polymorphic conversion must consult.
 Composing the theorem “Erasure” (`eeval_erase`) with adequacy, the erased evaluator
 computes the denotation (`eeval_den`): at the real-number instance
 of the semantics,
-the compiled program's output is the mathematical meaning, with units gone
+the erased evaluator's output equals the mathematical meaning, with units gone
 from the values and present in the types. “Mechanization notes” (`LambdaS.lean`)
 states what the floating-point instance adds to the trusted base.
 -/

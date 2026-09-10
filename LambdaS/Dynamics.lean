@@ -20,7 +20,8 @@ Runtime units alone *would* merely relocate the checking to the runtime. But
 paired with a theorem that **erasure preserves results**, they establish
 something the erased semantics cannot state on its own: that the instrumentation
 is *unnecessary*. That is precisely the content of "units are static", a
-slogan easy to assert and, before these files, unproved.
+property proved here for this calculus, including conversion. Kennedy also
+proves unit erasure for his calculus (WMM 2008).
 
 So there are three things, and they are complementary rather than competing:
 
@@ -30,7 +31,7 @@ So there are three things, and they are complementary rather than competing:
 | `eeval_erase` (`LambdaS.Erasure`) | dropping units **does not change the numbers** |
 | scaling parametricity, i.e. invariance of results under a change of units (`LambdaS.Fundamental`) | units have **observable meaning** |
 
-Kennedy did the third row. This file defines the instrumented evaluator; its
+Kennedy establishes scaling parametricity as well as erasure. This file defines the instrumented evaluator; its
 soundness lives in `LambdaS.Soundness` and `LambdaS.Normalization`, and erasure
 in `LambdaS.Erasure`; all three are stated at the whole language.
 -/
@@ -281,8 +282,8 @@ theorem asUnit_preserves {Δ : DCtx D 0 0} {ψ : Scaling B 0} {x : Meas ℝ B} {
 
 omit [DecidableEq B] in
 /-- **The cast rejects a dimension mismatch.** Reading a duration as a length
-fails rather than silently scaling: the Mars Climate Orbiter failure at the one
-place in Λs where it could still occur. -/
+fails rather than silently scaling. This example is a dimension mismatch,
+separate from a missing conversion between units of the same dimension. -/
 theorem asUnit_eq_none {Δ : DCtx D 0 0} {ψ : Scaling B 0} {x : Meas ℝ B} {μ : UExp B 0}
     (h : ¬ SameDim Δ x.unit μ) : asUnit Δ ψ x μ = none := by
   simp [asUnit, h]

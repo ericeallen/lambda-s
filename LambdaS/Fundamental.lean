@@ -59,10 +59,11 @@ where "instantiating a unit moves no magnitudes" is discharged.
 ## Why the denotation takes a valuation
 
 `den` is parameterized by a `Scaling B k`: the *declared* valuation, what each
-base unit is worth. Nothing but `convert` reads it (`den_indep` proves exactly
-that; note that `ucon` does **not** read it), but `convert` must: a conversion
-factor is a ratio of declared magnitudes and cannot be recovered from the term
-alone.
+base unit is worth. Unit application consults this valuation to select a
+family member; conversion uses it to multiply a magnitude by a ratio of declared
+unit magnitudes. `den_indep` establishes type-indexed independence for
+convert-free terms in independent environments; at scalar results this is
+equality. Unit constants do not consult the valuation.
 
 This is also why the fundamental theorem relates `den V` to `den (V.comp ψ)`
 rather than `den` to itself. Rescaling is a change of the declared unit system,
@@ -112,14 +113,7 @@ pays with the undefined point.
 -/
 
 /-!
-## From the paper's long form: The Price of Conversion
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## The Price of Conversion
 
 In this section, we develop the denotational semantics of Λs and prove
 two abstraction theorems. The first says that a parametric, convert-free
@@ -235,8 +229,8 @@ the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) and thro
 > phrase, “not one among the magnitudes whose zero it is” (§176), then
 > concludes that each kind of magnitude has its own zero (§177).
 > Λs takes both sides, and
-> the seam is exactly the one between types and semantics: 0 : Q m
-> and 0 : Q s are distinct terms at distinct types, but they
+> the distinction is between types and semantics: 0·1_m : Q m
+> and 0·1_s : Q s are distinct terms containing unit constants, but they
 > denote the same real number, the unique fixed point of every rescaling. The
 > action is free on the nonzero reals and trivial at 0; this is Russell's
 > remark in algebraic form. That is why
@@ -762,7 +756,8 @@ theorem relEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ψ : Scaling B k) (ρ ρ' : E
 
 /-! ## Independence of the valuation
 
-A convert-free term cannot read how big a meter is. Stating that as *"it denotes
+A convert-free term has a valuation-independent denotation in an independent
+environment, in the type-indexed sense defined below. Stating that as *"it denotes
 the same thing under `V` and `V'`"* is too naive once unit abstraction is in the
 language: at `e[μ]` the two readings consult the family at `V μ` and at `V' μ`,
 which are different points. For a `Λu` body the family is constant and nothing
@@ -858,7 +853,7 @@ theorem indepEnv_weakenDim : ∀ (Γ : Ctx B D j k) (ρ ρ' : Env Γ), IndepEnv 
        indepEnv_weakenDim Γ ρ.2 ρ'.2 h.2⟩
 
 omit [Fintype D] in
-/-- **A convert-free term cannot read the valuation.**
+/-- **Convert-free denotations satisfy type-indexed valuation independence.**
 
 Stated as an independence relation rather than as an equation: at two
 valuations, over environments related by `IndepEnv`, the two denotations are

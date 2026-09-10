@@ -32,6 +32,7 @@ import LambdaS.Declare
 import LambdaS.DeclareSolver
 import LambdaS.DeclarationSolverExamples
 import LambdaS.Examples
+import LambdaS.JacobiChecks
 import LambdaS.PiExamples
 import LambdaS.QM
 import LambdaS.Algorithms
@@ -64,14 +65,7 @@ Four terms recur throughout, two of them specific to this development.
   none appears here; `#guard` is an assertion the compiler executes at build
   time, so a false one breaks the build.
 
-## From the paper's long form: Mechanization notes
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Mechanization notes
 
 The measured size of the Lean 4 [de Moura and Ullrich 2021] development is
 recorded in the README by `scripts/count_lines.py`. It builds with no `sorry` (Lean's placeholder for an unproved
@@ -107,7 +101,7 @@ our equality is *definitional*: no datatype of unit expressions exists
 anywhere in the mechanization, so a unit
 expression is its own normal form (`Typing.lean`).
 
-**Derivations as data collapse the trusted base.**
+**Why the checker returns a derivation.**
 Making the typing judgment Type-valued and the checker
 derivation-returning (“Statics” (`Typing.lean`)) follows the
 intrinsically-typed tradition [Altenkirch and Reus 1999; Poulsen et al. 2018]; the technique is
@@ -162,7 +156,7 @@ enough to be useful would exclude the instance that runs. The
 carrier-generic theorems (type soundness, strong normalization, erasure)
 therefore hold of the compiled evaluator and constrain its units, array extents,
 and control flow; the theorems that pin down *which number* comes out
-(adequacy, declared factors reaching the compiled evaluator (`one_yard_in_meters`), drift independence)
+(adequacy, declared factors reaching the real-valued evaluator (`one_yard_in_meters`), drift independence)
 are stated at the ℝ instance. The binary's printed numbers are
 checked by assertion instead. The yard report's 300 and 91.44 are
 checked at build

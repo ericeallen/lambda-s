@@ -31,14 +31,7 @@ quantifier substitutes units, which leaves the skeleton alone.
 -/
 
 /-!
-## From the paper's long form: Dynamics
-
-This is the developed explanation that the paper's corresponding section
-summarizes and cites; the paper is the summary and this is the long form, so
-where the two differ in detail this one governs. It is maintained against the
-current development rather than left at the state the paper's `long-form` tag
-recorded. The brief mission statement above says what the module is for; read
-that first and this when you want the argument.
+## Dynamics
 
 In this section, we give Λs an operational semantics in which values
 carry their units, and we prove that the instrumentation is redundant. This
