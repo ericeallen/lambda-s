@@ -94,8 +94,8 @@ and a magnitude m such that evaluation of e at fuel n yields exactly
 Two remarks. First, the unit in the conclusion is u itself: the run-time
 tag provably agrees with the static type, which is what makes the tag
 redundant and erasure (“Adequacy and Erasure” (`Erasure.lean`)) possible. Second, the fuel
-is *produced* by the theorem rather than assumed by it: strong
-normalization supplies the bound, so partiality comes from the total
+is *produced* by the theorem rather than assumed by it: the termination
+theorem `eval_terminates` supplies the bound, so partiality comes from the total
 metalanguage's termination checker and not from Λs, and a well-typed term
 cannot exhaust any sufficiently large bound.
 
@@ -728,7 +728,7 @@ omit [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
   have hD : nilU D = idU D 0 := funext fun i => i.elim0
   rw [hB, hD, Ty.ground_id]
 
-/-- **Strong normalization.** Every well-typed closed term evaluates (at *some*
+/-- **Termination of evaluation.** Every well-typed closed term evaluates (at *some*
 finite fuel) to a value reducible at its type.
 
 This is what the fuel costs and what it buys. `eval` is a total function only

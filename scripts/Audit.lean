@@ -27,6 +27,7 @@ Run with `lake env lean scripts/Audit.lean`.
 
 -- Conversion
 #print axioms LambdaS.Scaling.coherent_iff_factors
+#print axioms LambdaS.coherent_iff_cvt_invariant
 #print axioms LambdaS.Scaling.coherent_of_dim_equiv
 
 -- Declare
@@ -42,6 +43,7 @@ Run with `lake env lean scripts/Audit.lean`.
 
 -- Normalization
 #print axioms LambdaS.unit_soundness_total
+#print axioms LambdaS.eval_terminates
 #print axioms LambdaS.eval_total
 #print axioms LambdaS.lin_soundness_total
 #print axioms LambdaS.eval_sound

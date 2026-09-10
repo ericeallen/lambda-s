@@ -55,6 +55,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 |---|---|---|
 | Preservation: a produced value has the predicted type | `LambdaS.eval_sound` | [`LambdaS/Soundness.lean:214`](LambdaS/Soundness.lean#L214) |
 | Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:769`](LambdaS/Normalization.lean#L769) |
+| Every closed well-typed term evaluates at some fuel | `LambdaS.eval_terminates` | [`LambdaS/Normalization.lean:740`](LambdaS/Normalization.lean#L740) |
 | Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:782`](LambdaS/Normalization.lean#L782) |
 | Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:754`](LambdaS/Normalization.lean#L754) |
 | Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:386`](LambdaS/QM.lean#L386) |
@@ -71,6 +72,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:380`](LambdaS/Parametricity.lean#L380) |
 | The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1441`](LambdaS/Fundamental.lean#L1441) |
 | The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1286`](LambdaS/Fundamental.lean#L1286) |
+| Coherent iff every single conversion is invariant | `LambdaS.coherent_iff_cvt_invariant` | [`LambdaS/Fundamental.lean:1484`](LambdaS/Fundamental.lean#L1484) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:452`](LambdaS/Conversion.lean#L452) |
 | One base unit per dimension makes every rescaling coherent | `LambdaS.Scaling.coherent_of_dim_equiv` | [`LambdaS/Conversion.lean:466`](LambdaS/Conversion.lean#L466) |
 

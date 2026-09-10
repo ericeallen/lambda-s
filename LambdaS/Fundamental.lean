@@ -1472,4 +1472,25 @@ and `velocity_scales` above are the whole construction. -/
 
 
 
+omit [Fintype D] in
+/-- **Coherence is exactly what every conversion requires.** A rescaling is
+coherent for `Δ` if and only if every single conversion between
+interchangeable units, at every valuation and every nonzero input, is
+invariant under it. Sufficiency for all parametric terms is `fundamental`;
+this biconditional, assembled from `cvt_rel_iff_coherent` and the definition
+of coherence, is the converse the paper's "exactly" needs: a rescaling that
+preserves every parametric term is coherent, because the conversions are
+among those terms. -/
+theorem coherent_iff_cvt_invariant {j k : ℕ} (Δ : DCtx D j k) (ψ : Scaling B k) :
+    ψ.Coherent Δ ↔
+      ∀ (u v : UExp B k) (h : SameDim Δ u v) (V : Scaling B k) (x : ℝ), x ≠ 0 →
+        Rel (.Q v) ψ (den V (cvtDeriv h) (x, PUnit.unit))
+          (den (V.comp ψ) (cvtDeriv h) (ψ.scale u * x, PUnit.unit)) := by
+  constructor
+  · intro hc u v h V x hx
+    exact (cvt_rel_iff_coherent h V ψ hx).mpr (hc u v h)
+  · intro hall u v h
+    exact (cvt_rel_iff_coherent h (Scaling.id B k) ψ one_ne_zero).mp
+      (hall u v h (Scaling.id B k) 1 one_ne_zero)
+
 end LambdaS
