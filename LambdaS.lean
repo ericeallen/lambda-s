@@ -25,8 +25,10 @@ import LambdaS.PiTheorem
 import LambdaS.PiCoherent
 import LambdaS.NonDefinability
 import LambdaS.Ratio
+import LambdaS.RatioCompare
 import LambdaS.Definability
 import LambdaS.Twist
+import LambdaS.RatioCompareExamples
 import LambdaS.Conversion
 import LambdaS.Declare
 import LambdaS.DeclareSolver

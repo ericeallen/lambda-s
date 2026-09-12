@@ -131,7 +131,7 @@ equations, the equations AᵀA x = Aᵀb that least squares
 solves, need a metric g : Lin w⃗ w⃗⁻¹: an inner
 product on the codomain, which is to say a choice of weights. A
 uniform space determines the *entry unit* such a metric must have, constantly
-u⁻² (`uniform_canonical_metric`): residuals all measured in meters admit a
+u⁻² (`uniform_canonical_metric`): residuals all measured in meters can use a
 metric with entries at m⁻², under which the weighted norm of a residual
 vector is a plain number. That is an identity of unit assignments. It does not
 construct the numerical matrix, nor prove it positive definite, nor single one

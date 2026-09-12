@@ -833,10 +833,11 @@ def addTwoVarsDeriv : HasTy Δ₀ (scalarCtx [m, m]) addTwoVars (.Q ft) :=
 `x in ft + y` with `x : Q m` and `y : Q ft` converts one branch and not the
 other, so the branch drifts are `m/ft` and `1`, distinct exponent vectors,
 and the sum has no uniform drift; indeed the program is not scale-invariant.
-By `Tw.normEq_iff_eval_eq` such disagreements are the *only* declines at
-`add` between atom-free ratios. Internal applications may introduce redexes;
-the bounded normalizer removes them in examples such as `hoSum` below, but
-no theorem guarantees that its fuel always suffices. -/
+By `Tw.normEq_firstOrder_iff` such disagreements are the *only* declines at
+`add` between assigned scalar ratios in a first-order ratio context. Internal
+applications may introduce redexes; the structural symbolic evaluator handles
+them without fuel, as in `hoSum` below. Unknown higher-order input contexts
+retain the conservative bounded comparison. -/
 def addMixed : Term₀ := .add (.convert (.var 0) m ft) (.var 1)
 
 def addMixedDeriv : HasTy Δ₀ (scalarCtx [m, ft]) addMixed (.Q ft) :=

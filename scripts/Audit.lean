@@ -229,3 +229,11 @@ Run with `lake env lean scripts/Audit.lean`.
 -- Operational semantics cited by the dynamics figures
 #print axioms LambdaS.eval
 #print axioms LambdaS.Num
+
+-- Fuel-free open ratio comparison and preservation of prior acceptance
+#print axioms LambdaS.Tw.openNF
+#print axioms LambdaS.Tw.openNF_correct
+#print axioms LambdaS.Tw.openNF_eq_iff
+#print axioms LambdaS.Tw.normEq_firstOrder_iff
+#print axioms LambdaS.Tw.normEq_of_legacy
+#print axioms LambdaS.RatioCompareExamples.open_composition_correct

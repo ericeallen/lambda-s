@@ -27,8 +27,8 @@ under all rescalings. Triviality is decidable. The diagnostic reports the
 assigned ratio, or declines to assign one; a decline supplies no invariance
 verdict either way.
 
-The development is 10,600 lines of definitions and proofs and 6,200 lines
-of documentation (19,400 lines of source in all; `scripts/count_lines.py`
+The development is 10,800 lines of definitions and proofs and 6,300 lines
+of documentation (19,800 lines of source in all; `scripts/count_lines.py`
 counts `LambdaS/*.lean`, and CI checks these figures and the table below against
 it). Units and dimensions are exponent vectors over ℚ. Substitution on these
 vectors is a linear map, and its algebraic laws follow by reordering finite
@@ -41,13 +41,13 @@ sums. Unit equality needs no normalization pass over unit syntax.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| lines of definitions and proofs | 10,600 |
-| lines of documentation | 6,200 |
-| theorem and lemma declarations | 570 |
+| lines of definitions and proofs | 10,800 |
+| lines of documentation | 6,300 |
+| theorem and lemma declarations | 583 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
-`Examples.lean`, `QM.lean`, and `Algorithms.lean` run the checker, the
-drift analysis, and the evaluator **at build time** through `#guard`; if a
+`Examples.lean`, `RatioCompareExamples.lean`, `QM.lean`, and `Algorithms.lean`
+run the checker, the drift analysis, and the evaluator **at build time** through `#guard`; if a
 stated result were different, the library would not compile. The particle in
 a box is checked this way, numerically as well as dimensionally: its
 uncertainty product and its ground-state energy are `#guard` assertions. The
@@ -117,8 +117,15 @@ certificate, and returns inspectable exact conversion factors as positive
 rational radicands with positive root degrees. Rejection is proved complete.
 The solver may choose reference magnitudes, but a queried factor is returned
 only when declarations determine it in every satisfying valuation.
-`Ratio` gives the first-order syntax of accumulated ratios, and `Twist` the drift analysis and
-its decision procedure.
+`Ratio` gives the first-order syntax of accumulated ratios, `RatioCompare`
+reflects independent unknown scalar components for fuel-free symbolic evaluation,
+and `Twist` implements the drift analysis. Scalar comparison is exact at
+scalar/vector/matrix ratio contexts, including arbitrary internal higher-order
+applications and unit binders (`Tw.normEq_firstOrder_iff`). Contexts containing
+unknown functions or unit families retain the sound bounded comparison, with
+no completeness claim. Every previously accepted comparison remains accepted
+(`Tw.normEq_of_legacy`); this is not a completeness theorem for the whole drift
+analysis.
 
 **Dimensional analysis.** `Pi` and `PiTheorem` derive Buckingham factorization
 and descent to `n - rank A` rational dimensionless coordinates. The factorization

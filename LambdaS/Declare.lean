@@ -89,8 +89,9 @@ system that implements conversion by *walking the declared structure*
 can offer more than one route between two units, with no guarantee the routes
 agree: add the redundant declaration yard = 0.9 meter
 and the direct route disagrees with the route through feet, since
-3 × 0.3048 = 0.9144 ≠ 0.9 (see note 1). Any implementation that converts by chaining declared factors
-ad hoc admits this defect, and nothing in the algebra of units forbids it: the units
+3 × 0.3048 = 0.9144 ≠ 0.9 (see note 1). Choosing a route through declared
+factors without checking consistency can cause this defect, and nothing in
+the algebra of units forbids it: the units
 form a free ℚ-vector space (“Units and Dimensions” (`Typing.lean`)), and the
 declared factors are data the algebra does not constrain.
 

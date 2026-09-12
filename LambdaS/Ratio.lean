@@ -443,23 +443,26 @@ def Tw.rowE {k : ℕ} {Θ : List Shape} {n : ℕ} :
   | _, .matcons r M, j => Fin.cases r (fun j' => Tw.rowE M j') j
   | _, t, j => .row t j
 
-/-! ### Normalization
+/-! ### Legacy bounded normalization
 
 `appE` and `uappE` reduce the redex at hand, but substitution can create
 another: a `lam`-bound variable in head position, instantiated by an
 abstraction, becomes a redex the construction site never sees. The flat-form
 comparison treats any surviving `app` as an atom, so a residue of this kind
 costs an agreement check its completeness. `Tw.norm` reduces redexes, under
-binders included, before a ratio is compared. It runs on fuel derived from the
-term's node count (`Tw.size`), one unit per reduction at a root.
+binders included, in the conservative higher-order-context comparison fallback.
+First-order contexts instead use the fuel-free `Tw.openNF` evaluator from
+`RatioCompare.lean`, exact even with internal higher-order applications. The
+legacy reducer runs on fuel derived from the term's node count (`Tw.size`),
+one unit per reduction at a root.
 
 The reduction is therefore *bounded*, not exhaustive, and what is proved about
 it is that it preserves meaning: `Tw.eval_norm` says the value is unchanged.
 No theorem here says the size-derived fuel suffices to reach a normal form on
-the ratios `twistOf` builds, and `normN 0` returns its argument unreduced. If
-the fuel runs out, a redex survives, `Tw.flat` treats it as an atom, and the
-comparison declines. Fuel can thus cost an agreement check its completeness;
-it never costs soundness. -/
+the ratios sent to the higher-order-context fallback, and `normN 0` returns
+its argument unreduced. If the fuel runs out, a redex survives, `Tw.flat`
+treats it as an atom, and the comparison may decline. Fuel can thus cost an agreement check its completeness;
+it never costs soundness. The first-order-context comparison has no such bound. -/
 
 /-- Node count of a ratio, the fuel `Tw.norm` runs on. -/
 def Tw.size : {k : ℕ} → {Θ : List Shape} → {s : Shape} → Tw B k Θ s → ℕ
@@ -479,7 +482,7 @@ def Tw.size : {k : ℕ} → {Θ : List Shape} → {s : Shape} → Tw B k Θ s �
   | _, _, _, .ulam t => t.size + 1
   | _, _, _, .uapp t _ => t.size + 1
 
-/-- Full β-normalization on fuel: reduces `app` of a literal `lam` and `uapp`
+/-- Bounded β-reduction: reduces `app` of a literal `lam` and `uapp`
 of a literal `ulam` wherever they occur, projections and rows of literals
 included, and leaves everything else in place. -/
 def Tw.normN : (n : ℕ) → {k : ℕ} → {Θ : List Shape} → {s : Shape} →
@@ -508,7 +511,8 @@ def Tw.normN : (n : ℕ) → {k : ℕ} → {Θ : List Shape} → {s : Shape} →
   | _ + 1, _, _, _, .matnil => .matnil
 termination_by n _ _ _ t => (n, sizeOf t)
 
-/-- Normalization at the fuel a ratio's own size supplies. -/
+/-- Legacy bounded reduction, retained in higher-order contexts to preserve
+previously accepted comparisons. First-order comparison uses `Tw.openNF`. -/
 def Tw.norm {k : ℕ} {Θ : List Shape} {s : Shape} (t : Tw B k Θ s) : Tw B k Θ s :=
   Tw.normN t.size t
 
