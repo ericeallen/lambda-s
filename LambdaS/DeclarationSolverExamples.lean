@@ -191,17 +191,39 @@ def allChecks : Bool :=
   determinedInIncomplete && undeterminedInIncomplete
 end RadicalChain
 
+namespace Nanometer
+/- A one-dimensional wavefunction amplitude carries a half-power of inverse
+length. A rational declared factor between nanometer and meter then yields a
+radical factor between the amplitude units. -/
+local instance : UnitSys (Fin 2) (Fin 1) where
+  dim _ := Term.ofBase 0
+
+def nm : UExp (Fin 2) 0 := Term.ofBase 0
+def meter : UExp (Fin 2) 0 := Term.ofBase 1
+/-- nm = 10^(-9) m. -/
+def nmDecl : Decl (Fin 2) := ⟨0, 1 / 10 ^ 9, by norm_num, meter⟩
+
+def accepted : Bool :=
+  (check (Equiv.refl _) (Equiv.refl (Fin 1)) ![nmDecl]).isSome
+
+/-- nm^(-1/2) to m^(-1/2) multiplies by 10^(9/2): radicand 10^9, degree 2. -/
+def exactAmplitude : Bool :=
+  (conversionExact (Equiv.refl _) ![nmDecl]
+      (Term.rpow nm (-1 / 2)) (Term.rpow meter (-1 / 2))).map
+    (fun q => (q.radicand, q.degree)) == some (10 ^ 9, 2)
+end Nanometer
+
 /-- All declaration regressions, also evaluated by the native artifact executable. -/
 def allChecks : Bool :=
   Length.disconnectedConsistent && Length.disconnectedRejected &&
   Length.disconnectedFactorRejected && Length.linkedAccepted && Length.reciprocalAccepted &&
   Length.conflictRejected && Length.exactLink && Root.accepted && Root.exactRoot &&
   Unsound.rejected && Empty.accepted && DependentDimensions.accepted &&
-  RadicalChain.allChecks
+  RadicalChain.allChecks && Nanometer.accepted && Nanometer.exactAmplitude
 
 /-- A compact runtime reading identifying the declaration checks. -/
 def report : String :=
-  s!"declaration solver: disconnected={Length.disconnectedRejected}, linked={Length.linkedAccepted}, reciprocal={Length.reciprocalAccepted}, conflict={Length.conflictRejected}, unsound={Unsound.rejected}, exact rational={Length.exactLink}, exact sqrt2={Root.exactRoot}, empty={Empty.accepted}, dependent dimensions={DependentDimensions.accepted}, radical chain={RadicalChain.allChecks}; all={allChecks}"
+  s!"declaration solver: disconnected={Length.disconnectedRejected}, linked={Length.linkedAccepted}, reciprocal={Length.reciprocalAccepted}, conflict={Length.conflictRejected}, unsound={Unsound.rejected}, exact rational={Length.exactLink}, exact sqrt2={Root.exactRoot}, empty={Empty.accepted}, dependent dimensions={DependentDimensions.accepted}, radical chain={RadicalChain.allChecks}, nm amplitude={Nanometer.exactAmplitude}; all={allChecks}"
 
 #guard Length.disconnectedConsistent
 #guard Length.disconnectedRejected
@@ -222,6 +244,8 @@ def report : String :=
 #guard RadicalChain.incompleteRejected
 #guard RadicalChain.determinedInIncomplete
 #guard RadicalChain.undeterminedInIncomplete
+#guard Nanometer.accepted
+#guard Nanometer.exactAmplitude
 #guard allChecks
 
 end LambdaS.DeclarationSolverExamples
