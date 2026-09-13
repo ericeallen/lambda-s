@@ -1279,6 +1279,100 @@ was consed from, magnitude and unit both. -/
 
 end Literals
 
+/-! ## Trace, determinant, and inverse of a dimensioned endomorphism
+
+Hart's endomorphism class, as terms. On `Lin State State` entry `(j,i)`
+carries `State j / State i`, so the diagonal is dimensionless and so is every
+permutation product; `entry_id_diag` and `entry_perm_prod` state that as unit
+identities in the map model. The terms below compute the quantities at a
+fixed size, and the checker assigns them unit `1` from the matrix type alone.
+The inverse of an endomorphism is again an endomorphism, and the cofactor
+formula at `2×2` lands there with no annotation beyond the two row units. -/
+
+section Endomorphism
+
+/-- The context: one endomorphism of the position-momentum space. -/
+def ΓE : Ctx Base Dim 0 0 := [.lin State State]
+
+/- Off-diagonal entries carry the ratio of the two component units. -/
+#guard typeOfIn ΓE ⟪ (%0 !! 0) ! 1 ⟫ == some (.Q (Term.div m pmom))
+#guard typeOfIn ΓE ⟪ (%0 !! 1) ! 0 ⟫ == some (.Q (Term.div pmom m))
+
+/-- The trace: a sum of two diagonal entries, each dimensionless. -/
+def traceTm : Term₀ := ⟪ (%0 !! 0) ! 0 + (%0 !! 1) ! 1 ⟫
+
+/-- The determinant. Both permutation products are dimensionless, so the
+subtraction is an addition at equal units. -/
+def detTm : Term₀ :=
+  ⟪ (%0 !! 0) ! 0 * (%0 !! 1) ! 1 - (%0 !! 0) ! 1 * (%0 !! 1) ! 0 ⟫
+
+#guard typeOfIn ΓE traceTm == some (.Q 1)
+#guard typeOfIn ΓE detTm == some (.Q 1)
+
+/-- The inverse by the cofactor formula. Each row is checked at the space
+`mcons` demands: row `0` at `m / State = [1, s/kg]` and row `1` at
+`pmom / State = [kg/s, 1]`. Negation is multiplication by `-1`, since a
+literal `0` is dimensionless and cannot be subtracted from a `s/kg` entry. -/
+def invTm : Term₀ :=
+  .mcons m
+    (.vcons ⟪ (%0 !! 1) ! 1 / detTm ⟫
+      (.vcons ⟪ (0 - 1) * (%0 !! 0) ! 1 / detTm ⟫ .vnil))
+    (.mcons pmom
+      (.vcons ⟪ (0 - 1) * (%0 !! 1) ! 0 / detTm ⟫
+        (.vcons ⟪ (%0 !! 0) ! 0 / detTm ⟫ .vnil))
+      (.mnil State))
+
+#guard typeOfIn ΓE invTm == some (.lin State State)
+
+/-- A literal endomorphism, entries at the units its rows demand:
+`[[2, 1 s/kg], [3 kg/s, 4]]`, trace `6`, determinant `5`. -/
+def endoLit : Term₀ :=
+  .mcons m
+    (.vcons (.lit 2) (.vcons (.mul (.lit 1) (.ucon (Term.div sec kg))) .vnil))
+    (.mcons pmom
+      (.vcons (.mul (.lit 3) (.ucon (Term.div kg sec))) (.vcons (.lit 4) .vnil))
+      (.mnil State))
+
+#guard typeOf endoLit == some (.lin State State)
+
+/-- Apply an open term over `ΓE` to the literal. -/
+def atEndoLit (e : Term₀) : Term₀ := .app (.lam (.lin State State) e) endoLit
+
+/-- The composite `A⁻¹ ∘ A`, an endomorphism the evaluator can multiply out. -/
+def invTimesLit : Term₀ := atEndoLit (.comp invTm (.var 0))
+
+#guard typeOf invTimesLit == some (.lin State State)
+
+/-- Evaluate a closed term at `Float`, with a conversion oracle nothing here
+consults. -/
+def runEndo (e : Term₀) : Option (Val Float Base Dim) :=
+  evalC (D := Dim) (fun _ _ => (1.0 : Float)) 10 [] e
+
+/-- Entry-wise agreement within a floating-point tolerance. -/
+def matNear (M N : List (List Float)) : Bool :=
+  M.length == N.length &&
+    (M.zip N).all fun (r, s) =>
+      r.length == s.length && (r.zip s).all fun (a, b) => Float.abs (a - b) < 1e-12
+
+/- The evaluator agrees with the arithmetic: trace `6` and determinant `5`,
+at unit `1`. -/
+#guard (match runEndo (atEndoLit traceTm) with
+  | some (.scalar x) => Float.abs (x.mag - 6) < 1e-12 && x.unit == 1
+  | _ => false)
+#guard (match runEndo (atEndoLit detTm) with
+  | some (.scalar x) => Float.abs (x.mag - 5) < 1e-12 && x.unit == 1
+  | _ => false)
+
+/-- `A⁻¹ ∘ A` is the identity. Composition reaches the C dot product, which
+the interpreter cannot run, so this check executes in the native binary
+(`JacobiChecks`), as the sweep's numerical checks do. -/
+def inverseIsIdentity : Bool :=
+  match runEndo invTimesLit with
+  | some (.matrix M U W) => matNear M [[1, 0], [0, 1]] && U == State && W == State
+  | _ => false
+
+end Endomorphism
+
 /-! ## Drift for vectors and matrices
 
 The drift of a vector is a vector of drifts, and the drift of a matrix is a

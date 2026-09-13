@@ -107,7 +107,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Legacy bounded reduction preserves evaluation | `LambdaS.Tw.eval_norm` | [`LambdaS/Ratio.lean:822`](LambdaS/Ratio.lean#L822) |
 | Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:969`](LambdaS/Examples.lean#L969) |
 | Drift-free closed programs are declaration-independent at the evaluator | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:2183`](LambdaS/Twist.lean#L2183) |
-| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1432`](LambdaS/Examples.lean#L1432) |
+| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1526`](LambdaS/Examples.lean#L1526) |
 | Sum of two converted inputs, accepted at m/ft | `LambdaS.Examples.addTwoVars` | [`LambdaS/Examples.lean:824`](LambdaS/Examples.lean#L824) |
 | Genuinely drifting sum, declined | `LambdaS.Examples.addMixed` | [`LambdaS/Examples.lean:841`](LambdaS/Examples.lean#L841) |
 | Agreeing sum through an internal abstraction, accepted | `LambdaS.Examples.hoSum` | [`LambdaS/Examples.lean:890`](LambdaS/Examples.lean#L890) |

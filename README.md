@@ -27,8 +27,8 @@ under all rescalings. Triviality is decidable. The diagnostic reports the
 assigned ratio, or declines to assign one; a decline supplies no invariance
 verdict either way.
 
-The development is 10,800 lines of definitions and proofs and 6,300 lines
-of documentation (19,800 lines of source in all; `scripts/count_lines.py`
+The development is 10,900 lines of definitions and proofs and 6,300 lines
+of documentation (19,900 lines of source in all; `scripts/count_lines.py`
 counts `LambdaS/*.lean`, and CI checks these figures and the table below against
 it). Units and dimensions are exponent vectors over ℚ. Substitution on these
 vectors is a linear map, and its algebraic laws follow by reordering finite
@@ -41,7 +41,7 @@ sums. Unit equality needs no normalization pass over unit syntax.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| lines of definitions and proofs | 10,800 |
+| lines of definitions and proofs | 10,900 |
 | lines of documentation | 6,300 |
 | theorem and lemma declarations | 583 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |

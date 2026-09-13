@@ -100,8 +100,11 @@ private def stopPasses (test : StopCase) : Bool :=
   stoppingPasses stopRelative test.input test.relativeStops &&
     stoppingPasses stopAbsolute test.input test.absoluteStops
 
-/-- All numerical Jacobi regressions; `main` exits nonzero on a failure. -/
-def allChecks : Bool := sweepInputs.all sweepPasses && stopCases.all stopPasses
+/-- All numerical Jacobi regressions, plus the endomorphism inverse check
+from `Examples`, which composes matrices and so also needs the binary;
+`main` exits nonzero on a failure. -/
+def allChecks : Bool :=
+  sweepInputs.all sweepPasses && stopCases.all stopPasses && inverseIsIdentity
 
 /-- Report failed inputs individually, so a failure can be reproduced. -/
 def report : String :=
@@ -110,7 +113,7 @@ def report : String :=
   let sweepDetails := failedSweeps.map fun input =>
     s!"  FAILED sweep: a={input.a}, b={input.b}, d={input.d}\n"
   let stopDetails := failedStops.map fun test => s!"  FAILED stopping: {test.name}\n"
-  s!"Jacobi: {sweepInputs.length} sweeps, {stopCases.length} stopping cases, all={allChecks}\n"
+  s!"Jacobi: {sweepInputs.length} sweeps, {stopCases.length} stopping cases, inverse={inverseIsIdentity}, all={allChecks}\n"
     ++ String.join (sweepDetails ++ stopDetails)
 
 end LambdaS.JacobiChecks
