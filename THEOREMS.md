@@ -216,6 +216,9 @@ result would fail the build.
 
 | Paper claim | Lean name | Location |
 |---|---|---|
+| Trace of a dimensioned endomorphism, at unit 1 | `LambdaS.Examples.traceTm` | [`LambdaS/Examples.lean:1302`](LambdaS/Examples.lean#L1302) |
+| Determinant of a dimensioned endomorphism, at unit 1 | `LambdaS.Examples.detTm` | [`LambdaS/Examples.lean:1306`](LambdaS/Examples.lean#L1306) |
+| Cofactor inverse, typed as an endomorphism | `LambdaS.Examples.invTm` | [`LambdaS/Examples.lean:1316`](LambdaS/Examples.lean#L1316) |
 | Rational dimensionless coordinates | `LambdaS.Pi.piCoordinates` | [`LambdaS/PiTheorem.lean:358`](LambdaS/PiTheorem.lean#L358) |
 | Arbitrary invariants descend to n minus rank coordinates | `LambdaS.Pi.invariant_descends` | [`LambdaS/PiTheorem.lean:412`](LambdaS/PiTheorem.lean#L412) |
 | Signed Buckingham factorization at reduced arity | `LambdaS.Pi.mulScaleLaw_factorization_reduced` | [`LambdaS/PiTheorem.lean:629`](LambdaS/PiTheorem.lean#L629) |
@@ -228,6 +231,7 @@ result would fail the build.
 | Coherent valuation changes preserve scalar denotation | `LambdaS.den_eq_of_coherent` | [`LambdaS/PiCoherent.lean:92`](LambdaS/PiCoherent.lean#L92) |
 | Converting programs obey the dimension-level scaling law | `LambdaS.Pi.den_mulScaleLaw_coherent` | [`LambdaS/PiCoherent.lean:135`](LambdaS/PiCoherent.lean#L135) |
 | Converting programs factor through n minus dimension-rank groups | `LambdaS.Pi.den_pi_coherent` | [`LambdaS/PiCoherent.lean:159`](LambdaS/PiCoherent.lean#L159) |
+| Pi for programs with conversion, as a dichotomy (Theorem 8.1) | `LambdaS.Pi.den_pi_coherent_dichotomy` | [`LambdaS/PiCoherent.lean:179`](LambdaS/PiCoherent.lean#L179) |
 
 ## Executable declaration solving and determinacy
 
@@ -246,6 +250,7 @@ result would fail the build.
 | Computed declaration solutions satisfy valuations | `LambdaS.DeclSolver.solve_sound` | [`LambdaS/DeclareSolver.lean:116`](LambdaS/DeclareSolver.lean#L116) |
 | Factor lookup decides determinacy | `LambdaS.DeclSolver.conversion_isSome_iff` | [`LambdaS/DeclareSolver.lean:185`](LambdaS/DeclareSolver.lean#L185) |
 | Extracted radical agrees with every satisfying valuation | `LambdaS.DeclSolver.conversionExact_correct` | [`LambdaS/DeclareSolver.lean:234`](LambdaS/DeclareSolver.lean#L234) |
+| Amplitude conversion nm^(-1/2) to m^(-1/2) extracts radicand 10^9, degree 2 | `LambdaS.DeclarationSolverExamples.Nanometer.exactAmplitude` | [`LambdaS/DeclarationSolverExamples.lean:210`](LambdaS/DeclarationSolverExamples.lean#L210) |
 | Full declaration checker sound and complete | `LambdaS.DeclSolver.check_isSome_iff` | [`LambdaS/DeclareSolver.lean:283`](LambdaS/DeclareSolver.lean#L283) |
 | Checked systems supply every legal conversion | `LambdaS.DeclSolver.Checked.conversionExact_isSome` | [`LambdaS/DeclareSolver.lean:300`](LambdaS/DeclareSolver.lean#L300) |
 | Rational factor actually computed | `LambdaS.DeclarationSolverExamples.Length.linkedFactor_returned` | [`LambdaS/DeclarationSolverExamples.lean:54`](LambdaS/DeclarationSolverExamples.lean#L54) |

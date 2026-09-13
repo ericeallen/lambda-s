@@ -170,5 +170,30 @@ theorem den_pi_coherent {m : ℕ} {e : Tm B D 0 0}
   mulScaleLaw_factorization_reduced (dimensionMatrix eqv us) (dimensionExponents eqv u)
     X hX (den_mulScaleLaw_coherent d hp V eqv)
 
+/-- **The Pi theorem for programs with conversion, as a dichotomy.** Either
+some power product of the arguments has the result's dimension, and the
+program factors on positive arguments through the dimensionless products
+(`den_pi_coherent`), or none does, and the program denotes zero on every
+argument (`den_mulScaleLaw_coherent` with `mulScaleLaw_eq_zero_of_unsolvable`).
+This is the statement the paper's Pi theorem cites. -/
+theorem den_pi_coherent_dichotomy {m : ℕ} {e : Tm B D 0 0}
+    {us : List (UExp B 0)} {u : UExp B 0}
+    (d : HasTy (DCtx.nil D) (scalarCtx us) e (.Q u)) (hp : e.Parametric)
+    (V : Scaling B 0) (eqv : Fin m ≃ D ⊕ Fin 0) :
+    (∃ X : Fin us.length → ℝ,
+      (∀ v, ∑ i, (dimensionMatrix eqv us v i : ℝ) * X i =
+        (dimensionExponents eqv u v : ℝ)) ∧
+      ∃ G : (Fin (us.length - Matrix.rank (dimensionMatrix eqv us)) → ℝ) → ℝ,
+        ∀ x : Fin us.length → ℝ, (∀ i, 0 < x i) →
+          den V d (envOf us x) = (∏ i, x i ^ X i) *
+            G (piCoordinates (dimensionMatrix eqv us) (fun i => Real.log (x i)))) ∨
+    ∀ x : Fin us.length → ℝ, den V d (envOf us x) = 0 := by
+  by_cases hs : ∃ X : Fin us.length → ℝ,
+      ∀ v, ∑ i, (dimensionMatrix eqv us v i : ℝ) * X i = (dimensionExponents eqv u v : ℝ)
+  · obtain ⟨X, hX⟩ := hs
+    exact Or.inl ⟨X, hX, den_pi_coherent d hp V eqv X hX⟩
+  · exact Or.inr fun x =>
+      mulScaleLaw_eq_zero_of_unsolvable _ _ hs (den_mulScaleLaw_coherent d hp V eqv) x
+
 end Pi
 end LambdaS

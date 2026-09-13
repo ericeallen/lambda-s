@@ -197,6 +197,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.dimensionMatrix
 #print axioms LambdaS.Pi.den_mulScaleLaw_coherent
 #print axioms LambdaS.Pi.den_pi_coherent
+#print axioms LambdaS.Pi.den_pi_coherent_dichotomy
 
 -- Predicted Pi boundary cases, checked by the kernel
 #print axioms LambdaS.Examples.addMixed_coherent
@@ -219,6 +220,10 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.DeclSolver.solve_sound
 #print axioms LambdaS.DeclSolver.conversion_isSome_iff
 #print axioms LambdaS.DeclSolver.conversionExact_correct
+#print axioms LambdaS.DeclarationSolverExamples.Nanometer.exactAmplitude
+#print axioms LambdaS.Examples.traceTm
+#print axioms LambdaS.Examples.detTm
+#print axioms LambdaS.Examples.invTm
 #print axioms LambdaS.DeclSolver.check_isSome_iff
 #print axioms LambdaS.DeclSolver.Checked.conversionExact_isSome
 #print axioms LambdaS.DeclarationSolverExamples.Length.linkedFactor_returned
