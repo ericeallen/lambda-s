@@ -21,6 +21,7 @@ Run with `lake env lean scripts/Audit.lean`.
 
 -- Typing
 #print axioms LambdaS.check_eq
+#print axioms LambdaS.System.solves_triangulate_iff
 #print axioms LambdaS.HasTy
 #print axioms LambdaS.elabConvert
 #print axioms LambdaS.elabConvert_isSome
@@ -44,12 +45,15 @@ Run with `lake env lean scripts/Audit.lean`.
 -- Normalization
 #print axioms LambdaS.unit_soundness_total
 #print axioms LambdaS.eval_terminates
+#print axioms LambdaS.eval_mono
 #print axioms LambdaS.eval_total
 #print axioms LambdaS.lin_soundness_total
 #print axioms LambdaS.eval_sound
 
 -- Fundamental
 #print axioms LambdaS.fundamental_free
+#print axioms LambdaS.RelCo
+#print axioms LambdaS.Rel
 #print axioms LambdaS.fundamental
 #print axioms LambdaS.cvt_rel_iff_coherent
 #print axioms LambdaS.den_eq_of_convertFree
@@ -85,6 +89,7 @@ Run with `lake env lean scripts/Audit.lean`.
 -- Adequacy and Erasure
 #print axioms LambdaS.eval_adeq
 #print axioms LambdaS.evalC_convert_declared
+#print axioms LambdaS.evalC_eq_den
 #print axioms LambdaS.eeval_erase
 #print axioms LambdaS.erasure_correct
 #print axioms LambdaS.eeval_den
@@ -151,6 +156,9 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Examples.dimCycle
 #print axioms LambdaS.Examples.caster
 #print axioms LambdaS.Examples.casterRound
+#print axioms LambdaS.Examples.stopAbsolute
+#print axioms LambdaS.Examples.sweep
+#print axioms LambdaS.Examples.fromTimeT
 #print axioms LambdaS.Examples.velocity
 #print axioms LambdaS.Examples.stateVec
 #print axioms LambdaS.Examples.toTime
@@ -175,6 +183,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.QM.expectation
 #print axioms LambdaS.scaleLaw_lin_of_driftFree
 #print axioms LambdaS.scaleLaw_lin_of_driftFree_gen
+#print axioms LambdaS.unitDriftGen
 #print axioms LambdaS.QM.twoStateChecks
 #print axioms LambdaS.Algorithms.ydPerFt
 #print axioms LambdaS.Algorithms.ydPerFtIn1
@@ -196,6 +205,7 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.dimensionExponents
 #print axioms LambdaS.Pi.dimensionMatrix
 #print axioms LambdaS.Pi.den_mulScaleLaw_coherent
+#print axioms LambdaS.Examples.addMixed_coherent
 #print axioms LambdaS.Pi.den_pi_coherent
 #print axioms LambdaS.Pi.den_pi_coherent_dichotomy
 

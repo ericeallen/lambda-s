@@ -12,6 +12,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 |---|---|---|
 | Typing rules (Figure 2) | `LambdaS.HasTy` | [`LambdaS/Typing.lean:435`](LambdaS/Typing.lean#L435) |
 | Completeness; derivations unique | `LambdaS.check_eq` | [`LambdaS/Typing.lean:664`](LambdaS/Typing.lean#L664) |
+| Triangularization preserves ground solution sets | `LambdaS.System.solves_triangulate_iff` | [`LambdaS/Unify.lean:330`](LambdaS/Unify.lean#L330) |
 | The generic caster is well-typed | `LambdaS.Examples.caster` | [`LambdaS/Examples.lean:1012`](LambdaS/Examples.lean#L1012) |
 | The velocity idiom | `LambdaS.Examples.velocity` | [`LambdaS/Examples.lean:97`](LambdaS/Examples.lean#L97) |
 | Surface `in` elaborates by running the checker | `LambdaS.elabConvert` | [`LambdaS/Notation.lean:110`](LambdaS/Notation.lean#L110) |
@@ -56,6 +57,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Preservation: a produced value has the predicted type | `LambdaS.eval_sound` | [`LambdaS/Soundness.lean:214`](LambdaS/Soundness.lean#L214) |
 | Unit soundness (Theorem 4.1) | `LambdaS.unit_soundness_total` | [`LambdaS/Normalization.lean:769`](LambdaS/Normalization.lean#L769) |
 | Every closed well-typed term evaluates at some fuel | `LambdaS.eval_terminates` | [`LambdaS/Normalization.lean:740`](LambdaS/Normalization.lean#L740) |
+| Every larger fuel bound returns the same value | `LambdaS.eval_mono` | [`LambdaS/Normalization.lean:126`](LambdaS/Normalization.lean#L126) |
 | Matrix literals evaluate to matrices at their spaces | `LambdaS.lin_soundness_total` | [`LambdaS/Normalization.lean:782`](LambdaS/Normalization.lean#L782) |
 | Totality at every type | `LambdaS.eval_total` | [`LambdaS/Normalization.lean:754`](LambdaS/Normalization.lean#L754) |
 | Fuel accounting, checked by the binary | `LambdaS.QM.twoStateChecks` | [`LambdaS/QM.lean:386`](LambdaS/QM.lean#L386) |
@@ -67,6 +69,8 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Convert-free terms ignore the valuation | `LambdaS.den_eq_of_convertFree` | [`LambdaS/Fundamental.lean:958`](LambdaS/Fundamental.lean#L958) |
 | Valuation independence at higher type | `LambdaS.den_indep` | [`LambdaS/Fundamental.lean:868`](LambdaS/Fundamental.lean#L868) |
 | Abstraction, convert-free (Theorem 5.1) | `LambdaS.fundamental_free` | [`LambdaS/Fundamental.lean:1127`](LambdaS/Fundamental.lean#L1127) |
+| The coherent logical relation | `LambdaS.RelCo` | [`LambdaS/Fundamental.lean:428`](LambdaS/Fundamental.lean#L428) |
+| The convert-free logical relation | `LambdaS.Rel` | [`LambdaS/Parametricity.lean:170`](LambdaS/Parametricity.lean#L170) |
 | Abstraction, coherent (Theorem 5.2) | `LambdaS.fundamental` | [`LambdaS/Fundamental.lean:977`](LambdaS/Fundamental.lean#L977) |
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:1153`](LambdaS/Examples.lean#L1153) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:380`](LambdaS/Parametricity.lean#L380) |
@@ -92,6 +96,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Drift 1 gives the unrestricted scaling law | `LambdaS.scaleLaw_of_driftFree` | [`LambdaS/Twist.lean:2170`](LambdaS/Twist.lean#L2170) |
 | Drift 1 gives the scaling law at a matrix result | `LambdaS.scaleLaw_lin_of_driftFree` | [`LambdaS/Twist.lean:1999`](LambdaS/Twist.lean#L1999) |
 | The same over an arbitrary context | `LambdaS.scaleLaw_lin_of_driftFree_gen` | [`LambdaS/Twist.lean:1967`](LambdaS/Twist.lean#L1967) |
+| The drift diagnostic over an arbitrary context and a matrix result | `LambdaS.unitDriftGen` | [`LambdaS/Twist.lean:1915`](LambdaS/Twist.lean#L1915) |
 | Invariance iff trivial ratio (Theorem 6.1) | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:1053`](LambdaS/Twist.lean#L1053) |
 | Decidability | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:1086`](LambdaS/Twist.lean#L1086) |
 | The diagnostic's specification (Theorem 6.1) | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:2031`](LambdaS/Twist.lean#L2031) |
@@ -113,6 +118,9 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Agreeing sum through an internal abstraction, accepted | `LambdaS.Examples.hoSum` | [`LambdaS/Examples.lean:890`](LambdaS/Examples.lean#L890) |
 | A visible application analyzes as its redex | `LambdaS.Examples.betaShared` | [`LambdaS/Examples.lean:934`](LambdaS/Examples.lean#L934) |
 | Polymorphic round trip, drift-free uninstantiated | `LambdaS.Examples.casterRound` | [`LambdaS/Examples.lean:1078`](LambdaS/Examples.lean#L1078) |
+| A fixed absolute tolerance, not parametric | `LambdaS.Examples.stopAbsolute` | [`LambdaS/Examples.lean:1789`](LambdaS/Examples.lean#L1789) |
+| One Jacobi sweep, typed at the uniform space | `LambdaS.Examples.sweep` | [`LambdaS/Examples.lean:1749`](LambdaS/Examples.lean#L1749) |
+| A transpose assembled from row extractions | `LambdaS.Examples.fromTimeT` | [`LambdaS/Examples.lean:1261`](LambdaS/Examples.lean#L1261) |
 | Leading lambda binders analyzed as inputs | `LambdaS.unitDriftLam` | [`LambdaS/Twist.lean:2054`](LambdaS/Twist.lean#L2054) |
 | The stripped kernel is analyzed as an open term | `LambdaS.unitDriftLam_eq_unitDrift` | [`LambdaS/Twist.lean:2074`](LambdaS/Twist.lean#L2074) |
 | The diagnostic through a leading abstraction, exact | `LambdaS.unitDriftLam_spec` | [`LambdaS/Twist.lean:2088`](LambdaS/Twist.lean#L2088) |
@@ -127,6 +135,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 |---|---|---|
 | Adequacy at the declared factors | `LambdaS.eval_adeq` | [`LambdaS/Adequacy.lean:341`](LambdaS/Adequacy.lean#L341) |
 | Declared factors reach the real-valued evaluator (Theorem 7.1) | `LambdaS.evalC_convert_declared` | [`LambdaS/Adequacy.lean:844`](LambdaS/Adequacy.lean#L844) |
+| Adequacy: the real-arithmetic evaluator computes the denotation | `LambdaS.evalC_eq_den` | [`LambdaS/Adequacy.lean:831`](LambdaS/Adequacy.lean#L831) |
 | Erasure (Theorem 7.2) | `LambdaS.erasure_correct` | [`LambdaS/Erasure.lean:510`](LambdaS/Erasure.lean#L510) |
 | The simulation behind it, no typing hypothesis | `LambdaS.eeval_erase` | [`LambdaS/Erasure.lean:296`](LambdaS/Erasure.lean#L296) |
 | The erased evaluator computes the denotation, at `ℝ` | `LambdaS.eeval_den` | [`LambdaS/Erasure.lean:523`](LambdaS/Erasure.lean#L523) |
@@ -230,6 +239,7 @@ result would fail the build.
 | Only same-dimension oracle entries affect evaluation | `LambdaS.eval_congr_sameDim` | [`LambdaS/PiCoherent.lean:39`](LambdaS/PiCoherent.lean#L39) |
 | Coherent valuation changes preserve scalar denotation | `LambdaS.den_eq_of_coherent` | [`LambdaS/PiCoherent.lean:92`](LambdaS/PiCoherent.lean#L92) |
 | Converting programs obey the dimension-level scaling law | `LambdaS.Pi.den_mulScaleLaw_coherent` | [`LambdaS/PiCoherent.lean:135`](LambdaS/PiCoherent.lean#L135) |
+| The declined sum still obeys the dimension-level law | `LambdaS.Examples.addMixed_coherent` | [`LambdaS/PiExamples.lean:24`](LambdaS/PiExamples.lean#L24) |
 | Converting programs factor through n minus dimension-rank groups | `LambdaS.Pi.den_pi_coherent` | [`LambdaS/PiCoherent.lean:159`](LambdaS/PiCoherent.lean#L159) |
 | Pi for programs with conversion, as a dichotomy (Theorem 8.1) | `LambdaS.Pi.den_pi_coherent_dichotomy` | [`LambdaS/PiCoherent.lean:179`](LambdaS/PiCoherent.lean#L179) |
 
