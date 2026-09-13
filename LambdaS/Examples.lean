@@ -1652,7 +1652,7 @@ end Ballistics
 
 /-! ## A Jacobi rotation, and what the units force
 
-The reason `ifle` was added. Section 5 classifies dimensioned maps, and
+The reason `ifle` was added. Section 9 classifies dimensioned maps, and
 `svd_entry_const` says a singular value decomposition needs a *uniform* space
 because sorting singular values requires a shared unit. That is a claim about
 types, and until now nothing in the development ran an actual kernel against
@@ -1775,7 +1775,7 @@ distinguishes how their tolerances are supplied.
 
 A **relative** tolerance scales a quantity already in hand by a dimensionless
 factor. It names no unit, so it stays inside the parametric fragment and
-Theorem 6.1 applies to the kernel.
+Theorem 5.1 applies to the kernel.
 
 The **fixed absolute** tolerance below is written using a named unit
 constant `ucon`, which `Tm.Parametric` excludes. The kernel still typechecks
@@ -1795,7 +1795,7 @@ def stopAbsolute : Term₀ :=
 #guard typeOfIn ΓA stopRelative == some (.lin U2 U2d)
 #guard typeOfIn ΓA stopAbsolute == some (.lin U2 U2d)
 
-/-- **The relative test is parametric.** Theorem 6.1 applies to the kernel: a
+/-- **The relative test is parametric.** Theorem 5.1 applies to the kernel: a
 rescaling moves its inputs and its output and changes nothing else, including
 whether this stopping test takes its return branch. -/
 example : Tm.Parametric stopRelative := by

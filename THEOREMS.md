@@ -75,7 +75,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Theorem 5.2 at a moving rescaling | `LambdaS.Examples.fundamental_at_moving_rescale` | [`LambdaS/Examples.lean:1153`](LambdaS/Examples.lean#L1153) |
 | The root scaling identity, all reals, positive factor | `LambdaS.mul_rpow_of_pos_left` | [`LambdaS/Parametricity.lean:380`](LambdaS/Parametricity.lean#L380) |
 | The abstraction theorem at a root term | `LambdaS.sqrt_scales` | [`LambdaS/Fundamental.lean:1441`](LambdaS/Fundamental.lean#L1441) |
-| The price is exact (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1286`](LambdaS/Fundamental.lean#L1286) |
+| Single-conversion invariance (Theorem 5.3) | `LambdaS.cvt_rel_iff_coherent` | [`LambdaS/Fundamental.lean:1286`](LambdaS/Fundamental.lean#L1286) |
 | Coherent iff every single conversion is invariant | `LambdaS.coherent_iff_cvt_invariant` | [`LambdaS/Fundamental.lean:1484`](LambdaS/Fundamental.lean#L1484) |
 | Coherent equals factoring through dimension | `LambdaS.Scaling.coherent_iff_factors` | [`LambdaS/Conversion.lean:452`](LambdaS/Conversion.lean#L452) |
 | One base unit per dimension makes every rescaling coherent | `LambdaS.Scaling.coherent_of_dim_equiv` | [`LambdaS/Conversion.lean:466`](LambdaS/Conversion.lean#L466) |
@@ -99,7 +99,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | The drift diagnostic over an arbitrary context and a matrix result | `LambdaS.unitDriftGen` | [`LambdaS/Twist.lean:1915`](LambdaS/Twist.lean#L1915) |
 | Invariance iff trivial ratio (Theorem 6.1) | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:1053`](LambdaS/Twist.lean#L1053) |
 | Decidability | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:1086`](LambdaS/Twist.lean#L1086) |
-| The diagnostic's specification (Theorem 6.1) | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:2031`](LambdaS/Twist.lean#L2031) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:2031`](LambdaS/Twist.lean#L2031) |
 | Branch comparison at `+` | `LambdaS.Tw.normEq` | [`LambdaS/Twist.lean:1591`](LambdaS/Twist.lean#L1591) |
 | Fuel-free open scalar normal form | `LambdaS.Tw.openNF` | [`LambdaS/RatioCompare.lean:127`](LambdaS/RatioCompare.lean#L127) |
 | Open normal form preserves evaluation | `LambdaS.Tw.openNF_correct` | [`LambdaS/RatioCompare.lean:143`](LambdaS/RatioCompare.lean#L143) |
@@ -161,7 +161,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Pi, the factorization | `LambdaS.Pi.pi_theorem` | [`LambdaS/PiTheorem.lean:279`](LambdaS/PiTheorem.lean#L279) |
 | Pi, multiplicative coordinates | `LambdaS.Pi.mulScaleLaw_factorization` | [`LambdaS/PiTheorem.lean:602`](LambdaS/PiTheorem.lean#L602) |
 | Invariants are the dimensionless monomials | `LambdaS.Pi.invariant_iff_dimensionless` | [`LambdaS/PiTheorem.lean:307`](LambdaS/PiTheorem.lean#L307) |
-| Buckingham's counting (Theorem 8.1) | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:331`](LambdaS/PiTheorem.lean#L331) |
+| Buckingham's counting | `LambdaS.Pi.pi_count` | [`LambdaS/PiTheorem.lean:331`](LambdaS/PiTheorem.lean#L331) |
 | The factorization is an equivalence | `LambdaS.Pi.piEquiv` | [`LambdaS/PiTheorem.lean:447`](LambdaS/PiTheorem.lean#L447) |
 | The pendulum signature | `LambdaS.Pi.pendulum` | [`LambdaS/Pi.lean:137`](LambdaS/Pi.lean#L137) |
 | The pendulum solution exhibited | `LambdaS.Pi.pendulum_period_solution` | [`LambdaS/Pi.lean:166`](LambdaS/Pi.lean#L166) |
@@ -172,7 +172,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | A once-appearing base unit forces a zero exponent | `LambdaS.Pi.solution_eq_zero_of_appears_once` | [`LambdaS/Pi.lean:122`](LambdaS/Pi.lean#L122) |
 | Signed equivalence, multiplicative coordinates | `LambdaS.Pi.piEquivSigned` | [`LambdaS/PiTheorem.lean:555`](LambdaS/PiTheorem.lean#L555) |
 | Unsolvable signatures admit only zero | `LambdaS.Pi.mulScaleLaw_eq_zero_of_unsolvable` | [`LambdaS/PiTheorem.lean:709`](LambdaS/PiTheorem.lean#L709) |
-| The solvability dichotomy (Theorem 8.1) | `LambdaS.Pi.mulScaleLaw_dichotomy` | [`LambdaS/PiTheorem.lean:737`](LambdaS/PiTheorem.lean#L737) |
+| The solvability dichotomy over scaling laws | `LambdaS.Pi.mulScaleLaw_dichotomy` | [`LambdaS/PiTheorem.lean:737`](LambdaS/PiTheorem.lean#L737) |
 
 ## Dimensioned linear algebra
 
@@ -181,7 +181,7 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Entry units (definition) | `LambdaS.entry` | [`LambdaS/Map.lean:162`](LambdaS/Map.lean#L162) |
 | The calculus's entry units are the model's | `LambdaS.entry_toSpace` | [`LambdaS/Syntax.lean:355`](LambdaS/Syntax.lean#L355) |
 | T-MCons enforces the model's entry units | `LambdaS.HasTy.mcons_entry` | [`LambdaS/Typing.lean:531`](LambdaS/Typing.lean#L531) |
-| Rank-one units (Theorem 9.1) | `LambdaS.entry_rank_one` | [`LambdaS/Map.lean:174`](LambdaS/Map.lean#L174) |
+| Rank-one units | `LambdaS.entry_rank_one` | [`LambdaS/Map.lean:174`](LambdaS/Map.lean#L174) |
 | Composition entry units | `LambdaS.entry_comp` | [`LambdaS/Map.lean:185`](LambdaS/Map.lean#L185) |
 | Endomorphism diagonals dimensionless | `LambdaS.entry_id_diag` | [`LambdaS/Map.lean:212`](LambdaS/Map.lean#L212) |
 | Permutation products dimensionless | `LambdaS.entry_perm_prod` | [`LambdaS/Map.lean:200`](LambdaS/Map.lean#L200) |

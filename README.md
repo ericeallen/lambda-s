@@ -131,15 +131,20 @@ analysis.
 and descent to `n - rank A` rational dimensionless coordinates. The factorization
 allows arbitrary signed outputs on positive inputs. `PiCoherent` supplies the
 dimension-level law for converting programs in closed external unit/dimension
-scope, including internal polymorphism. The stronger unit-level law applies to
-parametric convert-free or drift-free programs. `Definability` and `NonDefinability` prove
+scope, including internal polymorphism, and states the paper's Pi theorem as
+one dichotomy (`den_pi_coherent_dichotomy`): factorization when some power
+product has the result's dimension, zero otherwise. The stronger unit-level
+law applies to parametric convert-free or drift-free programs. `Definability` and `NonDefinability` prove
 that rational powers must be primitive.
 
 **Programs.** `Examples`, `QM`, and `Algorithms` are the worked examples,
-including the yard/foot/meter declarations end to end and the pendulum.
+including the yard/foot/meter declarations end to end, the pendulum, and the
+trace, determinant, and cofactor inverse of a dimensioned endomorphism, with
+`A⁻¹ ∘ A = I` checked in the executable.
 `DeclarationSolverExamples` executes disconnected/linked units, redundant and
 conflicting cycles, dimension errors, empty bases, dependent dimension rows,
-and exact rational and square-root factors. Its four kernel theorems connect
+and exact rational, square-root, and wavefunction-amplitude (nm^(-1/2) to
+m^(-1/2)) factors. Its four kernel theorems connect
 actual returned factors to every satisfying valuation. The native executable
 runs this battery and exits nonzero if it fails. `JacobiChecks` exercises the
 actual Float evaluator and native matrix operations on 125 Jacobi sweep cases
