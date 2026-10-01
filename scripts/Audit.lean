@@ -185,6 +185,9 @@ reports with `python3 scripts/check_axioms.py axioms.txt`.
 #print axioms LambdaS.scaleLaw_lin_of_driftFree
 #print axioms LambdaS.scaleLaw_lin_of_driftFree_gen
 #print axioms LambdaS.unitDriftGen
+#print axioms LambdaS.scaleLaw_vec_of_driftFree
+#print axioms LambdaS.scaleLaw_vec_of_driftFree_gen
+#print axioms LambdaS.unitDriftVecGen
 #print axioms LambdaS.QM.twoStateChecks
 #print axioms LambdaS.Algorithms.ydPerFt
 #print axioms LambdaS.Algorithms.ydPerFtIn1

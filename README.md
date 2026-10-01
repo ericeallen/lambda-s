@@ -37,8 +37,8 @@ is nonzero, the ratio is trivial exactly when the program is invariant under
 all rescalings, and triviality is decidable. The diagnostic may instead
 decline to assign a ratio; a decline gives no verdict either way.
 
-The development is 10,900 lines of definitions and proofs and 6,600 lines
-of documentation (20,200 lines of source in all; the rest are blank lines).
+The development is 11,000 lines of definitions and proofs and 6,600 lines
+of documentation (20,300 lines of source in all; the rest are blank lines).
 `scripts/count_lines.py` counts `LambdaS/*.lean`, and CI checks these figures
 and the table below against it.
 
@@ -54,9 +54,9 @@ finite sums.
 | Lean | 4.33.0 (pinned in `lean-toolchain`) |
 | mathlib | pinned in `lake-manifest.json` |
 | `sorry` / `admit` | none |
-| lines of definitions and proofs | 10,900 |
+| lines of definitions and proofs | 11,000 |
 | lines of documentation | 6,600 |
-| theorem and lemma declarations | 584 |
+| theorem and lemma declarations | 588 |
 | axioms | `propext`, `Classical.choice`, `Quot.sound` |
 
 `Examples.lean`, `RatioCompareExamples.lean`, `QM.lean`, and `Algorithms.lean`

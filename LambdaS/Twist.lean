@@ -997,6 +997,25 @@ theorem Twist.law_lin {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
     (TwEnv.onesFrom_oneTwEnv 0) (twRelEnv_scaleEnv (D := D) (j := j) φ ψ us ρ)
 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] in
+/-- **The twisted scaling law at a vector result.** The same law as
+`Twist.law`, over a context of scalars but a program that returns a vector.
+The conclusion is `TwRel` at `.vec` unfolded: component `i` rescales by the
+factor its *type* predicts, `ψ(U i)`, times that component's own ratio under
+each axis. Like `Twist.law_lin`, it is `Twist.scaling` instantiated at one
+shape. -/
+theorem Twist.law_vec {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {U : Sp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.vec U)}
+    {t : Tw B k (us.map fun _ => Shape.scalar) (.vec U.length)}
+    (ht : Twist 0 _ d t) (V₀ φ ψ : Scaling B k)
+    (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    ∀ i, den (V₀.comp φ) d (scaleEnv ψ us ρ) i
+      = ψ.scale (U.get i)
+        * ((Tw.eval φ t (oneTwEnv _) i : ℝ) * (Tw.eval ψ t (oneTwEnv _) i))
+        * den V₀ d ρ i :=
+  ht.scaling V₀ φ ψ (oneTwEnv _) (oneTwEnv _) (TwEnv.onesFrom_oneTwEnv 0)
+    (TwEnv.onesFrom_oneTwEnv 0) (twRelEnv_scaleEnv (D := D) (j := j) φ ψ us ρ)
+
+omit [DecidableEq B] [Fintype D] [DecidableEq D] in
 /-- **Invariance under all scalings forces the ratio's value to `1`.**
 
 The general converse for any term of scalar type over a context of scalars,
@@ -1930,8 +1949,9 @@ def unitDriftGen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V W : Sp B k}
 
 /-- **Unit drift at a matrix result**: one normal ratio per entry.
 
-A scalar program has a drift; a map-valued one has a drift *table*, because
-`TwRel` at `.lin` charges each entry separately. A single ratio would be wrong
+A scalar program has a drift, a vector-valued one a drift vector
+(`unitDriftVec`), and a map-valued one a drift *table*, because `TwRel` at
+`.lin` charges each entry separately. A single ratio would be wrong
 unless the entries happened to agree, so this reports the table and lets the
 caller ask what it wants of it. A table constantly `1` gives the type's scaling
 law (`scaleLaw_lin_of_driftFree`, below); no converse is proved here. -/
@@ -2025,6 +2045,101 @@ theorem scaleLaw_lin_of_driftFree {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp
       have := (Tw.nfOne_eq_one_iff (Tw.projE (Tw.rowE p.1 a) i)).mp (h1 a i) χ
       simpa using this
     have hl := Twist.law_lin p.2 V₀ Scaling.zero ψ ρ a i
+    rw [hone Scaling.zero, hone ψ] at hl
+    simpa using hl
+
+/-- **Unit drift at a vector result over an arbitrary context**: one normal
+ratio per component, or `none`.
+
+The vector counterpart of `unitDriftGen`. `TwRel` at `.vec` charges each
+component separately, so a vector-valued program has a drift *vector* rather
+than a single drift; `scaleLaw_vec_of_driftFree_gen` is its scaling law. -/
+def unitDriftVecGen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {U : Sp B k}
+    {e : Tm B D j k} (d : HasTy Δ Γ e (.vec U)) :
+    Option (Fin U.length → UExp B k) :=
+  (twistOf 0 Γ.shapes rfl d).map fun p => fun i => Tw.nfOne (Tw.projE p.1 i)
+
+/-- **Unit drift at a vector result**: one normal ratio per component, over a
+context of scalars. The vector counterpart of `unitDriftLin`; its scaling law
+is `scaleLaw_vec_of_driftFree`. -/
+def unitDriftVec {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {U : Sp B k}
+    {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.vec U)) :
+    Option (Fin U.length → UExp B k) :=
+  (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
+    fun p => fun i => Tw.nfOne (Tw.projE p.1 i)
+
+/-- Rescale a vector-valued argument the way its type prescribes: component
+`i` by `ψ(U i)`. -/
+noncomputable def scaleVecVal {k : ℕ} {U : Sp B k} (ψ : Scaling B k)
+    (v : Fin U.length → ℝ) : Fin U.length → ℝ :=
+  fun i => ψ.scale (U.get i) * v i
+
+omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
+/-- A one-vector environment is related to its own rescaling at trivial
+ratios: the vector-valued analogue of `twRelEnv_scaleLinVal`, which lets
+`scaleLaw_vec_of_driftFree_gen` be applied to a program that takes a vector. -/
+theorem twRelEnv_scaleVecVal {j k : ℕ} (φ ψ : Scaling B k) {U : Sp B k}
+    (v : Fin U.length → ℝ) (u : PUnit) :
+    TwRelEnv φ ψ [(Ty.vec U : Ty B D j k)] [Shape.vec U.length]
+      (oneTwEnv _) (oneTwEnv _) (v, u) (scaleVecVal ψ v, u) := by
+  refine TwRelEnv.cons rfl ?_ TwRelEnv.nil
+  intro i
+  show ψ.scale (U.get i) * v i = ψ.scale (U.get i) * ((1 : ℝ) * 1) * v i
+  ring
+
+omit [Fintype D] [DecidableEq D] in
+/-- **The scaling law at a vector result, over any context at all.**
+
+The vector counterpart of `scaleLaw_lin_of_driftFree_gen`. With the valuation
+held fixed, rescale the arguments however their types prescribe (`TwRelEnv` at
+trivial ratios), and a program whose drift vector is trivial moves component
+`i` by exactly `ψ(U i)`, the factor its type predicts. -/
+theorem scaleLaw_vec_of_driftFree_gen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
+    {U : Sp B k} {e : Tm B D j k} {d : HasTy Δ Γ e (.vec U)}
+    {w : Fin U.length → UExp B k}
+    (hd : unitDriftVecGen d = some w) (h1 : ∀ i, w i = 1)
+    (V₀ ψ : Scaling B k) {ρ ρ' : Env Γ}
+    (hr : TwRelEnv Scaling.zero ψ Γ Γ.shapes (oneTwEnv _) (oneTwEnv _) ρ ρ') :
+    ∀ i, den V₀ d ρ' i = ψ.scale (U.get i) * den V₀ d ρ i := by
+  intro i
+  unfold unitDriftVecGen at hd
+  rcases hopt : twistOf 0 Γ.shapes rfl d with _ | p
+  · rw [hopt] at hd; exact absurd hd (by simp)
+  · rw [hopt] at hd
+    simp only [Option.map_some, Option.some.injEq] at hd
+    subst hd
+    have hone : ∀ (χ : Scaling B k), Tw.eval χ p.1 (oneTwEnv _) i = 1 := by
+      intro χ
+      have := (Tw.nfOne_eq_one_iff (Tw.projE p.1 i)).mp (h1 i) χ
+      simpa using this
+    have hl := p.2.scaling V₀ Scaling.zero ψ (oneTwEnv _) (oneTwEnv _)
+      (TwEnv.onesFrom_oneTwEnv 0) (TwEnv.onesFrom_oneTwEnv 0) hr i
+    rw [hone Scaling.zero, hone ψ] at hl
+    simpa using hl
+
+omit [Fintype D] [DecidableEq D] in
+/-- **A drift-free vector obeys its type's scaling law, component by
+component.** The vector counterpart of `scaleLaw_lin_of_driftFree`: when every
+component of the drift vector is trivial, rescaling the scalar arguments moves
+component `i` by exactly `ψ(U i)`, and by nothing else. -/
+theorem scaleLaw_vec_of_driftFree {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
+    {U : Sp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.vec U)}
+    {w : Fin U.length → UExp B k}
+    (hd : unitDriftVec d = some w) (h1 : ∀ i, w i = 1)
+    (V₀ ψ : Scaling B k) (ρ : Env (scalarCtx (D := D) (j := j) us)) :
+    ∀ i, den V₀ d (scaleEnv ψ us ρ) i = ψ.scale (U.get i) * den V₀ d ρ i := by
+  intro i
+  unfold unitDriftVec at hd
+  rcases hopt : twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d with _ | p
+  · rw [hopt] at hd; exact absurd hd (by simp)
+  · rw [hopt] at hd
+    simp only [Option.map_some, Option.some.injEq] at hd
+    subst hd
+    have hone : ∀ (χ : Scaling B k), Tw.eval χ p.1 (oneTwEnv _) i = 1 := by
+      intro χ
+      have := (Tw.nfOne_eq_one_iff (Tw.projE p.1 i)).mp (h1 i) χ
+      simpa using this
+    have hl := Twist.law_vec p.2 V₀ Scaling.zero ψ ρ i
     rw [hone Scaling.zero, hone ψ] at hl
     simpa using hl
 

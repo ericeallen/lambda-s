@@ -90,39 +90,42 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | Ratio evaluation | `LambdaS.Tw.eval` | [`LambdaS/Ratio.lean:379`](LambdaS/Ratio.lean#L379) |
 | The scaling law, twisted (two parameters) | `LambdaS.Twist.scaling` | [`LambdaS/Twist.lean:631`](LambdaS/Twist.lean#L631) |
 | The twisted law at first order | `LambdaS.Twist.law` | [`LambdaS/Twist.lean:966`](LambdaS/Twist.lean#L966) |
-| The drift law (both parameters) | `LambdaS.unitDrift_law` | [`LambdaS/Twist.lean:2138`](LambdaS/Twist.lean#L2138) |
-| Declared magnitudes enter through the drift alone | `LambdaS.den_comp_of_drift` | [`LambdaS/Twist.lean:2151`](LambdaS/Twist.lean#L2151) |
-| Drift 1 is declaration independence, open programs at any unit | `LambdaS.den_indep_of_driftFree` | [`LambdaS/Twist.lean:2165`](LambdaS/Twist.lean#L2165) |
-| Drift 1 gives the unrestricted scaling law | `LambdaS.scaleLaw_of_driftFree` | [`LambdaS/Twist.lean:2180`](LambdaS/Twist.lean#L2180) |
-| Drift 1 gives the scaling law at a matrix result | `LambdaS.scaleLaw_lin_of_driftFree` | [`LambdaS/Twist.lean:2009`](LambdaS/Twist.lean#L2009) |
-| The same over an arbitrary context | `LambdaS.scaleLaw_lin_of_driftFree_gen` | [`LambdaS/Twist.lean:1977`](LambdaS/Twist.lean#L1977) |
-| The drift diagnostic over an arbitrary context and a matrix result | `LambdaS.unitDriftGen` | [`LambdaS/Twist.lean:1925`](LambdaS/Twist.lean#L1925) |
-| Invariance iff trivial ratio (Theorem 6.1) | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:1058`](LambdaS/Twist.lean#L1058) |
-| Decidability | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:1092`](LambdaS/Twist.lean#L1092) |
-| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:2041`](LambdaS/Twist.lean#L2041) |
-| Branch comparison at `+` | `LambdaS.Tw.normEq` | [`LambdaS/Twist.lean:1599`](LambdaS/Twist.lean#L1599) |
+| The drift law (both parameters) | `LambdaS.unitDrift_law` | [`LambdaS/Twist.lean:2253`](LambdaS/Twist.lean#L2253) |
+| Declared magnitudes enter through the drift alone | `LambdaS.den_comp_of_drift` | [`LambdaS/Twist.lean:2266`](LambdaS/Twist.lean#L2266) |
+| Drift 1 is declaration independence, open programs at any unit | `LambdaS.den_indep_of_driftFree` | [`LambdaS/Twist.lean:2280`](LambdaS/Twist.lean#L2280) |
+| Drift 1 gives the unrestricted scaling law | `LambdaS.scaleLaw_of_driftFree` | [`LambdaS/Twist.lean:2295`](LambdaS/Twist.lean#L2295) |
+| Drift 1 gives the scaling law at a matrix result | `LambdaS.scaleLaw_lin_of_driftFree` | [`LambdaS/Twist.lean:2029`](LambdaS/Twist.lean#L2029) |
+| The same over an arbitrary context | `LambdaS.scaleLaw_lin_of_driftFree_gen` | [`LambdaS/Twist.lean:1997`](LambdaS/Twist.lean#L1997) |
+| The drift diagnostic over an arbitrary context and a matrix result | `LambdaS.unitDriftGen` | [`LambdaS/Twist.lean:1944`](LambdaS/Twist.lean#L1944) |
+| Drift 1 gives the scaling law at a vector result, per component | `LambdaS.scaleLaw_vec_of_driftFree` | [`LambdaS/Twist.lean:2125`](LambdaS/Twist.lean#L2125) |
+| The same over an arbitrary context | `LambdaS.scaleLaw_vec_of_driftFree_gen` | [`LambdaS/Twist.lean:2097`](LambdaS/Twist.lean#L2097) |
+| The drift diagnostic over an arbitrary context and a vector result | `LambdaS.unitDriftVecGen` | [`LambdaS/Twist.lean:2057`](LambdaS/Twist.lean#L2057) |
+| Invariance iff trivial ratio (Theorem 6.1) | `LambdaS.Twist.invariant_iff` | [`LambdaS/Twist.lean:1077`](LambdaS/Twist.lean#L1077) |
+| Decidability | `LambdaS.Tw.nfOne_eq_one_iff` | [`LambdaS/Twist.lean:1111`](LambdaS/Twist.lean#L1111) |
+| The diagnostic's specification | `LambdaS.unitDrift_spec` | [`LambdaS/Twist.lean:2156`](LambdaS/Twist.lean#L2156) |
+| Branch comparison at `+` | `LambdaS.Tw.normEq` | [`LambdaS/Twist.lean:1618`](LambdaS/Twist.lean#L1618) |
 | Fuel-free open scalar normal form | `LambdaS.Tw.openNF` | [`LambdaS/RatioCompare.lean:129`](LambdaS/RatioCompare.lean#L129) |
 | Open normal form preserves evaluation | `LambdaS.Tw.openNF_correct` | [`LambdaS/RatioCompare.lean:145`](LambdaS/RatioCompare.lean#L145) |
 | Open normal forms exact at first-order contexts | `LambdaS.Tw.openNF_eq_iff` | [`LambdaS/RatioCompare.lean:186`](LambdaS/RatioCompare.lean#L186) |
-| Branch comparison exact at first-order contexts | `LambdaS.Tw.normEq_firstOrder_iff` | [`LambdaS/Twist.lean:1615`](LambdaS/Twist.lean#L1615) |
-| Accepts every comparison the bounded reducer accepts | `LambdaS.Tw.normEq_of_legacy` | [`LambdaS/Twist.lean:1625`](LambdaS/Twist.lean#L1625) |
+| Branch comparison exact at first-order contexts | `LambdaS.Tw.normEq_firstOrder_iff` | [`LambdaS/Twist.lean:1634`](LambdaS/Twist.lean#L1634) |
+| Accepts every comparison the bounded reducer accepts | `LambdaS.Tw.normEq_of_legacy` | [`LambdaS/Twist.lean:1644`](LambdaS/Twist.lean#L1644) |
 | Open higher-order composition regression (kernel) | `LambdaS.RatioCompareExamples.open_composition_correct` | [`LambdaS/RatioCompareExamples.lean:67`](LambdaS/RatioCompareExamples.lean#L67) |
-| Branch comparison, flat form | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:1461`](LambdaS/Twist.lean#L1461) |
+| Branch comparison, flat form | `LambdaS.Tw.scalarEq` | [`LambdaS/Twist.lean:1480`](LambdaS/Twist.lean#L1480) |
 | Bounded reducer (fallback for function and unit-family inputs) | `LambdaS.Tw.norm` | [`LambdaS/Ratio.lean:518`](LambdaS/Ratio.lean#L518) |
 | Bounded reduction preserves evaluation | `LambdaS.Tw.eval_norm` | [`LambdaS/Ratio.lean:824`](LambdaS/Ratio.lean#L824) |
 | Reassociated conversions accepted | `LambdaS.Examples.addAssoc` | [`LambdaS/Examples.lean:974`](LambdaS/Examples.lean#L974) |
-| Drift-free closed dimensionless programs are declaration-independent at the evaluator | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:2193`](LambdaS/Twist.lean#L2193) |
-| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1533`](LambdaS/Examples.lean#L1533) |
+| Drift-free closed dimensionless programs are declaration-independent at the evaluator | `LambdaS.evalC_indep_of_driftFree` | [`LambdaS/Twist.lean:2308`](LambdaS/Twist.lean#L2308) |
+| The ballistics case study (four verdicts) | `LambdaS.Examples.Ballistics` | [`LambdaS/Examples.lean:1553`](LambdaS/Examples.lean#L1553) |
 | Sum of two converted inputs, accepted at m/ft | `LambdaS.Examples.addTwoVars` | [`LambdaS/Examples.lean:829`](LambdaS/Examples.lean#L829) |
 | Genuinely drifting sum, declined | `LambdaS.Examples.addMixed` | [`LambdaS/Examples.lean:846`](LambdaS/Examples.lean#L846) |
 | Agreeing sum through an internal abstraction, accepted | `LambdaS.Examples.hoSum` | [`LambdaS/Examples.lean:895`](LambdaS/Examples.lean#L895) |
 | A visible application analyzes as its redex | `LambdaS.Examples.betaShared` | [`LambdaS/Examples.lean:939`](LambdaS/Examples.lean#L939) |
 | Polymorphic round trip, drift-free uninstantiated | `LambdaS.Examples.casterRound` | [`LambdaS/Examples.lean:1083`](LambdaS/Examples.lean#L1083) |
-| Leading lambda binders analyzed as inputs | `LambdaS.unitDriftLam` | [`LambdaS/Twist.lean:2064`](LambdaS/Twist.lean#L2064) |
-| The stripped kernel is analyzed as an open term | `LambdaS.unitDriftLam_eq_unitDrift` | [`LambdaS/Twist.lean:2084`](LambdaS/Twist.lean#L2084) |
-| The diagnostic through a leading abstraction, exact | `LambdaS.unitDriftLam_spec` | [`LambdaS/Twist.lean:2098`](LambdaS/Twist.lean#L2098) |
-| Comparison exact for atom-free ratios (iff) | `LambdaS.Tw.normEq_iff_eval_eq` | [`LambdaS/Twist.lean:1657`](LambdaS/Twist.lean#L1657) |
-| Flat comparison exact for atom-free ratios (iff) | `LambdaS.Tw.scalarEq_iff_eval_eq` | [`LambdaS/Twist.lean:1580`](LambdaS/Twist.lean#L1580) |
+| Leading lambda binders analyzed as inputs | `LambdaS.unitDriftLam` | [`LambdaS/Twist.lean:2179`](LambdaS/Twist.lean#L2179) |
+| The stripped kernel is analyzed as an open term | `LambdaS.unitDriftLam_eq_unitDrift` | [`LambdaS/Twist.lean:2199`](LambdaS/Twist.lean#L2199) |
+| The diagnostic through a leading abstraction, exact | `LambdaS.unitDriftLam_spec` | [`LambdaS/Twist.lean:2213`](LambdaS/Twist.lean#L2213) |
+| Comparison exact for atom-free ratios (iff) | `LambdaS.Tw.normEq_iff_eval_eq` | [`LambdaS/Twist.lean:1676`](LambdaS/Twist.lean#L1676) |
+| Flat comparison exact for atom-free ratios (iff) | `LambdaS.Tw.scalarEq_iff_eval_eq` | [`LambdaS/Twist.lean:1599`](LambdaS/Twist.lean#L1599) |
 | log of a round-trip ratio, accepted at drift 1 | `LambdaS.Examples.logRoundTrip` | [`LambdaS/Examples.lean:912`](LambdaS/Examples.lean#L912) |
 | log of a drifting argument, declined | `LambdaS.Examples.logDrifting` | [`LambdaS/Examples.lean:925`](LambdaS/Examples.lean#L925) |
 
@@ -190,8 +193,8 @@ if any depends on more than `propext`, `Classical.choice`, and `Quot.sound`.
 | SVD entries share one unit | `LambdaS.svd_entry_const` | [`LambdaS/Map.lean:276`](LambdaS/Map.lean#L276) |
 | Self-dual spaces are dimensionless | `LambdaS.transpose_comp_direct_iff` | [`LambdaS/Map.lean:290`](LambdaS/Map.lean#L290) |
 | Uniform metric entries carry unit u⁻² | `LambdaS.uniform_canonical_metric` | [`LambdaS/Map.lean:305`](LambdaS/Map.lean#L305) |
-| A fixed absolute tolerance, not parametric | `LambdaS.Examples.stopAbsolute` | [`LambdaS/Examples.lean:1799`](LambdaS/Examples.lean#L1799) |
-| One Jacobi sweep, typed at the uniform space | `LambdaS.Examples.sweep` | [`LambdaS/Examples.lean:1755`](LambdaS/Examples.lean#L1755) |
+| A fixed absolute tolerance, not parametric | `LambdaS.Examples.stopAbsolute` | [`LambdaS/Examples.lean:1819`](LambdaS/Examples.lean#L1819) |
+| One Jacobi sweep, typed at the uniform space | `LambdaS.Examples.sweep` | [`LambdaS/Examples.lean:1775`](LambdaS/Examples.lean#L1775) |
 | A transpose assembled from row extractions | `LambdaS.Examples.fromTimeT` | [`LambdaS/Examples.lean:1266`](LambdaS/Examples.lean#L1266) |
 | Trace of a dimensioned endomorphism, at unit 1 | `LambdaS.Examples.traceTm` | [`LambdaS/Examples.lean:1307`](LambdaS/Examples.lean#L1307) |
 | Determinant of a dimensioned endomorphism, at unit 1 | `LambdaS.Examples.detTm` | [`LambdaS/Examples.lean:1311`](LambdaS/Examples.lean#L1311) |

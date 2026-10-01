@@ -1382,10 +1382,12 @@ end Endomorphism
 
 The drift of a vector is a vector of drifts, and the drift of a matrix is a
 matrix of drifts. A literal whose component converts one way is *reported*
-with a drift vector naming the component's ratio, not declined; `idx` projects
-the component's drift back out; and a matrix application carries the
-`add`-style agreement condition per output row, across the summed index, so a
-row whose summands carry genuinely different drifts is declined. -/
+with a drift vector naming the component's ratio, not declined; a vector
+whose drift vector is trivial obeys its type's scaling law component by
+component (`scaleLaw_vec_of_driftFree`); `idx` projects the component's drift
+back out; and a matrix application carries the `add`-style agreement condition
+per output row, across the summed index, so a row whose summands carry
+genuinely different drifts is declined. -/
 
 section VectorDrift
 
@@ -1402,6 +1404,24 @@ def driftVecDeriv : HasTy Δ₀ (scalarCtx [m, sec]) driftVec (.vec [ft, sec]) :
     driftVecDeriv).map
     (fun p => Tw.nfOne (.proj p.1 0) == Term.div m ft
       && Tw.nfOne (.proj p.1 1) == (1 : UExp Base 0)) == some true
+
+/- `unitDriftVec` reports the same drift vector: `⟨m/ft, 1⟩`. -/
+#guard (unitDriftVec driftVecDeriv).map
+    (fun w => w 0 == Term.div m ft && w 1 == (1 : UExp Base 0)) == some true
+
+/-- `x : Q m, t : Q s ⊢ ⟨(x in ft) in m, t⟩`: the round trip in the first
+component. Its drift vector is trivial, so `scaleLaw_vec_of_driftFree`
+applies: rescaling the arguments moves each component by exactly the factor
+its type predicts. -/
+def roundTripVec : Term₀ :=
+  .vcons (.convert (.convert (.var 0) m ft) ft m) (.vcons (.var 1) .vnil)
+
+def roundTripVecDeriv : HasTy Δ₀ (scalarCtx [m, sec]) roundTripVec (.vec [m, sec]) :=
+  .vcons (.convert (.convert (.var rfl) sameDim_m_ft) sameDim_ft_m)
+    (.vcons (.var rfl) .vnil)
+
+#guard (unitDriftVec roundTripVecDeriv).map
+    (fun w => w 0 == (1 : UExp Base 0) && w 1 == (1 : UExp Base 0)) == some true
 
 /-- Indexing the drifting component recovers exactly the scalar diagnosis the
 one-way conversion would get on its own. -/
