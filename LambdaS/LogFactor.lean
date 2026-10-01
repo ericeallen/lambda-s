@@ -8,19 +8,40 @@ import Mathlib.Algebra.Module.Defs
 import Mathlib.Algebra.Group.TransferInstance
 import Mathlib.Tactic
 
-/-! Exact, executable arithmetic for rational linear combinations of logarithms.
+/-!
+# Exact logarithms of positive rationals
 
-Expressions are finite lists. Denominator clearing reduces equality to an exact
-rational product test. Quotienting by this decidable equality gives a rational
-module; its real interpretation is injective. No real arithmetic is executed.
+Eliminating declaration equations combines the logarithms of declared factors
+with rational coefficients, producing values such as `(log 2)/2 - log 3`. This
+module represents such values exactly and decides their equality without
+evaluating a logarithm or a root.
+
+An `Expr` is a finite list of pairs `(c, q)` of a rational coefficient and a
+positive rational, denoting `∑ c * log q` (`eval`). `radical` clears
+denominators, returning a positive rational `q` and a positive natural `N`
+with `log q = N * eval xs` (`radical_log`). So an expression denotes zero
+exactly when `q = 1` (`isZero_iff`), a test carried out in `ℚ`.
+
+`LogFactor` is the quotient of `Expr` by equality of denotation. It is a
+ℚ-module with decidable equality, so `RationalSolver` can eliminate over it.
+Its real interpretation `interpret` is an injective ℚ-linear map
+(`interpret_injective`), which lets `DeclSolver.solve_isSome_iff` transfer
+solvability to real valuations. The same `radical` gives the radicand and root
+degree of `DeclSolver.ExactFactor` (`radical_exp`). No real arithmetic is
+executed.
 -/
 
 namespace LambdaS
 namespace LogFactor
 
+/-- Positive rationals: the declared factors whose logarithms an `Expr` combines. -/
 abbrev PositiveRat := {q : ℚ // 0 < q}
+/-- A formal rational combination of logarithms: `[(c₁, q₁), …, (cₙ, qₙ)]` denotes
+`c₁ log q₁ + … + cₙ log qₙ`. -/
 abbrev Expr := List (ℚ × PositiveRat)
 
+/-- The real number an expression denotes. Noncomputable; used only in statements
+and proofs. -/
 noncomputable def eval : Expr → ℝ
   | [] => 0
   | (c, q) :: xs => (c : ℝ) * Real.log (q.val : ℝ) + eval xs
@@ -35,7 +56,8 @@ theorem eval_ofFn {n : ℕ} (c : Fin n → ℚ) (q : Fin n → PositiveRat) :
     rw [List.ofFn_succ, eval, Fin.sum_univ_succ]
     rw [ih]
 
-/-- Return `(q,D)` such that the expression denotes `log q / D`.
+/-- Return `(q, N)`, with `q` a positive rational and `N` a positive natural,
+such that the expression denotes `log q / N` (`radical_log`, `radical_pos`).
 The integer powers clear denominators without factoring any integer. -/
 def radical : Expr → ℚ × ℕ
   | [] => (1, 1)
@@ -50,6 +72,8 @@ theorem radical_pos (xs : Expr) : 0 < (radical xs).1 ∧ 0 < (radical xs).2 := b
     rcases a with ⟨c, q⟩
     exact ⟨mul_pos (zpow_pos q.property _) (pow_pos ih.1 _), Nat.mul_pos c.den_pos ih.2⟩
 
+/-- The defining property of `radical`: for `(q, N) = radical xs`,
+`log q = N * eval xs`. -/
 theorem radical_log (xs : Expr) :
     Real.log ((radical xs).1 : ℝ) = ((radical xs).2 : ℝ) * eval xs := by
   induction xs with
@@ -81,6 +105,8 @@ theorem radical_exp (xs : Expr) :
 /-- The executable zero test; its decision takes place entirely in `ℚ`. -/
 def isZero (xs : Expr) : Bool := (radical xs).1 == 1
 
+/-- **Exact zero test.** An expression denotes zero exactly when its cleared
+radicand is `1`. -/
 theorem isZero_iff (xs : Expr) : isZero xs = true ↔ eval xs = 0 := by
   have hp := radical_pos xs
   have hr : (0 : ℝ) < ((radical xs).1 : ℝ) := by exact_mod_cast hp.1
@@ -116,6 +142,8 @@ theorem eval_scaleExpr (c : ℚ) (xs : Expr) : eval (scaleExpr c xs) = (c : ℝ)
     rw [ih]
     ring
 
+/-- Two expressions are equivalent when they denote the same real number;
+`exprRelDecidable` decides this with `isZero` on their difference. -/
 instance exprSetoid : Setoid Expr where
   r xs ys := eval xs = eval ys
   iseqv := ⟨fun _ => rfl, Eq.symm, Eq.trans⟩
@@ -204,6 +232,8 @@ noncomputable def interpret : LogFactor →ₗ[ℚ] ℝ where
   map_add' := value_add
   map_smul' := value_smul
 
+/-- Distinct `LogFactor`s denote distinct reals, so exact equality agrees with
+real equality. -/
 theorem interpret_injective : Function.Injective interpret := value_injective
 
 theorem eq_iff_interpret (x y : LogFactor) : x = y ↔ interpret x = interpret y :=

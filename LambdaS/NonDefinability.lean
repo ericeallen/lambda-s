@@ -16,8 +16,9 @@ This file makes that a theorem.
 ## Why the fundamental theorem is not enough
 
 Applying `scaleLaw` to a hypothetical term of type `Q (u·u) → Q u` gives
-`f(k²x) = k·f(x)` for every `k > 0`, hence `f(y) = √y · f(1)`. So parametricity
-says any such function **is** square root; it does not say none exists. That is
+`f(k²x) = k·f(x)` for every `k > 0`, hence `f(y) = √y · f(1)` for `y > 0`. So
+parametricity says any such function **is** a multiple of square root on
+positive inputs; it does not say none exists. That is
 exactly why Kennedy needs a strengthening for his semantic proof: *"a more
 generous notion of scaling environment (homomorphisms from subgroups of Unt)"*.
 
@@ -208,13 +209,13 @@ theorem arith_inSpan {S : List (UExp B k)} {u : UExp B k} (e : Arith S u) :
 Given only a quantity of unit `u²`, no arithmetic expression has unit `u`. The
 type is *uninhabited*: not merely hard to reach, and not merely uncomputable.
 
-So `pow` is not a convenience: without it the field operations cannot express
-the square root of a dimensioned quantity at all: no expression they build even
-has the right unit. (For full Λs the syntactic claim needs the caveat that
+So `pow` is not a convenience. Without it the field operations cannot express
+the square root of a dimensioned quantity at all, because no expression they
+build has the right unit. (For full Λs the syntactic claim needs the caveat that
 `ucon` inhabits `Q u` in any context, so the *type* is inhabited; what this
 result pins down is that arithmetic alone never reaches the unit.) Together with
 the admissibility criterion (a primitive may take any type whose denotation is
-scale-invariant, and `√` is) this says `pow` is both **necessary** and
+scale-invariant, and `√` is, by `sqrt_scales`) this says `pow` is both **necessary** and
 **permitted**. -/
 theorem sqrt_not_definable {u : UExp B k} (hu : u ≠ 1) :
     IsEmpty (Arith [Term.mul u u] u) :=
@@ -223,7 +224,7 @@ theorem sqrt_not_definable {u : UExp B k} (hu : u ≠ 1) :
 /-- The same statement for Newton's iteration, which is where the intuition
 usually goes. The iteration itself is well-typed (`(x + a/x)/2` has unit `u`
 whenever `x` does), but no *seed* of unit `u` exists to start it, so the whole
-construction is unavailable. Kennedy's Exercise 14 hint in miniature. -/
+construction is unavailable. This is the hint to Exercise 14 of Kennedy's 2009 lecture notes, in miniature. -/
 theorem no_newton_seed {u : UExp B k} (hu : u ≠ 1) :
     ¬ Nonempty (Arith [Term.mul u u] u) := by
   rw [← not_isEmpty_iff]
@@ -309,7 +310,7 @@ theorem arith_of_hasTy {us : List (UExp B k)} {e : Tm B D j k} :
   all_goals exact fun _ ha => ha.elim
 
 /-- **Square root is not definable in Λs.** The paper's sentence, at the
-calculus's own term grammar: given a single argument of unit `u²`, no Λs term
+calculus's own term grammar: given a single argument of unit `u²` with `u ≠ 1`, no Λs term
 built from variables, rational literals, and the field operations has type
 `Q u`. This is `sqrt_not_definable` lifted from the self-contained `Arith`
 grammar to `Tm` via the reflection, and the `ucon` caveat is gone because
@@ -341,8 +342,8 @@ even if square root is added as a primitive.
 
 This section proves something their framework cannot state, because their
 calculus has no operation that reads a unit: **`convert` is a genuine
-primitive**. Any parametric, convert-free function from `Q u` to `Q v` is
-constantly zero whenever some scaling separates `u` from `v`. Parametricity
+primitive**. Any parametric, convert-free closed term of type `Q u → Q v`
+denotes zero whenever some scaling fixes `u` and moves `v`. Parametricity
 matters, since `λx. (x / ucon u) · ucon v` is convert-free and denotes the
 identity at that type. So conversion is not definable from the other
 constructs, and the coherence hypothesis on `fundamental` is the price of a
@@ -379,8 +380,9 @@ theorem separate_moves (b c : B) : (separate (k := k) b c).scale (Term.ofBase c)
   rw [scale_ofBase]; simp [separate, Real.exp_log]
 
 omit [DecidableEq B] [Fintype D] in
-/-- **Conversion cannot be simulated.** A convert-free function from `Q u` to
-`Q v` is the zero function, as soon as one scaling fixes `u` and moves `v`.
+/-- **Conversion cannot be simulated.** A parametric, convert-free closed term of
+type `Q u → Q v` denotes the zero function as soon as one scaling fixes `u` and
+moves `v`.
 
 This is the statement `fundamental_free` was built to make: no coherence
 hypothesis, so `ψ` may be chosen adversarially, and the adversarial choice
@@ -400,9 +402,9 @@ theorem convertFree_eq_zero {u v : UExp B k} {e : Tm B D j k}
   · exact h
 
 omit [Fintype D] in
-/-- **So `convert` is primitive.** No convert-free term denotes conversion
-between two distinct base units, because conversion is multiplication by a
-positive factor and the only convert-free candidate is zero.
+/-- **So `convert` is primitive.** No parametric, convert-free closed term denotes
+conversion between two distinct base units, because conversion is multiplication
+by a positive factor and every such term denotes zero (`convertFree_eq_zero`).
 
 Together with `fundamental` this is the design claim, proved in both
 directions: conversion cannot be removed from the language, and keeping it costs

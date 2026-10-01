@@ -17,9 +17,9 @@ whole of Λs, not for an arithmetic fragment.
 
 `eeval` is `eval` with two things removed: the **annotations** (values carry no
 units, closures carry no type or dimension ascriptions) and the **checks**
-(`add` does not compare units, `log` and `exp` do not demand dimensionlessness,
-`convert` does not verify its source, and `mapp` and `comp` do not compare
-spaces). Nothing is checked because there is nothing
+(`add` and `ifle` do not compare units, `log` and `exp` do not demand
+dimensionlessness, `convert` verifies neither its source nor its dimensions, and
+`mapp` and `comp` do not compare spaces). Nothing is checked because there is nothing
 left to check against, which is the point: the erased evaluator is the one a
 compiler would emit.
 
@@ -76,28 +76,28 @@ The evaluator takes its conversion factors from an oracle (an arbitrary
 function from pairs of ground units to magnitudes), because it should not fix
 a unit system. Adequacy pins the oracle down: take it to be
 conv_V for a valuation V and instantiate the evaluator with real arithmetic.
-Then evaluation agrees with
+Then evaluation, whenever it returns a value, agrees with
 denotation, magnitude and unit both, at every type and scope
-(`eval_adeq`). The proof relates closures behaviorally: two closures
-are related when they send related arguments to related results at every
+(`eval_adeq`). The proof relates closures behaviorally: a closure is related
+to a function when it sends related arguments to related results at every
 fuel bound, so the relation absorbs the fuel and no induction on it
 is needed. Composing
 adequacy with the declaration theory of “Unit Declarations” (`Declare.lean`) closes
 the chain from source text to evaluator:
 
-**Theorem (Declared factors reach the real-valued evaluator;
+**Theorem (Factors reach the machine;
 `evalC_convert_declared`).** Let V satisfy a declaration unit b = q w relating units of
-one dimension. Then converting a well-typed e : Q b to w, evaluated
-with real arithmetic and oracle conv_V, multiplies e's value by q.
+one dimension, and let e : Q b be closed and well-typed. Then convert e b w, evaluated
+with real arithmetic and oracle conv_V, returns the denotation of e times exactly q, at unit w.
 
 The number the evaluator multiplies by *is* the number the declaration
 names, not a number equal to it up to a chain of intermediate steps. In the
-artifact the yard example runs both routes: one yard converts to three feet
-by the declared 3 (`one_yard_is_three_feet`) and to 0.9144
-meters by the forced redundant factor (`one_yard_in_meters`). The
-compiled binary prints 100 yards as 300 feet, as 91.44 meters by the
-direct declaration, and as 91.44 meters again through feet: path
-independence made observable.
+artifact one yard converts to three feet by the declared 3
+(`one_yard_is_three_feet`), and to 0.9144 meters directly or through feet,
+with the routes provably equal (`one_yard_in_meters`,
+`one_yard_in_meters_via_feet`, `yard_routes_agree`). The compiled `Float`
+binary prints 100 yards as 300 feet and as 91.44 meters by either route;
+that run is checked by `#guard`, not by a real-to-`Float` theorem.
 
 ### Erasure, with Nothing Left to Check
 
@@ -105,11 +105,11 @@ Instrumenting run-time values with units invites the objection that it makes
 soundness trivial: the checking has merely moved to run time. The objection
 dissolves when erasure is a theorem. We define a second evaluator,
 eeval, the one a compiler would emit: values carry no unit tags,
-and *the checks are gone with the tags*. Addition does
-not compare units, application does not compare spaces, and conversion does
+and *the checks are gone with the tags*. Addition and comparison do
+not compare units, map application does not compare spaces, and conversion does
 not verify its source, because there is nothing left to compare against.
 
-**Theorem (Erasure; `eeval_erase`).** Whenever the instrumented evaluator produces a value, the erased evaluator,
+**Theorem (Erasure; `eeval_erase`, `erasure_correct`).** Whenever the instrumented evaluator produces a value, the erased evaluator,
 on the erased environment at the same fuel, produces its erasure.
 Consequently every closed well-typed e : Q u evaluates under both
 evaluators to the same magnitude, at the unit u the type predicts.
@@ -136,7 +136,7 @@ dictionaries [Wadler and Blott 1989].
 This is the residue of conversion: units are static except at
 the finitely many scope entries polymorphic conversion must consult.
 
-Composing the theorem “Erasure” (`eeval_erase`) with adequacy, the erased evaluator
+Composing the simulation (`eeval_erase`) with adequacy, the erased evaluator
 computes the denotation (`eeval_den`): at the real-number instance
 of the semantics,
 the erased evaluator's output equals the mathematical meaning, with units gone

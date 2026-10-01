@@ -11,16 +11,17 @@ import Mathlib.LinearAlgebra.Dual.Lemmas
 /-!
 # The Pi theorem
 
-Kennedy's Theorem 4: a first-order unit-polymorphic type is isomorphic to one
+Kennedy's Pi theorem (POPL 1997, Theorem 3): when `A X = b` is solvable over ℤ,
+a first-order unit-polymorphic type is isomorphic, for positive values, to one
 with `n − r` dimensionless arguments, where `r` is the rank of the exponent
-matrix. He listed its proof as work in progress on his WMM 2008 slides and no
-completion appears in the eighteen years since.
+matrix. His WMM 2008 slides list formalizing its proof as work in progress.
 
 This module mechanizes equivalences with scale-invariant functions on `n`
 arguments (`piEquiv`, `piEquivSigned`), including both inverse laws. It separately
 reduces those invariants to `n − rank A` orbit coordinates (`invariant_descends`).
 The equivalences themselves do not have reduced-coordinate functions as their
-codomains.
+codomains. The paper's Pi theorem (Theorem 8.1), for programs with conversion,
+is `den_pi_coherent_dichotomy` in `LambdaS.PiCoherent`.
 
 ## The route taken
 
@@ -28,7 +29,7 @@ Kennedy proves it by reducing the exponent matrix through a sequence of
 *syntactic* type isomorphisms: column operations `C1`–`C3`, row operations
 `R1`–`R3`, then `r` instances of an elimination isomorphism `D`. That route
 needs the isomorphism witnesses to be terms, hence a term-level rational power
-`xᵠ`, hence positivity, and it is what has been blocking progress here.
+`x^q`, hence positivity.
 
 This file takes the **semantic** route instead. The fundamental theorem
 (`fundamental_free`) already gives every parametric convert-free term an
@@ -48,13 +49,13 @@ groups", and
 
 is Buckingham's conclusion.
 
-## Why ℚ pays off a fourth time
+## Why ℚ helps
 
-Kennedy reduces the matrix to **Smith Normal Form**, which is what ℤ forces.
+Kennedy's ℤ-exponent proof reduces the matrix to **Smith normal form**.
 Here the orbit subspace is `range Aᵀ` over a field, its dimension is `rank A`,
 and `invariant_descends` obtains `n − r` coordinates from a rational basis
 of the kernel, using linear extension with values in ℝ to separate the orbits.
-The coordinate count is rank-nullity (Mathlib's). The rational-exponent decision keeps paying in places it was not made for.
+The coordinate count is rank-nullity (Mathlib's).
 -/
 
 /-!
@@ -66,7 +67,7 @@ library wants: a non-definability theorem and the Pi theorem of dimensional
 analysis.
 
 First, non-definability. For any nontrivial u
-(some base exponent nonzero), no term of Λs built
+(u ≠ 1: some base or variable exponent nonzero), no term of Λs built
 from
 variables, rational literals, and the field operations computes square root
 at type Q u² → Q u
@@ -102,17 +103,15 @@ is the seed x₀ : Q u, and manufacturing one from a : Q u² is
 the non-definability theorem itself (`no_newton_seed`; at the
 term grammar, `no_newton_seed_tm`). The full calculus offers
 the seed 1_u, at a price the theory names: every finite run
-of the constant-seeded program depends on the unit system, boundedly
-under a relative tolerance (an absolute tolerance written as a literal
-times 1_u is not writable parametrically, though one supplied as an
-input is), while a seed passed as an argument rescales with
-everything else and restores parametricity wholesale. The artifact's
-documentation develops the full analysis, seeds, tolerances, and the
+of the constant-seeded program depends on the unit system (an absolute
+tolerance written as a literal times 1_(u²) is not writable parametrically,
+though one supplied as an input is), while a seed passed as an argument
+rescales with everything else and restores parametricity wholesale.
+`LambdaS.NonDefinability` develops seeds, tolerances, and the unmechanized
 piecewise-rational argument that no recursive program computes square
-root exactly (module `LambdaS.NonDefinability`). Its content
-is that *the* square root cannot be computed: what the power
-primitive buys is exactness, a denotation that commutes with rescaling
-pointwise rather than up to tolerance.
+root exactly. Its content is that *the* square root cannot be computed:
+what the power primitive buys is exactness, a denotation that commutes with
+rescaling.
 
 Second, the Pi theorem, which we motivate with its classical example before
 stating it. What determines the period of a pendulum? List everything the
@@ -121,7 +120,7 @@ period could plausibly depend on: the mass m of the bob, the length
 amplitude θ, so that T = f(m, ℓ, g, θ) for some unknown
 f. Dimensional analysis extracts the form of f from the units alone,
 before any mechanics. Record the exponents of each argument's unit over the
-base units of mass, length, and time as the columns of a matrix (g is an
+base units of mass, length, and time as the columns of a matrix A (g is an
 acceleration, at L/T²; the amplitude is an angle,
 dimensionless, hence a zero column):
 
@@ -172,7 +171,7 @@ translation action are exactly the dimensionless power products of the
 arguments, a space of dimension n - rank A, and every function
 obeying the scaling law factors through them.
 
-**Theorem (Pi; `pi_theorem`).** Let (A, b) be a signature whose output's exponents are solvable from the
+**Theorem (Pi, for a signature; `pi_theorem`).** Let (A, b) be a signature whose output's exponents are solvable from the
 arguments (AX = b for some X). A function obeying its scaling law
 factors as an explicit power product times a function invariant under every
 rescaling; the invariant monomials form a space of dimension
@@ -190,8 +189,8 @@ Solvability of AX = b is half of a dichotomy
 (`mulScaleLaw_dichotomy`): when no X solves it, some
 combination of rescalings fixes every argument while moving the output,
 so the only function obeying the scaling law is identically zero
-(`mulScaleLaw_eq_zero_of_unsolvable`; at the term level, its
-one-variable case is `scaleLaw_forces_zero`). An
+(`mulScaleLaw_eq_zero_of_unsolvable`; its single-base-unit case over
+scalar environments is `scaleLaw_forces_zero`). An
 unsolvable signature is dimensional inconsistency.
 
 For the pendulum, the power product is √(ℓ/g), the invariant space
@@ -210,29 +209,28 @@ first-order function can depend on, an interface-narrowing result that
 costs nothing. Whatever a function of the pendulum's signature computes, it
 can depend on its four arguments only through √(ℓ/g) and θ.
 
-The counting is Buckingham's [1914], in the modern
-rank formulation, obtained here as a
-corollary of parametricity: the reading Kennedy
-proposed [Kennedy 1997] and, for one variable, Atkey et al. [2013]
-mechanized. Ours is the general n-variable statement with the rank
+The counting is Buckingham's [1914], in the modern rank formulation, obtained
+here as a corollary of parametricity, as Kennedy [1997] showed on paper.
+Atkey et al. [2013] derive a one-variable instance; their Coq development
+states the instance ∀s. real⟨s⟩ → real⟨s⟩ ≅ real⟨1⟩ in a comment, with its
+proof unfinished. Ours is the general n-variable statement with the rank
 condition, mechanized and connected to the calculus; we claim the
-mechanization, not the mathematics. The
-standing hypotheses are the convert-free abstraction theorem (`fundamental_free`)'s: the
-program must be parametric (no unit constants) and convert-free;
-solvability's failure is the dichotomy's other half, settled above. Neither
-syntactic hypothesis is redundant. A program that converts obeys the
-scaling law only for coherent rescalings, and the Pi argument quantifies
-over all rescalings. The drift analysis (`Twist.lean`) supplies the sharper
-hypothesis, drift-free rather than convert-free, and that weakening is
-proved: `den_mulScaleLaw_driftFree`, below, reaches the same conclusion for a
-program whose conversions cancel. It keeps the theorem's other hypotheses,
-and it does not subsume the convert-free statement, since the two are
-incomparable: a drift-free program may convert, and a convert-free one may be
-declined by the analysis. Parametricity cannot be dropped even for
-convert-free
-terms: λ x. (x/1_u)·1_v is convert-free,
-denotes the identity at Q u → Q v, and violates the unrestricted
-law.
+mechanization, not the mathematics. The unit-level statement's standing
+hypotheses are those of the convert-free abstraction theorem
+(`fundamental_free`): the program must be parametric (no unit constants) and
+convert-free; solvability's failure is the dichotomy's other half, settled
+above. Neither syntactic hypothesis is redundant. A program that converts
+obeys the scaling law only for coherent rescalings, so it can fail the
+unit-level law, which quantifies over all rescalings; it still obeys the
+dimension-level law of `LambdaS.PiCoherent`. The drift analysis (`Twist.lean`)
+supplies a sharper unit-level hypothesis, drift-free rather than convert-free:
+`den_mulScaleLaw_driftFree`, below, reaches the same conclusion for a program
+whose conversions cancel, with no separate parametricity hypothesis because
+the analysis declines unit constants. It does not subsume the convert-free
+statement, since the two are incomparable: a drift-free program may convert,
+and a convert-free one may be declined by the analysis. Parametricity cannot
+be dropped even for convert-free terms: λ x. (x/1_u)·1_v is convert-free,
+denotes the identity at Q u → Q v, and violates the unrestricted law.
 -/
 
 namespace LambdaS.Pi
@@ -249,8 +247,9 @@ def act (A : ExpMatrix m n) (ψ : Fin m → ℝ) (i : Fin n) : ℝ :=
 /-- **The scaling law** of a first-order signature, in log coordinates.
 
 `F` is `log ∘ f ∘ exp`; rescaling the units translates the arguments and shifts
-the value by the output's own scale. This is exactly what `fundamental_free`
-delivers for a parametric convert-free term, transported to logs. -/
+the value by the output's own scale. This is what `fundamental_free` delivers
+for a parametric convert-free term, transported to logs; the transport needs a
+positive output (`scaleLaw_of_mulScaleLaw`). -/
 def ScaleLaw (A : ExpMatrix m n) (b : Fin m → ℚ) (F : (Fin n → ℝ) → ℝ) : Prop :=
   ∀ ψ ξ, F (fun i => ξ i + act A ψ i) = F ξ + ∑ v, (b v : ℝ) * ψ v
 
@@ -269,9 +268,10 @@ theorem sum_act_eq (A : ExpMatrix m n) (b : Fin m → ℚ) (X : Fin n → ℝ)
 
 /-- **The Pi theorem.**
 
-Any function satisfying the scaling law factors as an explicit power-product
-times a function that is **invariant under every rescaling**, hence a function
-of the dimensionless groups alone, of which there are `n − r`.
+In log coordinates: given a solution `X` of `A X = b`, any function satisfying
+the scaling law is the linear functional `⟨X, ·⟩` plus a function that is
+**invariant under every rescaling**, hence a function of the dimensionless
+groups alone (`invariant_descends`), of which there are `n − r`.
 
 In the original coordinates this reads
 `f(x) = (∏ xᵢ^{Xᵢ}) · g(Π₁, …, Π_{n−r})`, which is Buckingham's conclusion and
@@ -323,8 +323,8 @@ theorem invariant_iff_dimensionless (A : ExpMatrix m n) (c : Fin n → ℝ) :
     rw [this, h v, zero_mul]
 
 /-- **The count.** The dimensionless groups form a space of dimension `n − r`,
-and `invariant_descends` shows that every invariant depends on at most that
-many arguments. Particular functions may ignore some or all of them.
+and `invariant_descends` shows that every invariant is a function of that many
+coordinates (`piCoordinates`). Particular functions may ignore some or all of them.
 
 Restated here from `finrank_dimensionless_add_rank` to keep the theorem's two
 halves (the factorization and the count) in one place. -/
@@ -483,8 +483,9 @@ which additionally takes the logarithm of the *output* to present the law
 additively; that is a presentation choice, not a hypothesis of the
 theorem. -/
 
-/-- **The multiplicative scale law.** Scaling each base unit `v` by a positive
-factor `κ v` scales argument `i` by `∏ v, κ v ^ A v i` and the result by
+/-- **The multiplicative scale law.** Scaling each row symbol `v` (a base unit,
+unit variable, or dimension) by a positive factor `κ v` scales argument `i` by
+`∏ v, κ v ^ A v i` and the result by
 `∏ v, κ v ^ b v`. This is the form of the scaling law a Λs term actually
 satisfies (`den_mulScaleLaw` below); `ScaleLaw` is its image in log
 coordinates. Exponents are rational, so the powers are `Real.rpow` under a
@@ -701,11 +702,11 @@ zero function, on the whole space. The scaling built from the annihilator
 fixes every argument pointwise while scaling the output by a factor other
 than `1`, and the only value that survives is `0`.
 
-`scaleLaw_forces_zero` in `LambdaS.Definability` is the one-variable special
-case of this collapse, stated for terms: there the result unit mentions a
-base unit no argument mentions, so the row of that base unit is zero in the
-matrix while its entry in `b` is not, and the annihilator is the coordinate
-direction itself. -/
+`scaleLaw_forces_zero` in `LambdaS.Definability` is the single-base-unit
+special case of this collapse, stated over scalar environments (`forced_zero`
+is its form for terms): there the result unit mentions a base unit no argument
+mentions, so the row of that base unit is zero in the matrix while its entry
+in `b` is not, and the annihilator is the coordinate direction itself. -/
 theorem mulScaleLaw_eq_zero_of_unsolvable (A : ExpMatrix m n) (b : Fin m → ℚ)
     (hb : ¬ ∃ X : Fin n → ℝ, ∀ v, ∑ i, (A v i : ℝ) * X i = (b v : ℝ))
     {f : (Fin n → ℝ) → ℝ} (hmul : MulScaleLaw A b f) (x : Fin n → ℝ) : f x = 0 := by
@@ -896,9 +897,9 @@ signature whose system is unsolvable forces the denotation to vanish.
 
 The law quantifies over the **full scaling group** of the signature: a
 rescaling may move base units and unit variables independently, which is
-exactly the freedom `scaleLaw` itself provides. For a closed program
+exactly the freedom `scaleLaw` itself provides. In closed unit scope
 (`k = 0`) the `Fin k` summand is empty and the matrix is the base-unit
-matrix, so the concrete examples are unchanged. -/
+matrix. -/
 theorem den_mulScaleLaw {m : ℕ} {Δ : DCtx D j k} {e : Tm B D j k}
     {us : List (UExp B k)} {u₀ : UExp B k}
     (d : HasTy Δ (scalarCtx us) e (.Q u₀)) (hp : e.Parametric)
@@ -947,6 +948,9 @@ does not mention the mass; and it is zero in every dimensionless group
 (`Pi.pendulum_mass_drops_out`), so `G` cannot mention it either. The period is
 independent of the mass, and both factors of the factorization say so. -/
 
+/-- **The pendulum's period does not depend on the mass.** The mass exponent is
+zero in every solution of `pendulum.mulVec X = ![0, 0, 1]` and in every
+dimensionless group, so neither factor of the factorization mentions the mass. -/
 theorem pendulum_mass_absent :
     (∀ {X : Fin 4 → ℚ}, pendulum.mulVec X = ![0, 0, 1] → X 0 = 0) ∧
     (∀ {x : Fin 4 → ℚ}, x ∈ Dimensionless pendulum → x 0 = 0) :=

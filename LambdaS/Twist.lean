@@ -44,9 +44,10 @@ rule. Keeping it free puts the correspondence in the `var` rule, where it is one
 hypothesis.
 
 `Tw.castShape` appears at `uapp` and `dapp` for the same reason in the other
-index: the result type is `τ.subst σ`, and `Ty.shape_subst` is a theorem. It
-appears once more at `mcons`, where a row's space is a `map` over the column
-space and `List.length_map` is likewise a theorem.
+index: the result types are `τ.subst σ` and `τ.substDim d`, and
+`Ty.shape_subst` and `Ty.shape_substDim` are theorems. It appears also at
+`mcons` and `mrow`, where a row's space is a `map` over the column space and
+`List.length_map` is likewise a theorem.
 -/
 
 /-!
@@ -59,9 +60,9 @@ one-way conversion is not. In this section we assign a program its *accumulated
 conversion ratio* where the analysis succeeds, prove that the ratio measures
 the program's departure from scale-invariance, and show that the resulting
 condition is decidable, which turns the abstraction theory into a compiler
-diagnostic. The analysis is conservative: at a sum, a comparison, `mapp` and
-`comp` it can decline to assign a ratio, and a decline is not a verdict of
-non-invariance.
+diagnostic. The analysis is conservative: at a sum, a comparison, `mapp`,
+`comp`, `log` and `exp` it can decline to assign a ratio, and it always
+declines a unit constant; a decline is not a verdict of non-invariance.
 
 ### Ratios as Syntax
 
@@ -104,7 +105,7 @@ quantifier preserves it, so a ratio indexed by a type equally indexes every
 instantiation of that type, and no transport is needed. Unit instantiation
 is then *recorded* by the syntax rather than performed: t [u]
 stores the instantiating unit, and the interpretation reads the ratio
-family at that unit's log-factor. So no unit substitution acts on a ratio.
+family at that unit's log-factor. So the `Twist` rules apply no unit substitution to a ratio; `twistOf` performs a recorded instantiation only to reduce a redex (`Tw.uappE`).
 Reduction of a ratio *application* is ordinary syntactic substitution
 (`Tw.subst0`, interpreted by `Tw.eval_subst0`).
 
@@ -118,7 +119,7 @@ drawn from and a rescaling ψ of the program's inputs, a program of type
 Q u whose conversions accumulate to ratio t rescales by
 ψ(u)·φ(t)·ψ(t); we write
 ψ(t) for the ratio's value ⟦t⟧_(ψ,ρ) with every ratio
-variable held at the constant ratio ⟨ 1 ⟩.
+variable held at the trivial ratio `1`.
 
 Each conversion pays the factor once to each parameter: once under ψ because
 the converted value rescales with its source unit rather than the target its
@@ -194,18 +195,18 @@ The sum also has drift m/ft: both branches carry the
 same variable's ratio times m/ft, so the agreement
 demanded at + holds and the branches' shared drift is the program's.
 
-At +, and at map application and composition per output component, the
-analysis compares ratio terms up to β-reduction and the unit
+At +, at a comparison, and at map application and composition per output
+component, the analysis compares ratio terms up to β-reduction and the unit
 algebra (`Tw.normEq`). At a first-order ratio context, `Tw.openNF` evaluates
 structurally with an independent fresh coordinate for every scalar input
 component. It has no fuel and handles arbitrary internal higher-order
 applications and unit binders. Equality of its exponent vectors is exact
 (`Tw.normEq_firstOrder_iff`). At contexts containing unknown functions or unit
-families, the legacy bounded `Tw.norm` reducer and opaque-atom algebra remain
-a sound conservative fallback. In that fallback, unit constants merge into
+families, the bounded `Tw.norm` reducer and opaque-atom algebra serve as a
+sound conservative fallback. In that fallback, unit constants merge into
 one exponent vector and opaque subratios carry rational exponents.
-Reordered, reassociated, and differently placed conversions are therefore
-accepted: the artifact's `addAssoc` converts a product of meters
+In either mode, reordered, reassociated, and differently placed conversions
+are accepted: the artifact's `addAssoc` converts a product of meters
 once at m² in one branch and factor by factor in the other,
 and the analysis reports the drift the branches share. An atom also
 cancels against itself across the fraction bar, and soundly: semantic
@@ -232,8 +233,8 @@ scale factors, so the positive carrier excludes nothing the scaling law
 can instantiate. At first-order ratio contexts, comparison is exact in
 both directions for all scalar ratio syntax: agreement coincides with equal
 evaluation under every rescaling and every positive input drift
-(`Tw.normEq_firstOrder_iff`). The earlier atom-free exactness statement remains
-valid at arbitrary contexts (`Tw.normEq_iff_eval_eq`). Once both summands have
+(`Tw.normEq_firstOrder_iff`). For atom-free ratios, comparison is exact at
+arbitrary contexts (`Tw.normEq_iff_eval_eq`). Once both summands have
 ratios in either exact fragment, the sum is declined precisely when those
 ratios disagree. A summand whose own analysis declines
 also makes the sum decline. The artifact checks both sides of the line:
@@ -246,20 +247,19 @@ valuation-induced rescalings. Exact ratio comparison does not imply that a
 declined whole program fails invariance: a mismatched branch can be multiplied
 by zero, or two conditional arms can denote the same value.
 
-Scalar, vector, and matrix binders retain independent unknown drifts in the
-first-order symbolic environment; internal beta redexes impose no bound.
-Unknown function and unit-family inputs select the retained bounded fallback,
-whose fuel is not proved sufficient. `Tw.normEq_of_legacy` proves that every
-comparison previously accepted remains accepted. Distinct input components
-remain independent: agreeing at a particular call site is weaker than the
-universal agreement that the compositional analysis requires.
+Unknown function and unit-family inputs select the bounded fallback, whose
+fuel is not proved sufficient; `Tw.normEq_of_legacy` shows that, at every
+context, `Tw.normEq` accepts each pair that comparison accepts. Distinct input
+components remain independent: agreeing at a particular call site is weaker
+than the universal agreement that the compositional analysis requires.
 
 The analysis declines one term form unconditionally:
 1_u, which the convert-free abstraction theorem (`fundamental_free`) places outside the
-invariance theory. The decline also keeps the report single-voiced. A unit constant's defect is a failure of covariance, not
+invariance theory. The decline also keeps a reported drift meaning one thing.
+A unit constant's defect is a failure of covariance, not
 a dependence on the declarations: 1_u/1_u depends
 on nothing, and x · 1_u never consults the valuation.
-An earlier account claimed the ratio u^(-1/2) tracks it. That works only on
+The ratio u^(-1/2) would track it only on
 the diagonal φ = ψ, where the valuation and the inputs are rescaled together:
 the twisted law's factor is ψ(u)·φ(w)·ψ(w), which at w = u^(-1/2) is
 ψ(u)^(1/2)·φ(u)^(-1/2), equal to 1 exactly when φ(u) = ψ(u). The law's two
@@ -267,7 +267,9 @@ parameters are independent, so no single ratio in the unit group accepts
 1_u in general. Even were one available, tracking it would make the
 exhibited ratio mean two different things. With 1_u declined, conversion remains
 the only analyzed construct that reads the valuation, so a reported
-drift names dependence on the declared magnitudes and nothing else. log and exp accept an argument whose ratio is
+drift names dependence on the declared magnitudes and nothing else.
+
+log and exp accept an argument whose ratio is
 trivial, since a drift-free value is unmoved by every rescaling and so
 is its logarithm; the artifact accepts log of a round-trip ratio at
 drift 1 (`logRoundTrip`) and declines log of a drifting
@@ -316,8 +318,8 @@ open or closed and at any unit, denotes at every environment the same number
 under *every* valuation of the base units (`den_indep_of_driftFree`): its
 output provably does not depend on how the units it converts through are
 declared. By the adequacy theorem of
-“Adequacy and Erasure” (`Erasure.lean`), the same holds of a closed program's
-real-valued evaluation (`evalC_indep_of_driftFree`). The declared factors along any
+“Adequacy and Erasure” (`Erasure.lean`), the same holds of the real-valued
+evaluation of a closed program at `Q 1` (`evalC_indep_of_driftFree`). The declared factors along any
 closed conversion loop cancel, which restates “Unit Declarations”
 (`Declare.lean`)'s consistency criterion as a theorem about programs. With
 the valuation held fixed instead, the same program obeys the unrestricted
@@ -373,6 +375,9 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
   | div {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {u v a b p Θ}
       {da : HasTy Δ Γ a (.Q u)} {db : HasTy Δ Γ b (.Q v)} {s t : Tw B k Θ .scalar} :
       Twist p Θ da s → Twist p Θ db t → Twist p Θ (.div da db) (.div s t)
+  /-- Addition: the two summands' ratios must have equal value under every
+  scaling and environment (`heq`), and the sum carries that shared ratio.
+  `twistOf` discharges `heq` with `Tw.normEq`. -/
   | add {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {u a b p Θ}
       {da : HasTy Δ Γ a (.Q u)} {db : HasTy Δ Γ b (.Q u)} {s t : Tw B k Θ .scalar}
       (heq : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ s θρ = Tw.eval ψ t θρ) :
@@ -390,6 +395,8 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       (htf : ∀ (ψ : Scaling B k) (θρ : TwEnv Θ), Tw.eval ψ st θρ = Tw.eval ψ sf θρ) :
       Twist p Θ da sa → Twist p Θ db sb → Twist p Θ dt st → Twist p Θ df sf →
       Twist p Θ (.ifle da db dt df) st
+  /-- Conversion from `u` to `v` multiplies the operand's ratio by `u/v`: the
+  value still moves with `u` where its type now predicts `v`. -/
   | convert {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {u v a p Θ}
       {da : HasTy Δ Γ a (.Q u)} {s : Tw B k Θ .scalar} (h : SameDim Δ u v) :
       Twist p Θ da s → Twist p Θ (.convert da h) (.mul s (.div (.unit u) (.unit v)))
@@ -511,8 +518,8 @@ inductive Twist : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} →
       Twist (τ := .lin V W) p Θ df tf → Twist (τ := .lin U V) p Θ dg tg →
       Twist (τ := .lin U W) p Θ (.comp df dg) tw
   /-- Ratio conversion: a ratio may be replaced by one of equal value under
-  every scaling and environment. This is how `twistOf` β-normalizes as it
-  builds: `app` on a literal `lam` emits the substituted body (`Tw.appE`),
+  every scaling and environment. This is how `twistOf` reduces the redexes it
+  forms while building: `app` on a literal `lam` emits the substituted body (`Tw.appE`),
   `uapp` on a literal `ulam` performs the recorded instantiation
   (`Tw.uappE`), `idx` reduces projections of vector literals (`Tw.projE`),
   and `mrow` reduces rows of matrix literals (`Tw.rowE`), each justified by
@@ -565,8 +572,7 @@ theorem twRelEnv_lookup {j k : ℕ} {φ ψ : Scaling B k} : ∀ {Γ : Ctx B D j 
 omit [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
 /-- **Weakening related environments under a unit binder.** The value
 environments are retyped by `Env.weaken`; the ratio environments are untouched,
-because shape is blind to units, which is the entire design working as
-intended. -/
+because shape is blind to units (`Ty.shape_weaken`). -/
 theorem twRelEnv_weaken {j k : ℕ} {φ ψ : Scaling B k} (s s' : ℝ) :
     ∀ {Γ : Ctx B D j k} {Θ : List Shape} {θρ θρ' : TwEnv Θ} {ρ ρ' : Env Γ},
     TwRelEnv φ ψ Γ Θ θρ θρ' ρ ρ' →
@@ -618,8 +624,7 @@ The value environments are related at the **evaluation of the assignment**:
 the ratio environments are arbitrary at the atoms (positions below `p`, the
 `lam`-bound variables) and pinned at `1` from `p` on (`TwEnv.OnesFrom`),
 which is where the `varOne` rule reads its trivial ratio back. The exported
-theorems instantiate at `p = 0` and the all-ones environments, the
-instantiation they performed already.
+theorems instantiate at `p = 0` and the all-ones environments.
 
 Proved at the whole calculus; the binder cases are the ones a function-space
 ratio could not state. -/
@@ -925,9 +930,10 @@ theorem Twist.scaling : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
 
 A term of scalar type over a context of scalars: a program computing a number
 from numbers, whatever abstraction and application it uses inside. Its ratio is
-a closed scalar `Tw`, and the characterization says: the program obeys the
-unrestricted scaling law exactly when that ratio's value is `1` under every
-scaling. The next section makes that condition *syntactic*, and hence decidable.
+a closed scalar `Tw`, and the characterization says: a program with nonzero
+denotation obeys the unrestricted scaling law exactly when that ratio's value
+is `1` under every scaling. The next section makes that condition *syntactic*,
+and hence decidable.
 -/
 
 omit [Fintype B] [DecidableEq B] [Fintype D] [DecidableEq D] [UnitSys B D] in
@@ -1046,10 +1052,9 @@ scalars with nonzero denotation, invariance under every scaling holds exactly
 when its accumulated ratio is worth `1` under every scaling.
 
 This is `cvt_invariant_iff_eq` for arbitrary terms rather than a single
-conversion, and it says precisely what "conversion is the only thing that pays"
-means: the payment is the accumulated ratio, and unrestricted parametricity
-charges for exactly that and nothing else. The condition on the right is
-*semantic*; `Tw.nfOne` decides it syntactically, via `Tw.nfOne_eq_one_iff`. -/
+conversion: under unrestricted rescaling, the accumulated ratio is the only
+defect. The condition on the right is *semantic*; `Tw.nfOne` decides it
+syntactically (`Tw.nfOne_eq_one_iff`, `Twist.invariant_iff_nfOne`). -/
 theorem Twist.invariant_iff {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
     {u : UExp B k} {e : Tm B D j k} {d : HasTy Δ (scalarCtx us) e (.Q u)}
     {t : Tw B k (us.map fun _ => Shape.scalar) .scalar}
@@ -1078,9 +1083,10 @@ theorem Tw.eval_oneTwEnv {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar)
     (srelEnv_ones ψ Θ)
   rwa [Scaling.pull_id] at h
 
-/-- **Triviality of a ratio is decidable.** It is worth `1` under *every*
-scaling exactly when its normal form is the unit of the group: an equality in a
-free ℚ-vector space, decided coordinatewise.
+/-- **Triviality of a ratio is decidable.** A scalar ratio, with its ratio
+variables held at `1`, is worth `1` under *every* scaling exactly when its normal
+form is the unit of the group: an equality in a free ℚ-vector space, decided
+coordinatewise.
 
 This is the theorem that turns the characterization into an algorithm. -/
 theorem Tw.nfOne_eq_one_iff {k : ℕ} {Θ : List Shape}
@@ -1122,18 +1128,18 @@ derivation, a ratio together with its `Twist` derivation, or `none`.
 It fails in exactly two circumstances, and they are different in kind. At `add`
 the two branches' ratios must agree up to β-reduction and the unit algebra
 (`Tw.normEq`, exact symbolic evaluation at first-order contexts and the
-retained conservative bounded fallback at higher-order contexts):
+conservative bounded fallback at higher-order contexts):
 unit constants merge into one exponent vector and atoms into one rational
 exponent each, so reordered, reassociated and differently split conversions
 are accepted. The same check runs per output component at `mapp` and `comp`,
 whose sums mix one drift per summand: the products along the summed index must
 agree, and the common value is the component's drift; disagreement declines,
-exactly as at `add`. Under the frees-at-one assignment the program's own
-context variables contribute the literal ratio `1` rather than atoms, so the
-ratio of a first-order program without abstractions of its own is atom-free
-and the ratio-equality check is exact there (`Tw.normEq_iff_eval_eq`). Once
-all operands have ratios, the comparison at `add`, `mapp` and `comp` declines
-only on a genuine ratio disagreement, such as `(x in ft) + y`. A decline
+exactly as at `add`. `ifle` runs it on the two compared quantities and, per
+component (`Tw.agree`), on the two branches. Under the frees-at-one assignment
+the program's own context variables contribute the literal ratio `1` rather
+than atoms. At a first-order ratio context, once all operands have ratios, the
+comparison at `add`, `mapp` and `comp` declines only on a genuine ratio
+disagreement (`Tw.normEq_firstOrder_iff`), such as `(x in ft) + y`. A decline
 inside an operand propagates, and a disagreement need not imply a dependence
 of the whole denotation: multiplication by zero can erase it. Another source
 of incompleteness is the treatment of unknown higher-order inputs. Scalar,
@@ -1185,7 +1191,7 @@ def Tw.beq : {k : ℕ} → {Θ : List Shape} → {s : Shape} →
   | _, _, _, .uapp t μ, .uapp t' μ' => t.beq t' && μ == μ'
   | _, _, _, _, _ => false
 
-/-- `beq` decides equality. Proof fields vanish by proof irrelevance; the `app`
+/-- `beq` is sound (`Tw.beq_refl` gives the converse). Proof fields vanish by proof irrelevance; the `app`
 case pattern-matches the existential shape. -/
 theorem Tw.beq_sound : ∀ {k : ℕ} {Θ : List Shape} {s : Shape}
     (t t' : Tw B k Θ s), t.beq t' = true → t = t' := by
@@ -1295,7 +1301,7 @@ theorem Tw.beq_sound : ∀ {k : ℕ} {Θ : List Shape} {s : Shape}
 /-! ## Comparing branch ratios up to the unit algebra
 
 `Tw.beq` is syntactic. At a sum, syntactic comparison rejects branches whose
-ratios are the same conversions written in a different order, so we compare a
+ratios are the same conversions written in a different order, so the bounded fallback of `Tw.normEq` compares a
 *flattened* form instead: a scalar ratio splits into its unit-constant part
 (one exponent vector, merged by the group operations) and a list of opaque
 atoms each carrying a rational exponent, a vector in the free ℚ-vector space
@@ -1303,13 +1309,14 @@ the atoms generate, exactly as the units themselves are vectors over the base
 units. Multiplication appends, division negates the exponents, and `qpow`
 scales them. Two ratios compare equal when their unit parts agree and every
 atom carries the same total exponent on both sides. What the comparison never
-does is identify *distinct* atoms: an atom is the ratio of a `lam`-bound
-variable, standing for a future argument, and nothing relates two arguments'
-ratios. The program's own context variables produce no atoms at all under the
-frees-at-one assignment. Comparison is complete when the resulting ratios are
-atom-free (`Tw.scalarEq_complete`). The production comparison additionally
-has unrestricted-syntax exactness at first-order contexts
-(`Tw.normEq_firstOrder_iff`). Soundness of the exponent arithmetic needs
+does is identify syntactically *distinct* atoms. An atom is usually the ratio
+of a `lam`-bound variable, standing for a future argument, and nothing relates
+two arguments' ratios; a residual application, projection, or unit
+instantiation is also an atom (`Tw.flat`). The program's own context variables
+produce no atoms under the frees-at-one assignment. Comparison is complete when
+the resulting ratios are atom-free (`Tw.scalarEq_complete`). At first-order
+contexts `Tw.normEq` does not use this comparison and is exact for all ratio
+syntax (`Tw.normEq_firstOrder_iff`). Soundness of the exponent arithmetic needs
 every atom's value positive, which the carrier `SemScalar`
 provides: `x ^ p · x ^ q = x ^ (p + q)` already fails at `x = 0`. -/
 
@@ -1531,7 +1538,7 @@ The frees-at-one assignment gives each context variable the literal ratio `1`.
 For ratios built from unit expressions, multiplication, division, and rational
 powers, the flat form is a bare exponent vector. On this atom-free fragment,
 comparison is complete as well as sound. Unit variables are permitted; unknown
-argument drifts and residual applications or projections are excluded. The separating lemma is `scale_eq_iff`: scalings
+argument drifts and residual applications, projections, or unit instantiations are excluded. The separating lemma is `scale_eq_iff`: scalings
 tell apart any two distinct exponent vectors, by scaling a base where they
 differ. -/
 
@@ -1539,7 +1546,7 @@ differ. -/
 the ratio is built from `unit`, `mul`, `div` and `qpow` alone. Under the
 frees-at-one assignment, context variables contribute `1`. Unit variables
 remain permitted in unit expressions. Unknown argument drifts and residual
-applications or projections fall outside this fragment. `Tw.normN_of_atomFree`
+applications, projections, or unit instantiations fall outside this fragment. `Tw.normN_of_atomFree`
 proves that bounded normalization fixes an already atom-free ratio; it does not
 prove that normalization removes every atom from arbitrary generated ratios. -/
 def Tw.AtomFree {k : ℕ} {Θ : List Shape} (t : Tw B k Θ .scalar) : Prop :=
@@ -1567,10 +1574,9 @@ theorem Tw.scalarEq_complete {k : ℕ} {Θ : List Shape}
 
 /-- **The comparison is exact on the atom-free fragment**: for atom-free
 scalar ratios, `Tw.scalarEq` answers `true` precisely when the two ratios
-evaluate equal under every scaling and every environment. With the
-frees-at-one assignment this covers every first-order program without
-abstractions of its own, and for those the conditional declines at `add`,
-`mapp` and `comp` are exactly the genuine drift disagreements. -/
+evaluate equal under every scaling and every environment.
+`Tw.normEq_iff_eval_eq` carries this to `Tw.normEq`, the comparison `twistOf`
+runs. -/
 theorem Tw.scalarEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
     (a b : Tw B k Θ .scalar) (ha : a.AtomFree) (hb : b.AtomFree) :
     Tw.scalarEq a b = true
@@ -1582,12 +1588,14 @@ theorem Tw.scalarEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
 For a first-order context, `openNF` reflects independent unknown components and
 performs structural symbolic evaluation. All internal applications and unit
 binders are supported. When the context contains an unknown function or unit
-family, the legacy bounded normalizer and sound opaque-atom algebra provide a
+family, the bounded normalizer `Tw.norm` and sound opaque-atom algebra provide a
 conservative comparison. Only that higher-order-context fallback uses fuel.
 -/
 
-/-- Exact symbolic comparison at first-order contexts; conservative bounded
-comparison at contexts containing unknown higher-order inputs. -/
+/-- The ratio comparison `twistOf` runs. At first-order contexts it compares
+`Tw.openNF` normal forms, which is exact (`Tw.normEq_firstOrder_iff`); otherwise
+it compares `Tw.norm` forms by `Tw.scalarEq`, which is sound but not proved
+complete. -/
 def Tw.normEq {k : ℕ} {Θ : List Shape} (a b : Tw B k Θ .scalar) : Bool :=
   if ratioFirstOrder Θ then decide (a.openNF = b.openNF)
   else Tw.scalarEq a.norm b.norm
@@ -1611,9 +1619,9 @@ theorem Tw.normEq_firstOrder_iff {k : ℕ} {Θ : List Shape}
   simp only [Tw.normEq, hΘ, ↓reduceIte, decide_eq_true_eq]
   exact a.openNF_eq_iff b hΘ
 
-/-- Every comparison accepted by the previous production implementation is
-still accepted. First-order exactness subsumes its sound result; the
-higher-order fallback is unchanged. -/
+/-- `Tw.normEq` accepts every pair that the bounded comparison
+`Tw.scalarEq a.norm b.norm` accepts: at first-order contexts by exactness,
+elsewhere by definition. -/
 theorem Tw.normEq_of_legacy {k : ℕ} {Θ : List Shape}
     (a b : Tw B k Θ .scalar) (h : Tw.scalarEq a.norm b.norm = true) :
     Tw.normEq a b = true := by
@@ -1644,8 +1652,8 @@ theorem Tw.normN_of_atomFree {k : ℕ} {Θ : List Shape} :
   | _ + 1, .proj _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
   | _ + 1, .uapp _ _, h => absurd h (by simp [Tw.AtomFree, Tw.flat])
 
-/-- The earlier atom-free exactness interface remains valid in any context.
-`normEq_firstOrder_iff` removes its syntax restrictions at first-order contexts. -/
+/-- Exactness for atom-free ratios, in any context. At first-order contexts
+`Tw.normEq_firstOrder_iff` drops the atom-freeness hypotheses. -/
 theorem Tw.normEq_iff_eval_eq {k : ℕ} {Θ : List Shape}
     (a b : Tw B k Θ .scalar) (ha : a.AtomFree) (hb : b.AtomFree) :
     Tw.normEq a b = true
@@ -1748,10 +1756,10 @@ component (`Tw.normEq_firstOrder_iff`). Internal functions and unit binders
 are evaluated structurally without a reduction bound. The unit algebra merges
 conversions that are reordered, reassociated, or split into rational powers;
 positivity makes cancellation sound. Unknown function or unit-family inputs
-select the unchanged bounded `Tw.norm` and opaque-atom comparison, which is
-sound but not proved complete. `Tw.normEq_of_legacy` guarantees preservation
-of every previously accepted comparison. Atom-free exactness in arbitrary
-contexts remains available as `Tw.normEq_iff_eval_eq`.
+select the bounded `Tw.norm` and opaque-atom comparison, which is sound but
+not proved complete. Atom-free ratios compare exactly in any context
+(`Tw.normEq_iff_eval_eq`). `ifle` runs the check on its compared quantities
+and, per component (`Tw.agree`), on its branches.
 `mapp` and `comp` run the same check per output component, across the summed
 index, and `log` and `exp` run it against the literal ratio `1`, accepting
 exactly the arguments whose ratio is identifiably trivial. Everything
@@ -1882,10 +1890,10 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
           (Tw.normEq_sound t (.unit 1) h1 ψ θρ).trans
             (Tw.eval_one ψ .scalar θρ)) ht⟩
       else none
-  -- `ucon` is the one unconditional decline. The ratio `u^(-1/2)` accepts it
-  -- only on the diagonal `φ = ψ`, since the law's factor `ψ(u)·φ(w)·ψ(w)` is
-  -- then `ψ(u)^(1/2)·φ(u)^(-1/2)`, which is `1` iff `φ(u) = ψ(u)`; the two
-  -- parameters are independent here. Separately, a unit constant's defect is a
+  -- `ucon` is the one unconditional decline. The ratio `w = u^(-1/2)` accepts
+  -- it only on the diagonal `φ = ψ`: at that `w` the law's factor
+  -- `ψ(u)·φ(w)·ψ(w)` is `ψ(u)^(1/2)·φ(u)^(-1/2)`, which is `1` iff
+  -- `φ(u) = ψ(u)`, and the two parameters are independent. Separately, a unit constant's defect is a
   -- covariance failure with no dependence on the declarations, so tracking it
   -- would make a reported drift mean two different things. With `ucon`
   -- declined, conversion remains the only analyzed construct that reads the
@@ -1897,21 +1905,23 @@ def twistOf : {j k : ℕ} → {Δ : DCtx D j k} → {Γ : Ctx B D j k} → {e : 
 /-- **Unit drift**: the normal form of a program's accumulated conversion
 ratio, computed from its derivation. `some 1` means the conversions cancel;
 `some w` with `w ≠ 1` exhibits the drift; `none` means the analysis does not
-apply (a `ucon`, a `log` or `exp` whose argument ratio is not identifiably
-trivial, or an `add` whose branch ratios `Tw.normEq` cannot identify). -/
+apply (a `ucon`; a `log` or `exp` whose argument ratio is not identifiably
+trivial; or an `add`, `ifle`, `mapp` or `comp` whose compared ratios
+`Tw.normEq` cannot identify). -/
 def unitDrift {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {u : UExp B k}
     {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.Q u)) : Option (UExp B k) :=
   (twistOf 0 (us.map fun _ => Shape.scalar) (shapes_scalarCtx us).symm d).map
     fun p => Tw.nfOne p.1
 
-/-- **Unit drift at a matrix result over an arbitrary context.**
+/-- **Unit drift at a matrix result over an arbitrary context**: one normal
+ratio per entry, or `none`.
 
-`twistOf` never wanted a scalar context; only `unitDrift`'s wrapper did, and
-only because `twRelEnv_scaleEnv` *constructs* the rescaled environment and
-knows how to do that at scalar types alone. Taking the environment relation as
-a hypothesis instead removes the restriction without proving anything new: the
-relation is the specification of "each argument rescaled as its type
-prescribes", and constructing one is the caller's business. -/
+`unitDriftLin` takes a scalar context only because its theorem uses
+`twRelEnv_scaleEnv`, which *constructs* the rescaled environment and can do so
+only at scalar types. `scaleLaw_lin_of_driftFree_gen` instead takes the
+environment relation as a hypothesis: the relation specifies "each argument
+rescaled as its type prescribes", and constructing one is the caller's
+business. -/
 def unitDriftGen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V W : Sp B k}
     {e : Tm B D j k} (d : HasTy Δ Γ e (.lin V W)) :
     Option (Fin W.length → Fin V.length → UExp B k) :=
@@ -1921,10 +1931,10 @@ def unitDriftGen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {V W : Sp B k}
 /-- **Unit drift at a matrix result**: one normal ratio per entry.
 
 A scalar program has a drift; a map-valued one has a drift *table*, because
-`TwRel` at `.lin` charges each entry separately. Reporting a single ratio would
-be a lie unless the entries happened to agree, so this reports the table and
-lets the caller ask what it wants of it. Invariance is the table constantly
-`1`, which is `scaleLaw_lin_of_driftFree` below. -/
+`TwRel` at `.lin` charges each entry separately. A single ratio would be wrong
+unless the entries happened to agree, so this reports the table and lets the
+caller ask what it wants of it. A table constantly `1` gives the type's scaling
+law (`scaleLaw_lin_of_driftFree`, below); no converse is proved here. -/
 def unitDriftLin {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)} {V W : Sp B k}
     {e : Tm B D j k} (d : HasTy Δ (scalarCtx us) e (.lin V W)) :
     Option (Fin W.length → Fin V.length → UExp B k) :=
@@ -1956,7 +1966,7 @@ theorem twRelEnv_scaleLinVal {j k : ℕ} (φ ψ : Scaling B k) {V W : Sp B k}
 omit [Fintype D] [DecidableEq D] in
 /-- **The scaling law at a matrix result, over any context at all.**
 
-The context restriction is gone. Rescale the arguments however their types
+With the valuation held fixed, rescale the arguments however their types
 prescribe, which is what `TwRelEnv` at trivial ratios says, and a drift-free
 map moves entry `(a,i)` by exactly `ψ(W a) / ψ(V i)`.
 
@@ -1991,8 +2001,8 @@ theorem scaleLaw_lin_of_driftFree_gen {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B 
 omit [Fintype D] [DecidableEq D] in
 /-- **A drift-free map obeys its type's scaling law, entry by entry.**
 
-The matrix analogue of `scaleLaw_of_driftFree`, and the theorem that puts the
-linear-algebra section and the diagnostic in the same room. When every entry of
+The matrix analogue of `scaleLaw_of_driftFree`, and the theorem that connects
+the diagnostic to dimensioned linear algebra (Section 9 of the paper). When every entry of
 the drift table is trivial, rescaling the arguments moves entry `(a,i)` by
 exactly `ψ(W a) / ψ(V i)`, the factor Hart's rank-one form assigns it, and by
 nothing else. -/
@@ -2101,12 +2111,12 @@ theorem unitDriftLam_spec {j k : ℕ} {Δ : DCtx D j k} {us : List (UExp B k)}
 The twisted law has two parameters, and holding each at the trivial scaling
 in turn yields the two statements a drift diagnosis is for. With the values
 held fixed, a program's dependence on the declared unit magnitudes is exactly
-its drift: drift `1` is declaration independence at any first-order type, for
+its drift: drift `1` is declaration independence at any result unit, for
 open programs as for closed ones. With the valuation held fixed, a drift-free
 program obeys the unrestricted scaling law of `scaleLaw`, which is the
 hypothesis the Pi theorem consumes, now supplied by the drift analysis rather
 than by the absence of conversion. Composed with adequacy, the first
-statement holds of evaluation with real arithmetic: its output is invariant across every
+statement holds of evaluation with real arithmetic for a closed program at `Q 1`: its output is invariant across every
 consistent extension of the declaration set. This is the ratio-level analogue
 of `evalC_convert_declared`: `Twist` joined to `Declare` the way `eval_adeq`
 joined `Dynamics` to `Declare`. -/

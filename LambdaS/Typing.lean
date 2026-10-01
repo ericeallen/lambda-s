@@ -40,9 +40,8 @@ design:
 * `pow` is **primitive**, with no side condition. It is not definable from the
   field operations, because the closure of the arguments under arithmetic is
   the subgroup they generate and rational powers escape it. Over ℚ exponents it
-  is *total*, so `√` of a volume is well-typed here and is a type error in F#,
-  and `pow 0 e : Q 1` is fine, denoting `x^0 = 1`. The rule mirrors the unit
-  grammar, which has had `u^q` all along.
+  is *total*, so `√` of a volume is well-typed, and `pow 0 e : Q 1` is fine,
+  denoting `x^0 = 1`. The rule mirrors the unit grammar's `u^q`.
 * `idx` reads the unit **out of the space**. `V[i]? = some u` is Λs in one
   hypothesis: the unit of a component is determined by its index.
 * `uapp` **substitutes** a unit expression for a unit variable, and checks that
@@ -130,13 +129,13 @@ First, *exponents are rational*, not integral. In Kennedy's
 calculus [Kennedy 1997] the units form the free abelian group on the
 base units, with integer exponents; here they form the free
 ℚ-vector space on the same generators (see note 1).
-The difference propagates everywhere downstream: the group is *divisible*,
-every unit having an `n`-th root for nonzero `n` (`Uom.rpow_nth_root`),
-so √(m³) has unit m^(3/2) in the fixed meter basis, whereas integer
-exponents allow √(m²) but cannot express m^(3/2) in that basis; and consistency of unit declarations is
-consistency of a linear system over a *field*, solved by Gaussian
-elimination rather than Smith normal form, the integer-matrix analogue of
-diagonalization (“Unit Declarations” (`Declare.lean`)).
+The difference propagates everywhere downstream. The group is *divisible*:
+every unit has an `n`-th root for nonzero `n` (`Uom.rpow_nth_root`), so
+√(m³) has unit m^(3/2) in the fixed meter basis, where integer exponents allow
+√(m²) but not m^(3/2). And consistency of unit declarations is consistency of
+a linear system over a *field*, solved by Gaussian elimination rather than
+Smith normal form, the integer-matrix analogue of diagonalization
+(“Unit Declarations” (`Declare.lean`)).
 Neither follows from torsion-freeness, which the free abelian group of
 [Kennedy 1997] has too (see note 1). Quantities with genuinely fractional dimension,
 such as the half-densities of geometric quantization (see note 2),
@@ -150,7 +149,7 @@ come for free.
 > dimensionless space, but so is a free abelian group over ℤ, so this is
 > not a difference the rational exponents make. Nor is it what makes
 > “ratio equal to one” mean “units equal”: that is cancellation, and holds
-> in any group (`Definability.div_eq_one_iff`).
+> in any group (`div_eq_one_iff`).
 
 > **Note 2.** A probability
 > density on a line measured in Length carries dimension
@@ -183,7 +182,7 @@ variables in scope, every algebraic combination (u · v
 for two bound
 variables, m/s, u^(3/2) · kg)
 denotes a
-vector, and the operations of the unit grammar in Figure 1 of the paper (the `UExp`, `DExp`, `Ty`, and `Tm` inductives of `Syntax.lean`) are
+vector, and the operations of the unit grammar in Figure 1 of the paper (the `UExp` and `DExp` abbreviations and the `Ty` and `Tm` inductives of `Syntax.lean`) are
 total functions on vectors (pointwise addition, subtraction, scaling). A type
 such as Q u · v under
 Λu:d₁. Λv:d₂ is as well-formed as
@@ -201,8 +200,8 @@ decided by comparing their entries.
 
 ### Types and Terms
 
-The types and terms are the `UExp`, `DExp`, `Ty` and `Tm` inductives of
-`Syntax.lean`. Two conventions there matter for what follows. Types and terms
+The types and terms are the `Ty` and `Tm` inductives of
+`Syntax.lean`, over unit and dimension expressions `UExp` and `DExp`. Two conventions there matter for what follows. Types and terms
 are indexed by the number of enclosing dimension binders j and unit binders k,
 with unit and dimension variables as de Bruijn indices into those scopes. And
 function application and linear-map application are distinct term forms, `app`
@@ -245,18 +244,17 @@ demands the row inhabit Vec (w/u⃗), entry j at w/u_j.
 That premise is Hart's factorization (“Dimensioned Linear Algebra” (`Map.lean`)) checked at
 the introduction form: a matrix whose entries do not factor as row unit over
 column unit cannot be written down. The eliminations are indexing e.i,
-map application e ⊙ e, and composition e ∘ e: given
+row extraction row_i e, map application e ⊙ e, and composition e ∘ e: given
 x : Vec [m, kg·m/s],
 indexing gives x.0 : Q m and
 x.1 : Q kg·m/s, and x.2 is a type
 error.
 Well-scopedness is a type index: types and terms carry the number of
 enclosing dimension and unit binders, so ill-scoped unit and dimension syntax
-is unrepresentable and unit and dimension substitution has nowhere to go
-wrong; value variables are plain de Bruijn naturals, checked against Γ
-by the typing relation. (“Mechanization notes” (`LambdaS.lean`)
-reports the defect we found anyway, in the one place indexing could not
-reach.)
+is unrepresentable; value variables are plain de Bruijn naturals, checked
+against Γ by the typing relation. Scope indices do not rule out selecting the
+wrong variable within a scope; “Mechanization notes” (`LambdaS.lean`) reports
+a capture defect of exactly that kind.
 
 The two quantifiers deserve comment, because their interaction is the
 calculus's answer to a question every polymorphic unit system faces: what
@@ -278,11 +276,10 @@ generic caster
 
     Λδ. Λu:δ. Λv:δ.  λ x:Q u. convert x u v
 
-is well-typed (`caster`), and it is a term the two
-abstraction theorems of “The Price of Conversion” (`Fundamental.lean`) separate: a coherent
-rescaling assigns u and v the one factor its
+is well-typed (`caster`), and “The Price of Conversion” (`Fundamental.lean`)
+states what it costs: a coherent rescaling assigns u and v the one factor its
 dimension rescaling gives δ, leaving the caster invariant, while
-independent factors move it. Converting to a *concrete* unit is still
+independent factors move it (`cvt_rel_iff_coherent`). Converting to a *concrete* unit is still
 rejected, as an unbounded variable demands, and because coherence
 forces every variable bounded by δ to rescale together, the free
 theorems of “The Price of Conversion” (`Fundamental.lean`) keep their full strength
@@ -306,7 +303,7 @@ floating-point computation). Powers at constant rational exponents are primitive
 definable from the field operations (no term built from +, ·,
 and / computes a square root: “Dimensional Analysis” (`PiTheorem.lean`) proves
 Q u² → Q u
-uninhabited by arithmetic terms), and the rule
+uninhabited by arithmetic terms for u ≠ 1), and the rule
 accepts every unit, since scaling an exponent vector by q always yields
 a unit. For example, √(m³) is a quantity at
 m^(3/2) (see note 3). Finally log and
@@ -387,9 +384,7 @@ pointwise quotient w/u⃗ has entry j at w/u_j.
 The typing judgment Δ;Γ ⊢ e : τ carries a dimension
 context Δ (the declared dimension of each unit variable in scope)
 alongside the usual Γ; the rules are the constructors of `HasTy`,
-they are syntax-directed, and types are unique. We highlight what the
-artifact makes of this, because the
-arrangement is unusual and we recommend it. The checker does not return a
+they are syntax-directed, and types are unique. The checker does not return a
 type; it returns a *derivation*:
 
     def check : {j k : ℕ} → (Δ : DCtx D j k) → (Γ : Ctx B D j k) → (e : Tm B D j k) →
@@ -458,11 +453,11 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
   /-- The unit of a component is read out of the space. -/
   | idx {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e V i u} :
       HasTy Δ Γ e (.vec V) → V[i]? = some u → HasTy Δ Γ (.idx e i) (.Q u)
-  /-- **Row extraction**, the elimination form for `Lin`. Row `i` of a map at
-  `Lin V W` is a vector over `w / δ_V(·)` for `w = δ_W(i)`: precisely the row
-  `mcons` consumes, so intro and elim meet definitionally. Without this rule
-  `Lin` has introduction forms and no elimination form, and no closed term can
-  read an entry out of a matrix it did not itself build. -/
+  /-- **Row extraction**, an elimination form for `Lin` alongside `mapp` and
+  `comp`. Row `i` of a map at `Lin V W` is a vector over `w / δ_V(·)` for
+  `w = δ_W(i)`: precisely the row `mcons` consumes, so intro and elim meet
+  definitionally. With `idx` it reads any entry, which makes transposes
+  writable (`Examples.fromTimeT`). -/
   | mrow {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e V W i w} :
       HasTy Δ Γ e (.lin V W) → W[i]? = some w →
       HasTy Δ Γ (.mrow e i) (.vec (V.map fun u => Term.div w u))
@@ -526,7 +521,7 @@ inductive HasTy : {j k : ℕ} → DCtx D j k → Ctx B D j k → Tm B D j k → 
 /-- **T-MCons enforces the model's entry units.** The row `T-MCons` accepts at
 codomain unit `w` carries, at component `i`, the unit `w / δ_V(i)`, which is
 entry `(0, i)` of the resulting matrix at `Lin V (w :: W)` (`linEntry`) and,
-through `entry_toSpace`, the model's `entry`: reading a component out of the
+through `entry_toSpace` (for closed spaces), the model's `entry`: reading a component out of the
 row lands at exactly the unit Hart's form assigns it. -/
 def HasTy.mcons_entry {j k} {Δ : DCtx D j k} {Γ : Ctx B D j k} {w r : _} {V : Sp B k}
     (W : Sp B k) (dr : HasTy Δ Γ r (.vec (V.map fun u => Term.div w u))) (i : Fin V.length) :
@@ -710,9 +705,8 @@ the sense that the data is determined.
 This is what licenses speaking of *the* denotation of a term. Anything defined
 by recursion over a derivation is thereby a function of the term alone, and no
 theorem is needed to say so. It is also why making `HasTy` `Type`-valued costs
-nothing in expressiveness: the elimination restriction that `Prop` would impose
-is the only thing given up, and there was never a second derivation for it to
-protect. -/
+nothing: `Prop`'s elimination restriction exists to keep distinct proofs
+indistinguishable, and no judgment here has two derivations. -/
 instance {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k} {e : Tm B D j k}
     {τ : Ty B D j k} : Subsingleton (HasTy Δ Γ e τ) :=
   ⟨fun d₁ d₂ => by simpa using (check_eq d₁).symm.trans (check_eq d₂)⟩

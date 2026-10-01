@@ -19,10 +19,11 @@ carrying the unit `δ i`; a linear map is handled in `LambdaS.Map`.
 with no coercion in between.
 
 This is a decision, not an accident. It is what makes a uniform space *equal* to
-`triv ⊗ u` rather than merely isomorphic to it, and so what lets the signature of
-SVD be a type error rather than a side condition. Making spaces nominal would
-silently invalidate `Space.uniform_iff_scale_triv` and, with it, the claim
-that Hart's taxonomy is derived rather than checked.
+`triv ⊗ u` rather than merely isomorphic to it, and so what lets a signature over
+uniform spaces reject a non-uniform argument as a type error rather than a
+failed side condition. Making spaces nominal would break
+`Space.uniform_iff_scale_triv` and, with it, the claim that Hart's taxonomy is
+derived rather than checked.
 -/
 
 namespace LambdaS
@@ -34,8 +35,7 @@ namespace Space
 
 variable {B I J : Type*}
 
-/-- The dimensionless space on `I`, written `I₁` on paper. Every component
-carries the trivial unit. -/
+/-- The dimensionless space on `I`: every component carries the trivial unit. -/
 def triv (B I : Type*) : Space B I := fun _ => 1
 
 /-- The dual space carries **reciprocal** units.
@@ -78,7 +78,7 @@ theorem scale_eq_tensor (V : Space B I) (d : Uom B) (i : I) :
 @[simp] theorem scale_one (V : Space B I) : V ⊗ (1 : Uom B) = V := by funext i; simp
 
 /-- Scaling composes: `(V ⊗ d) ⊗ e = V ⊗ (d * e)`. Half of the functoriality of
-`⊗`; the other half is `LambdaS.Map.entry_scale_scale`. -/
+`⊗`; the other half is `entry_scale_scale` (in `LambdaS.Map`). -/
 @[simp] theorem scale_scale (V : Space B I) (d e : Uom B) : (V ⊗ d) ⊗ e = V ⊗ (d * e) := by
   funext i; simp [mul_assoc]
 
@@ -87,7 +87,7 @@ theorem dual_scale (V : Space B I) (d : Uom B) : (V ⊗ d).dual = V.dual ⊗ d�
 
 /-- A uniform space is *equal* to a scaled dimensionless space, not merely
 isomorphic to one. This equality is what structurality buys, and it is what
-makes `LambdaS.Map.svd_entry_const` a statement about types. -/
+makes `svd_entry_const` (in `LambdaS.Map`) a statement about types. -/
 theorem uniform_iff_scale_triv (V : Space B I) :
     V.Uniform ↔ ∃ u, V = triv B I ⊗ u := by
   constructor

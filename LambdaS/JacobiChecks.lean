@@ -11,12 +11,12 @@ import LambdaS.Examples
 These checks run the actual `sweep`, `stopRelative`, and `stopAbsolute` terms
 through the Float evaluator in the native binary. Matrix composition reaches
 the C dot-product implementation, so these are run-time checks, not `#guard`
-assertions. The typing and parametricity checks remain in `Examples`.
+assertions. The endomorphism inverse check `inverseIsIdentity` runs here for the same reason; the typing and parametricity checks remain in `Examples`.
 
 The sweep checks cover 125 finite symmetric matrices with positive, negative,
 and zero off-diagonals, and equal or unequal diagonals. They check the result,
 not the formula used to construct the rotation: both off-diagonals must vanish,
-symmetry must hold, and trace and determinant must be preserved. The tolerance
+symmetry must hold, trace and determinant must be preserved, and an already diagonal input must come back unchanged. The tolerance
 is `1e-12 * max(1, |expected|)` for these small test matrices. This is not an
 error bound for arbitrary floating-point inputs.
 -/

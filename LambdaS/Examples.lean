@@ -12,11 +12,13 @@ import LambdaS.Notation
 /-!
 # Λs, running
 
-Every line below **runs the checker** at build time via `#guard`. If any result
-were different, this file would not compile.
+Most lines below are `#guard` assertions that **run the checker** (and in places
+the evaluator and the drift analysis) at build time. If any result were different,
+this file would not compile. The theorems are kernel-checked, and
+`inverseIsIdentity` runs in the compiled binary (`LambdaS.JacobiChecks`).
 
-A note on what that does and does not establish. `#guard` executes the compiled
-`infer`, so these are *tests*, not kernel-checked proofs: kernel reduction gets
+A note on what the guards do and do not establish. `#guard` runs `infer` in
+Lean's interpreter, so these are *tests*, not kernel-checked proofs: kernel reduction gets
 stuck on the `Rat` instance chain that Mathlib's algebraic hierarchy is built
 from, which is a known cost of building on it. The correctness guarantee does
 not come from here: it comes from `LambdaS.Typing`, where `check` returns the
@@ -114,9 +116,10 @@ def mismatch : Term₀ := .add length duration
 
 /-! ## Roots, where ℚ exponents pay for themselves
 
-Kennedy's Λu and F# both type `sqrt : float<'u^2> -> float<'u>`, which to apply
-at a volume requires solving `2·vec(u) = 3` over ℤ. There is no solution, so
-**F# rejects the square root of a volume.** Over ℚ the root is total, and this
+Kennedy's Λu, like F# before version 4.0, types `sqrt : float<'u^2> -> float<'u>`
+over integer exponents, so applying it at a volume requires solving
+`2·vec(u) = 3` over ℤ. There is no solution, so **an integer-exponent system
+rejects the square root of a volume.** Over ℚ the root is total, and this
 lands at `m^(3/2)`. -/
 
 def volume : Term₀ := .mul (.mul (.ucon m) (.ucon m)) (.ucon m)
@@ -181,7 +184,7 @@ def sqr : Term₀ := .dlam (.ulam dvar (.lam (.Q uvar) (.mul (.var 0) (.var 0)))
 #guard typeOf sqr
     == some (.allDim (.all dvar (.arrow (.Q uvar) (.Q (Term.mul uvar uvar)))))
 
-/- Using it takes two applications: supply the dimension, then the unit. -/
+/-- Using it takes two applications: supply the dimension, then the unit. -/
 abbrev sqrAt (d : DExp Dim 0) (μ : UExp Base 0) : Term₀ := .uapp (.dapp sqr d) μ
 
 /- Instantiating at meters gives `Q m → Q m²`. The unit variable really is
@@ -252,7 +255,8 @@ is rejected: `dimOf` reports the dimension *variable* `δ`, which is not the
 dimension of the meter, so `SameDim` fails. This is the rejection an unbounded
 quantifier ought to give, and it is why the bound is a dimension variable rather
 than the trivial dimension: under the trivial dimension `u` would be claimed
-dimensionless and the conversion would wrongly be accepted. -/
+dimensionless, and a conversion from `u` to a dimensionless unit such as `m/ft`
+would wrongly be accepted. -/
 def inMetersFree : Term₀ :=
   .dlam (.ulam dvar (.lam (.Q uvar) (.convert (.var 0) uvar m.weaken)))
 
@@ -272,7 +276,7 @@ abbrev G : UExp Base 0 :=
 /-- c = m/s -/
 abbrev c : UExp Base 0 := Term.div m sec
 
-/- **The Planck length**, √(ħG/c³). Three constants, three base dimensions, an
+/-- **The Planck length**, √(ħG/c³). Three constants, three base dimensions, an
 exponent matrix of rank 3, so by the Pi theorem the combination with dimension
 Length is *unique*. The checker confirms the standard formula lands on meters. -/
 def planckLength : Term₀ :=
@@ -281,14 +285,14 @@ def planckLength : Term₀ :=
 
 #guard typeOf planckLength == some (.Q m)
 
-/- Getting the power of c wrong is caught. -/
+/-- Getting the power of c wrong is caught. -/
 def planckWrong : Term₀ :=
   .pow (1/2) (.div (.mul (.ucon hbar) (.ucon G))
                    (.mul (.mul (.ucon c) (.ucon c)) (.mul (.ucon c) (.ucon c))))
 
 #guard typeOf planckWrong != some (.Q m)
 
-/- **Fermion fields have mass dimension 3/2.** The Lagrangian carries mass
+/-- **Fermion fields have mass dimension 3/2.** The Lagrangian carries mass
 dimension 4 and the kinetic term contributes `2[ψ] + 1`, forcing `[ψ] = 3/2`.
 
 This is the case that matters, and it is *not* like the Planck length. There the
@@ -347,9 +351,9 @@ abbrev halfDensity : UExp Base 0 := Term.rpow (Term.inv m) (1/2)
 #guard (typeOf (.log (.ucon density))).isNone
 
 /- **KL divergence is fine.** A ratio of equal-weight densities lands at `1`, so
-`log (p/q)` typechecks. The classical fact that relative entropy is invariant
-under a change of units while differential entropy is not, as a distinction the
-checker enforces rather than one the reader must remember. -/
+`log (p/q)` typechecks. This is the classical fact that relative entropy is
+invariant under a change of units while differential entropy is not, enforced
+by the checker rather than remembered by the reader. -/
 #guard typeOf (.log (.div (.ucon density) (.ucon density)))
     == some (.Q (1 : UExp Base 0))
 
@@ -369,9 +373,9 @@ end Measure
 
 /-! ## Conversion, and the ambiguity that never arises
 
-Comp 311's unit-conversion assignment has a latent bug: with units nameable in
-terms of other units, `convert` walks a declared structure, and two routes from
-`u` to `v` need not agree. Λs cannot exhibit it. Conversion is a *ratio of one
+A conversion operator that walks a declared structure has a latent bug: with
+units nameable in terms of other units, two routes from `u` to `v` need not
+agree. Λs cannot exhibit it. Conversion is a *ratio of one
 valuation* (`LambdaS.Conversion`), so `convChain_eq` makes path independence a
 theorem rather than a proof obligation on declarations.
 
@@ -412,9 +416,9 @@ wrong and the term does not typecheck. -/
     == some (.Q (Term.div ft sec))
 #guard (typeOf (.convert velocity (Term.div m sec) ft)).isNone
 
-/- Speed of light in meters per second converted to feet per second: the shape
-of every real unit conversion, and the round trip is the identity because
-`conv_symm` says the factors are inverse. -/
+/- A velocity converted from meters per second to feet per second and back:
+the round trip typechecks at `m/s`, and `conv_symm` makes its two factors
+inverse, so it denotes the identity. -/
 #guard typeOf (.convert (.convert velocity (Term.div m sec) (Term.div ft sec))
     (Term.div ft sec) (Term.div m sec)) == some (.Q (Term.div m sec))
 
@@ -423,7 +427,8 @@ end Conversion
 /-! ## Declarations, and the conflict that cannot be declared away
 
 `unit yard = 3 foot` declares a generator **and** an equation. Three such
-declarations give two routes from yard to meter, which is the Comp 311 bug. Here
+declarations give two routes from yard to meter, which a converter that walks
+declarations can follow to different answers. Here
 the redundant declaration is either arithmetically right or the system has no
 solution: there is never a choice of route to get wrong. -/
 
@@ -465,9 +470,9 @@ Length. `unit yard = 3 second` would fail here. -/
 #guard dYardFoot.factor * dFootMeter.factor == dYardMeter.factor
 #guard dYardFoot.factor * dFootMeter.factor != dYardMeterBad.factor
 
-/-- **The consistent set forces the redundant factor.** Any valuation satisfying
-the first two determines the third, so the second route cannot disagree with the
-first; it is not free to. -/
+/-- **The consistent set forces the redundant factor.** Any valuation
+satisfying all three declarations forces `3 × 0.3048 = 0.9144`, so the second
+route cannot disagree with the first. -/
 theorem yard_forced (ψ : Scaling Base 0)
     (h1 : Decl.Satisfies ψ dYardFoot) (h2 : Decl.Satisfies ψ dFootMeter)
     (h3 : Decl.Satisfies ψ dYardMeter) :
@@ -476,8 +481,8 @@ theorem yard_forced (ψ : Scaling Base 0)
 
 /-- **The conflicting set has no valuation at all.**
 
-This is the Comp 311 bug, decided rather than papered over. The assignment's
-`convert` had to walk a declared structure and could walk the wrong way; here the
+This is the route-ambiguity bug, decided rather than papered over. A `convert`
+that walks a declared structure can walk the wrong way; here the
 configuration that would force a choice is exactly the configuration with no
 solution, so it is rejected at declaration time. -/
 theorem yard_conflict :
@@ -708,10 +713,10 @@ original definition recursed as `τ.subst σ.weaken`, which substitutes index 0
 had the matching defect, inserting the fresh variable at index 0 rather than past
 the binder.
 
-Nothing here reached it. Every single-binder use is unaffected, and the one test
-with nested unit binders (`twoVars`) is *rejected* by the checker before
-substitution runs. The two definitions were also wrong in a way that canceled,
-so `subst_weaken` (the only theorem about them) held regardless.
+Nothing in the examples of the time reached it: single-binder uses were
+unaffected, and the one nested-binder test then (`twoVars`) is *rejected*
+before substitution runs. The two definitions were also wrong in a way that
+canceled, so `subst_weaken` (then the only theorem about them) held regardless.
 
 It took writing the soundness proof to surface it: the composition lemma for
 substitution refused to hold, and the reason was that `liftU` had no counterpart
@@ -746,7 +751,7 @@ where it is. -/
 
 /- Substituting into a weakened type is the identity. This held under the old
 definitions too: both were wrong in a way that canceled, which is why the only
-theorem about them never noticed. -/
+theorem then stated about them never noticed. -/
 #guard Ty.subst (Ty.weaken polyBound) m == polyBound
 
 end SubstRegression
@@ -780,7 +785,7 @@ def fiveMps : Term₀ := .mul (.lit 5) (.ucon (Term.div m sec))
 
 /-! ## The drift diagnostic, exercised
 
-Three programs, three answers. Converting meters to feet and back cancels:
+The first three programs get three answers. Converting meters to feet and back cancels:
 `unitDrift` answers `1`, and the result is unit-system independent. Converting
 one way does not: the drift is `m/ft`, and the diagnostic names it. And a sum
 whose branches share a variable carries the branches' shared drift. -/
@@ -902,7 +907,7 @@ theorem div_self_unit (u : UExp Base 0) : Term.div u u = 1 :=
 /-- `log ((x in ft)/(x in ft))`: the argument's conversions cancel, so it is
 drift-free, and a drift-free value at `Q 1` is declaration-independent under
 every rescaling. Its logarithm is declaration-independent too, and the
-analysis now accepts it: `log` runs the `add`-style check against the literal
+analysis accepts it: `log` runs the `add`-style check against the literal
 ratio `1` rather than declining unconditionally. -/
 def logRoundTrip : Term₀ :=
   .log (.div (.convert (.var 0) m ft) (.convert (.var 0) m ft))
@@ -1182,7 +1187,7 @@ def stateVec : Term₀ :=
 /- The empty vector lives at the empty space. -/
 #guard typeOf (.vnil : Term₀) == some (.vec [])
 
-/- Consing a duration where the momentum slot expects `kg·m/s` builds a vector
+/-- Consing a duration where the momentum slot expects `kg·m/s` builds a vector
 over a *different* space, and the eliminations reject it: a `State`-consuming
 map applies to the literal above and not to this one. -/
 def wrongVec : Term₀ :=
@@ -1192,7 +1197,7 @@ def wrongVec : Term₀ :=
 #guard (typeOfIn [.lin State W] (.mapp (.var 0) wrongVec)).isNone
 
 /-- A map from `State` to `W = [sec]` as a literal: one row whose entry `i`
-carries `sec / δ_State(i)`, which is the rank-one condition the `mcons` rule
+carries `sec / State i`, which is the rank-one condition the `mcons` rule
 checks. -/
 def toTime : Term₀ :=
   .mcons sec
@@ -1439,14 +1444,15 @@ def mappOkIdxDeriv : HasTy Δ₀ Γv (.idx mappOk 0) (.Q ft) := .idx mappOkDeriv
 
 #guard (unitDrift mappOkIdxDeriv).map (· == Term.div m ft) == some true
 
+/-- Two lengths and a dimensionless entry at `ft/ft`. -/
+abbrev Γv₂ : Ctx Base Dim 0 0 := scalarCtx [m, m, Term.div ft ft]
+
 /-- The same shape with *distinct* measurements in the argument components:
 the `mapp` analogue of `addTwoVars`. Under the frees-at-one assignment both
 components contribute the ratio `1` through their own variable, so the
 products across the sum agree at the exponent vector `m/ft` and the
 application is accepted; an earlier design gave `x` and `y` distinct atoms
 and declined it. -/
-abbrev Γv₂ : Ctx Base Dim 0 0 := scalarCtx [m, m, Term.div ft ft]
-
 def mappTwoVars : Term₀ := .mapp
   (.mcons ft (.vcons (.var 2) (.vcons (.var 2) .vnil)) (.mnil [ft, ft]))
   (.vcons (.convert (.var 0) m ft) (.vcons (.convert (.var 1) m ft) .vnil))
@@ -1464,13 +1470,14 @@ def mappTwoVarsIdxDeriv : HasTy Δ₀ Γv₂ (.idx mappTwoVars 0) (.Q ft) :=
 
 #guard (unitDrift mappTwoVarsIdxDeriv).map (· == Term.div m ft) == some true
 
+/-- A length, a length in feet, and a dimensionless entry at `ft/ft`. -/
+abbrev Γv₃ : Ctx Base Dim 0 0 := scalarCtx [m, ft, Term.div ft ft]
+
 /-- What `mapp` still declines at first order: a genuine drift disagreement
 across the summed index, the `mapp` analogue of `addMixed`. One argument
 component converts (`x in ft`, drift `m/ft`) and the other is already in
 feet (drift `1`), so the row's two products carry distinct exponent vectors
 and no uniform output drift exists. -/
-abbrev Γv₃ : Ctx Base Dim 0 0 := scalarCtx [m, ft, Term.div ft ft]
-
 def mappMixed : Term₀ := .mapp
   (.mcons ft (.vcons (.var 2) (.vcons (.var 2) .vnil)) (.mnil [ft, ft]))
   (.vcons (.convert (.var 0) m ft) (.vcons (.var 1) .vnil))
@@ -1652,14 +1659,13 @@ end Ballistics
 
 /-! ## A Jacobi rotation, and what the units force
 
-The reason `ifle` was added. Section 9 classifies dimensioned maps, and
-`svd_entry_const` says a singular value decomposition needs a *uniform* space
-because sorting singular values requires a shared unit. That is a claim about
-types, and until now nothing in the development ran an actual kernel against
-it. This does.
+The reason `ifle` was added. Section 9 of the paper classifies dimensioned
+maps, and `svd_entry_const` says every entry of a map between *uniform* spaces
+carries one unit, which is what sorting singular values requires. That is a
+claim about types; this section runs an actual kernel against it.
 
-The setting is the symmetric eigenvalue problem, the fourth Hart class:
-`A : V ⊸ dual V` on a uniform `V`, so every entry carries `1 / (V j * V i)`
+The setting is the symmetric eigenvalue problem on Hart's fourth class, the
+dimensionally symmetric maps `A : V ⊸ dual V`, here on a uniform `V`, so every entry carries `1 / (V j * V i)`
 and, uniformly, `m⁻²`. A Jacobi sweep annihilates the off-diagonal entry by a
 rotation whose angle is computed from the entries themselves. -/
 
@@ -1775,7 +1781,7 @@ distinguishes how their tolerances are supplied.
 
 A **relative** tolerance scales a quantity already in hand by a dimensionless
 factor. It names no unit, so it stays inside the parametric fragment and
-Theorem 5.1 applies to the kernel.
+the paper's Theorem 5.1 (`fundamental_free`) applies to the kernel.
 
 The **fixed absolute** tolerance below is written using a named unit
 constant `ucon`, which `Tm.Parametric` excludes. The kernel still typechecks
@@ -1783,9 +1789,13 @@ and runs, but the abstraction theorem no longer applies. An absolute tolerance
 passed as an input could remain parametric and would rescale with the inputs;
 absolute tolerances are not excluded in general. -/
 
+/-- One sweep, skipped (the input returned unchanged) when the off-diagonal
+magnitude is at most `1e-9` times the larger diagonal magnitude. -/
 def stopRelative : Term₀ :=
   .ifle offDiagAbs (.mul (.lit 0.000000001) diagonalScale) (.var 0) sweep
 
+/-- The same test against the fixed tolerance `1e-9 m⁻²`, written with the
+unit constant `ucon (1/m/m)`. -/
 def stopAbsolute : Term₀ :=
   .ifle offDiagAbs
     (.mul (.lit 0.000000001) (.ucon (Term.div (Term.div 1 m) m)))
@@ -1795,7 +1805,7 @@ def stopAbsolute : Term₀ :=
 #guard typeOfIn ΓA stopRelative == some (.lin U2 U2d)
 #guard typeOfIn ΓA stopAbsolute == some (.lin U2 U2d)
 
-/-- **The relative test is parametric.** Theorem 5.1 applies to the kernel: a
+/-- **The relative test is parametric.** The paper's Theorem 5.1 (`fundamental_free`) applies: a
 rescaling moves its inputs and its output and changes nothing else, including
 whether this stopping test takes its return branch. -/
 example : Tm.Parametric stopRelative := by
@@ -1838,13 +1848,13 @@ floating-point correctness theorem for all inputs. -/
 
 /-! ### The kernel restated over scalar arguments
 
-Written when the gap above was open, as the workaround: pass the entries
-rather than the matrix, so that the context is a `scalarCtx` and only the
-result shape stands between the kernel and the diagnostic. `unitDriftGen`
-has since removed the need for it. It stays because it exercises a genuinely
-different path, a scalar context with a matrix result, and because the same
-rotation algebra written two ways is a check that the shapes are doing no
-work the units are not. -/
+An earlier drift diagnostic accepted only scalar contexts, and this
+restatement was the workaround: pass the entries rather than the matrix, so
+that the context is a `scalarCtx`. `unitDriftGen` has since removed the need
+for it. It stays as a typing check over a scalar context with a matrix result.
+It predates the sign and zero-guard fixes to `rot` and `tanRot`: `rotS` is
+`[[c, -s], [s, c]]` and `tanS` has no zero guard, so it is typechecked only,
+never run. -/
 
 /-- The entry unit of a symmetric matrix on the uniform space. -/
 def e2 : UExp Base 0 := Term.div (Term.div 1 m) m
@@ -1879,8 +1889,7 @@ def rotTS : Term₀ :=
       (.vcons ⟪ (rotS !! 0) ! 1 ⟫ (.vcons ⟪ (rotS !! 1) ! 1 ⟫ .vnil))
       (.mnil U2d))
 
-/-- **The sweep over a scalar context.** Everything `unitDrift` asks of the
-context is satisfied here; only the result shape remains. -/
+/-- **The sweep over a scalar context**, checked for its type only. -/
 def sweepS : Term₀ := .comp rotTS (.comp asymm rotS)
 
 #guard typeOfIn ΓS tauS == some (.Q 1)

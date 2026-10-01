@@ -7,13 +7,14 @@ import LambdaS.PiCoherent
 import LambdaS.Examples
 
 /-!
-# Boundary checks for the strengthened Pi theorem
+# Boundary checks for the coherent Pi theorem
 
-These kernel-checked examples test three predictions recorded before running:
-coherent factorization covers `addMixed` despite its diagnostic decline;
-internal dimension/unit abstraction is accepted by the coherent bridge; and
-rank-zero/full-rank matrices require no extra nonempty hypotheses. The caster's
-derivation is constructed from typing rules and substitution lemmas, without
+These kernel-checked examples test three boundaries: the dimension-level
+scaling law covers `addMixed`, which the drift diagnostic declines
+(`addMixed_coherent`); the coherent bridge accepts internal dimension and unit
+abstraction (`instantiatedCaster_coherent`); and descent needs no extra
+nonempty hypotheses at rank zero or full rank. The caster's derivation is
+constructed from typing rules and substitution lemmas, without
 compiler-evaluated decision procedures.
 -/
 
@@ -53,6 +54,8 @@ private def casterMeterTyped : HasTy Δ₀ (scalarCtx [m])
   simp [Ty.subst, Ty.ground, liftU]
   rfl
 
+/-- The typing derivation of `instantiatedCaster` at `Q ft` over one meter
+input, built from `HasTy.dapp`, `HasTy.uapp`, and substitution lemmas. -/
 def instantiatedCasterDeriv : HasTy Δ₀ (scalarCtx [m]) instantiatedCaster (.Q ft) := by
   have h : HasTy Δ₀ (scalarCtx [m])
       (.uapp (.uapp (.dapp caster (Term.ofBase Dim.length)) m) ft)
@@ -62,6 +65,8 @@ def instantiatedCasterDeriv : HasTy Δ₀ (scalarCtx [m]) instantiatedCaster (.Q
       exact Decl.dimOf_ofBase Base.foot))
   exact .app h (.var rfl)
 
+/-- The dimension-level scaling law holds for `instantiatedCaster`, which binds
+a dimension and two units internally and converts meters to feet. -/
 theorem instantiatedCaster_coherent (V : Scaling Base 0) {m' : ℕ}
     (eqv : Fin m' ≃ Dim ⊕ Fin 0) :
     MulScaleLaw (dimensionMatrix eqv [m]) (dimensionExponents eqv ft)

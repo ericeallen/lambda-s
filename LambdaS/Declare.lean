@@ -12,34 +12,37 @@ import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 # Unit declarations, and why conflicting ones are rejected
 
 `dimension Velocity = Length/Time` is an abbreviation: dimensions are exponent
-vectors, so it expands and nothing is left to check. Unit declarations are the
-interesting case, because
+vectors, so it expands, and its only check is scoping (`DimAbbrev.elabDimDefs`).
+Unit declarations are the interesting case, because
 
 ```
 unit yard = 3 foot
 ```
 
-declares a generator **and** an equation, and equations can conflict. This is
-the bug that the Comp 311 assignment's one-unit-per-dimension restriction
-(`LambdaS.Conversion`) exists to dodge: with units nameable in terms
-of other units, two routes from `yard` to `meter` need not agree, and nothing in
-a free abelian group of units forces them to.
+declares a generator **and** an equation, and equations can conflict: with
+units nameable in terms of other units, two routes from `yard` to `meter` need
+not agree, and nothing in the algebra of units (a free ℚ-vector space) forces
+them to. `LambdaS.Conversion` contrasts this with a design that sidesteps route
+ambiguity by allowing at most one named unit per dimension.
 
 ## What the resolution is, and what it is not
 
-It is *not* a consistency check on paths. `LambdaS.Conversion` already makes
-conversion a ratio of one valuation, so `convChain_eq` says any chain of
+It is *not* a consistency check on paths. A *valuation* (a `Scaling B 0`)
+assigns each base unit a positive real magnitude, and `LambdaS.Conversion`
+already makes conversion a ratio of one valuation, so `convChain_eq` says any chain of
 intermediate conversions equals the direct factor: path independence is a
 theorem there, not an obligation here.
 
 What is left is the prior question: do the declarations determine a valuation at
 all? That is a linear system, and this file gives its solvability criterion, in
-both directions. `dependency_forces` is necessity: every ℚ-linear combination
-of the declarations whose *unit* parts cancel forces the corresponding
-*factors* to multiply to one. `dependency_sufficient` is sufficiency:
-respect every dependency and a satisfying valuation exists, so
-`consistent_iff_dependencies` (and its multiplicative form) characterizes
-consistency outright. `factor_chain` is the two-step instance that is
+both directions. `dependency_forces` is necessity: under a satisfying
+valuation, every ℚ-linear combination of the declared ratios whose *unit*
+exponents cancel forces the same combination of log-factors to vanish
+(`dependency_forces_mul` says the *factors* multiply to one).
+`dependency_sufficient` is sufficiency: respect every dependency and a
+satisfying valuation exists, so `consistent_iff_dependencies` characterizes
+consistency outright. Its multiplicative form,
+`consistent_iff_dependencies_mul`, is Theorem 3.1 of our paper. `factor_chain` is the two-step instance that is
 literally the yard/foot/meter conflict. `not_satisfiable_of_chain` turns it
 around: get the arithmetic wrong and **no** valuation exists, so the declaration
 set is rejected rather than silently picking a route.
@@ -50,8 +53,9 @@ The criterion is exact rational arithmetic even though valuations are real.
 Declared factors are rationals; a dependency demands `∏ qᵢ^{cᵢ} = 1` with `cᵢ`
 rational, which clearing denominators turns into an identity in ℚ. Rational
 powers can require irrational magnitudes: if `V(c) = 2`, then
-`V(c^(1/2)) = √2`. Valuations therefore range over ℝ. The checker manipulates
-symbolic logarithmic expressions exactly; it evaluates no logarithms or roots.
+`V(c^(1/2)) = √2`. Valuations therefore range over ℝ. The checker
+(`DeclSolver.solve`, eliminating over `LogFactor`) manipulates symbolic
+logarithmic expressions exactly; it evaluates no logarithms or roots.
 Declarations live in ℚ⁺, and the consistency tests reduce to equality in ℚ⁺.
 
 ## What is not declared has no factor
@@ -60,17 +64,21 @@ A base unit with no declaration is a primitive, and its magnitude is free. So
 `meter` and `foot` as bare generators are same-dimension units with **no**
 determined conversion factor: `convert` between them typechecks, but its value
 is whatever the valuation says. Declaring `unit foot = 0.3048 meter` is exactly
-what pins it. `DeclSolver.check` in `LambdaS.DeclareSolver` now enforces the
+what pins it. `DeclSolver.check` in `LambdaS.DeclareSolver` enforces the
 execution obligation: declarations must be dimensionally sound, consistent,
-and determine every same-dimension factor. `DeclSolver.conversionExact` also
-supports individual lookup, returning none for an undetermined ratio. It
-returns exact radicals for determined ratios; it does not silently supply an
-arbitrary missing factor. The semantic criterion below is linked to those
-executable checks by soundness and completeness proofs.
+and determine every same-dimension factor. `DeclSolver.conversionExact`
+supports individual lookup. For a consistent set it returns an exact radical
+when the ratio is determined and `none` when it is not; it does not silently
+supply an arbitrary missing factor. The semantic criterion below is linked to
+those executable checks by soundness and completeness proofs
+(`DeclSolver.solve_isSome_iff`, `DeclSolver.check_isSome_iff`).
 -/
 
 /-!
 ## Unit Declarations
+
+The worked examples this section cites by bare name, such as `yard_satisfiable`,
+`cycle_conflict`, and `dimCycle`, are in `LambdaS.Examples`.
 
 Conversion forces a question the parametric literature never faces: where do
 the factors come from? The answer is unit declarations, in the style
@@ -79,15 +87,14 @@ scientists write them:
     unit yard = 3 foot;  unit foot = 0.3048 meter.
 
 Declarations are not terms of Λs: they are the interface a surface
-language hands to the calculus, and the artifact consumes them as data. Each
-declaration constrains one unit against another by a factor; in
-unit yard = 3 foot, the declared factor is
-3.
+language hands to the calculus, and the artifact consumes them as data (as
+`Decl` values). Each declaration constrains one unit against another by a
+factor; in `unit yard = 3 foot`, the declared factor is `3`.
 
 Declarations can conflict. With units nameable in terms of other units, a
 system that implements conversion by *walking the declared structure*
 can offer more than one route between two units, with no guarantee the routes
-agree: add the redundant declaration yard = 0.9 meter
+agree: add the redundant declaration `yard = 0.9 meter`
 and the direct route disagrees with the route through feet, since
 3 × 0.3048 = 0.9144 ≠ 0.9 (see note 1). Choosing a route through declared
 factors without checking consistency can cause this defect, and nothing in
@@ -103,32 +110,32 @@ declared factors are data the algebra does not constrain.
 
 Dimension declarations, by contrast, carry no factor, and the only
 check they need is scoping. A bare one,
-dimension Length, introduces a base dimension;
+`dimension Length`, introduces a base dimension;
 freshness is its whole check, and the bare declarations jointly supply
 the calculus's parameter D. One with a right-hand side is an
 abbreviation: it introduces a fresh name for a vector
 over the base dimensions, its right-hand side mentioning only base
 dimensions and earlier abbreviations, and expands at once:
-dimension Velocity = Length/Time
+`dimension Velocity = Length/Time`
 is the vector (Length ↦ 1, Time ↦ -1)
 from then on. Cycles are consequently not detected but unrepresentable:
-the incorrect pair Velocity = Length/Time,
-Length = Velocity/Time is rejected at its
+the incorrect pair `Velocity = Length/Time`,
+`Length = Velocity/Time` is rejected at its
 second line for rebinding a generator, before any question of
 consistency can arise, and a forward reference is rejected because an
-undefined name does not denote (`elabDimDefs`; the cyclic pair
+undefined name does not denote (`DimAbbrev.elabDimDefs`; the cyclic pair
 is `dimCycle`). Base units are declared the same way, by a
-dimension and no factor: unit meter : Length
-makes meter *primary*, Fortress's
-term [Allen et al. 2008], and the declaration is what determines the
+dimension and no factor: `unit meter : Length`
+makes `meter` *primary* (the term is from [Allen et al. 2004]; the syntax is
+Fortress's [Allen et al. 2006]), and the declaration is what determines the
 unit's dimension. The primary declarations jointly supply the calculus's
 parameters B and dim, and they too need only scoping
-(`elabPrimary`): a fresh name, and a dimension that denotes.
+(`DimAbbrev.elabPrimary`): a fresh name, and a dimension that denotes.
 This section is therefore about the declarations that carry a factor.
 
-Λs does not implement conversion as a walk. Recall that a
-valuation
-V assigns each base unit a positive magnitude: an exchange-rate table
+Λs does not implement conversion as a walk. A
+*valuation* V (a `Scaling B 0` in the artifact)
+assigns each base unit a positive magnitude: an exchange-rate table
 into an arbitrary fixed reference scale, not a measurement. For example,
 V(meter) = 1, V(foot) = 0.3048,
 V(yard) = 0.9144 is a valuation, and it satisfies both
@@ -142,17 +149,17 @@ satisfies every declared equation. Note that declarations carry no order,
 and no acyclicity condition is imposed or needed: each declaration is an
 equation, the set is a simultaneous system, and a cycle is just a
 dependency the criterion below decides. The benign cycle
-yard = 3 foot,
-foot = 1/3 yard is satisfiable
+`yard = 3 foot`,
+`foot = 1/3 yard` is satisfiable
 (`cycle_satisfiable`); close it wrongly, with
-foot = yard, and the dependency forces 3 = 1, so no
+`foot = yard`, and the dependency forces `3 = 1`, so no
 valuation exists (`cycle_conflict`). Nor can a declaration
 mention an undeclared generator: the base units are the calculus's
 parameter B, so the reference is unrepresentable. What remains is the
 prior question:
 *do the declarations determine a valuation at all?*
 
-A declaration unit b = q w constrains the ratio b/w to the
+A declaration `unit b = q w` constrains the ratio b/w to the
 value q ∈ ℚ^(>0). In logarithmic coordinates each declaration is
 one linear equation in the unknowns log V(b), so a valuation exists
 exactly when that linear system is consistent: every linear dependency among
@@ -162,8 +169,8 @@ factors. Both directions are theorems. Necessity holds
 `dependency_forces_mul`). Sufficiency invites a worry. The
 unknowns log V(b) are real, and necessarily so: valuations are
 real-valued, not merely their logarithms, since rational exponents can
-force irrational magnitudes (declare c = 2 and
-b = c^(1/2), and every satisfying valuation has
+force irrational magnitudes (declare `c = 2` and
+`b = c^(1/2)`, and every satisfying valuation has
 V(b) = √2), and rational magnitudes can have
 irrational logarithms (though log 1 = 0). The dependencies, by contrast, are
 rational, so we
@@ -174,11 +181,11 @@ the rational coefficient matrix has the same dependencies over either
 field, and the system is solved ℚ-linearly with real
 values (`dependency_sufficient`).
 
-**Theorem (Consistency; `consistent_iff_dependencies_mul`).** A declaration set with ratios r_i and factors q_i admits a satisfying
-valuation if and only if, for every
-ℚ-linear combination with ∑_i c_i r_i = 0 in the unit
-group, ∏_i q_i^c_i = 1; equivalently, in logarithmic form,
-∑_i c_i log q_i = 0 (`consistent_iff_dependencies`).
+**Theorem 3.1 (Consistency; `consistent_iff_dependencies_mul`).** A finite
+declaration set with ratios `r_i` and positive rational factors `q_i` admits a
+satisfying valuation if and only if, for every ℚ-linear combination with
+`∑_i c_i r_i = 0` in the unit group, `∏_i q_i^c_i = 1`; equivalently, in
+logarithmic form, `∑_i c_i log q_i = 0` (`consistent_iff_dependencies`).
 
 With the criterion in hand, we work the example in full. The three
 declarations
@@ -194,7 +201,7 @@ they induce the linear system
     y - f = log 3,  f - m = log 0.3048,  y - m = log 0.9144.
 
 The ratios are linearly dependent: with coefficients c = (1, 1, -1) in
-the theorem “Consistency” (`consistent_iff_dependencies_mul`), r₁ + r₂ - r₃ = 0 in the unit group
+Theorem 3.1 (`consistent_iff_dependencies_mul`), r₁ + r₂ - r₃ = 0 in the unit group
 (multiplicatively,
 (yard/foot)(foot/meter)(meter/yard)
 is the dimensionless 1), so consistency demands
@@ -202,7 +209,7 @@ q₁ q₂ q₃⁻¹ = 1, that is,
 3 × 0.3048 = 0.9144 (see note 2). The equation
 holds, and the artifact exhibits a satisfying valuation explicitly
 (`yard_satisfiable`): the exchange-rate table V above. Now replace
-the third declaration by yard = 0.9 meter. The same
+the third declaration by `yard = 0.9 meter`. The same
 dependency demands 3 × 0.3048 = 0.9, which is false; the artifact
 refutes the set (`yard_conflict`): *no* valuation satisfies all
 three, the set is rejected at declaration time, and there is never a choice
@@ -216,13 +223,13 @@ factor: any valuation satisfying all three declarations forces
 declaration.
 
 > **Note 2.** The yard has been exactly 0.9144
-> meters only since 1959, when six English-speaking countries agreed to end a
-> disagreement of roughly two parts per
-> million [Astin et al. 1959]. The United States kept its
+> meters only since 1959, when the United States and five other
+> English-speaking countries adopted a common yard, the American one moving by
+> two parts per million [Astin and Karo 1959]. The United States kept its
 > earlier foot for surveying; that redundant declaration, inconsistent with
-> the new one in the seventh decimal place, survived until the end of 2022; its
-> retirement, effective December 31, 2022, was announced by a 2020 Federal
-> Register notice [NIST and NOAA 2020].
+> the new one in the seventh decimal place, survived until its retirement,
+> effective December 31, 2022, announced by a 2020 Federal Register notice
+> [NIST and NOAA 2020].
 
 Note that a base unit with no declaration is a primitive, and its magnitude
 is free. Its dimension is not: the unit system assigns every base unit a
@@ -230,13 +237,14 @@ dimension (dim : B → ℚ^D is total, “Units and Dimensions” (`Typing.lean`
 so declarations add magnitudes, never dimensions. Declarations, not the type
 system, give conversion its numeric content; the type system contributes a
 separate, decidable check that each declaration relates
-units of one dimension: unit yard = 3 second
-is rejected (`Sound`, orthogonal to
-the theorem “Consistency” (`consistent_iff_dependencies_mul`)).
+units of one dimension: `unit yard = 3 second` fails `Decl.Sound`, and
+`DeclSolver.check` rejects it. That check is orthogonal to Theorem 3.1
+(`consistent_iff_dependencies_mul`).
 
 What the declared numbers are worth to running code is the subject of
-“Adequacy and Erasure” (`Erasure.lean`), where the chain from declaration to real-valued
-evaluation is closed: the evaluator instantiated with real arithmetic converts one yard into feet by
+Section 7 of our paper (Adequacy and Erasure), where Theorem 7.1
+(`evalC_convert_declared`, in `LambdaS.Adequacy`) closes the chain from
+declaration to real-valued evaluation: the evaluator instantiated with real arithmetic converts one yard into feet by
 multiplying by the declared 3 and into meters by the forced
 0.9144 (`one_yard_is_three_feet`; through the forced
 factor, `one_yard_in_meters`).
@@ -256,8 +264,8 @@ The factor is a positive rational. That is not a convenience; it is what keeps
 the consistency criterion exact, since a product of rational powers of rationals
 is decidably one. -/
 structure Decl (B : Type) where
-  /-- The unit being declared. A generator: declaring is what gives it meaning,
-  not what defines it away. -/
+  /-- The unit being declared, a base unit. The declaration constrains its
+  magnitude; it does not define the unit away in terms of `rhs`. -/
   lhs : B
   /-- The declared magnitude, against `rhs`. -/
   factor : ℚ
@@ -313,7 +321,8 @@ variable [UnitSys B D]
 
 /-- A declaration is **sound** when the declared unit has the dimension of its
 right-hand side. Decidable, and it is what stops a declaration smuggling in a
-conversion between dimensions: `unit yard = 3 second` is rejected here. -/
+conversion between dimensions: `unit yard = 3 second` is not sound, and
+`DeclSolver.check` rejects any declaration set containing it. -/
 def Sound (d : Decl B) : Prop :=
   UnitSys.dim (D := D) d.lhs = dimOf (DCtx.nil D) d.rhs
 
@@ -417,7 +426,7 @@ The converse direction. `dependency_forces` says a satisfying valuation makes
 every dependency respect the factors; here we show that respecting the
 dependencies is all it takes, so the criterion decides consistency outright.
 
-The proof needs no real linear algebra. The system asks for a function
+The proof needs no linear algebra over ℝ. The system asks for a function
 `B → ℝ` in log coordinates, and ℝ is a vector space over ℚ, so the system can
 be solved ℚ-linearly with values in ℝ: send each ratio's exponent vector to its
 log-factor, check the assignment kills every rational dependency (the
@@ -429,8 +438,8 @@ vectors exceed the rational ones never arises. -/
 declared ratios forces the matching combination of log-factors to vanish, then
 some valuation satisfies every declaration at once.
 
-This is the converse of `dependency_forces` and the sufficiency half of the
-paper's solvability theorem. In log coordinates each declaration is one linear
+This is the converse of `dependency_forces` and the sufficiency half of
+Theorem 3.1 (Consistency) in our paper. In log coordinates each declaration is one linear
 equation in the unknown base magnitudes; the hypothesis is exactly that the
 right-hand sides respect the dependencies of the left-hand sides, and
 `exists_linearMap_of_dependencies` turns that into a ℚ-linear map on `B → ℚ`
@@ -472,7 +481,7 @@ theorem consistent_iff_dependencies {n : ℕ} {ds : Fin n → Decl B} :
     exact dependency_forces hψ c hc
   · exact dependency_sufficient
 
-/-- **Consistency, in the multiplicative form the paper states.** A declaration
+/-- **Consistency, in the multiplicative form of Theorem 3.1 in our paper.** A declaration
 set has a satisfying valuation exactly when every ℚ-linear dependency among its
 ratios forces the corresponding product of declared factors to one. Since the
 coefficients and factors are rational, the right-hand side is an exact
@@ -499,12 +508,14 @@ theorem consistent_iff_dependencies_mul {n : ℕ} {ds : Fin n → Decl B} :
 /-! ## The conflict, exhibited
 
 Three declarations, two routes from the first unit to the last. This is the
-Comp 311 configuration exactly: `yard = 3 foot`, `foot = 0.3048 meter`, and a
-redundant `yard = q meter`. -/
+running example of Section 3 of our paper: `yard = 3 foot`,
+`foot = 0.3048 meter`, and a redundant `yard = q meter`. `LambdaS.Examples`
+instantiates these lemmas (`yard_forced`, `yard_conflict`). -/
 
 /-- **Chained declarations force the factor.** If `a` is declared against `b`'s
 unit, `b` against some `w`, and `c` declares `a`'s unit directly against the same
-`w`, then the factors are forced: `factor a · factor b = factor c`.
+`w`, then any valuation satisfying all three forces
+`a.factor * b.factor = c.factor`.
 
 There is no freedom here and no route to choose. The redundant declaration is
 either arithmetically correct or the system has no solution. -/
@@ -525,11 +536,12 @@ theorem factor_chain {ψ : Scaling B 0} {a b c : Decl B}
 
 /-- **Conflicting declarations are rejected.** Get the arithmetic wrong and no
 valuation satisfies all three, so there is nothing for an implementation to pick
-between: the declaration set fails to elaborate.
+between: `DeclSolver.solve` rejects any declaration set containing them
+(`DeclSolver.solve_isSome_iff`).
 
-This is the Comp 311 bug, decided. The assignment's `convert` had to choose a
-path and could choose wrongly; here the situation that would have forced a choice
-is precisely the situation with no solution. -/
+A converter that walks declared factors must choose a route and can choose
+wrongly; here the situation that would force a choice is precisely the
+situation with no solution. -/
 theorem not_satisfiable_of_chain {a b c : Decl B}
     (h1 : a.rhs = Term.ofBase b.lhs) (h2 : a.lhs = c.lhs) (h3 : b.rhs = c.rhs)
     (hbad : a.factor * b.factor ≠ c.factor) :
@@ -591,11 +603,12 @@ def elabDimDefs (baseName : String → Option D) :
 
 /-- **Primary-unit declarations.** A base unit is introduced by naming it
 and its dimension, with no factor: `unit meter : Length` makes `meter`
-primary (Fortress's term), and the declaration is what determines the
-unit's dimension. Elaboration is scoping again: a fresh unit name, and a
-dimension that denotes (a base dimension or an abbreviation already
-elaborated). The surviving table is the calculus's `dimOf`, restricted to
-the declared generators. -/
+primary (the term is from Allen et al. 2004; the syntax is Fortress's), and
+the declaration is what determines the unit's dimension. Elaboration is
+scoping again: a fresh unit name, and a dimension that denotes (a base
+dimension or an abbreviation already elaborated). The surviving table is the
+calculus's parameter `UnitSys.dim` on the declared generators, which `dimOf`
+extends to unit expressions (`Decl.dimOf_ofBase`). -/
 def elabPrimary (baseName : String → Option D)
     (dims : List (String × DExp D 0)) :
     List (String × (D ⊕ String)) → Option (List (String × DExp D 0))

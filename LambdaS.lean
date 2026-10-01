@@ -31,6 +31,10 @@ import LambdaS.Twist
 import LambdaS.RatioCompareExamples
 import LambdaS.Conversion
 import LambdaS.Declare
+import LambdaS.RationalSolver
+import LambdaS.LogFactor
+import LambdaS.Determinacy
+import LambdaS.DeclarationComplete
 import LambdaS.DeclareSolver
 import LambdaS.DeclarationSolverExamples
 import LambdaS.Examples
@@ -43,10 +47,9 @@ import LambdaS.Algorithms
 # Λs: a calculus for units of measure with conversion
 
 This is the root module; importing it imports the whole development. The
-module list above follows the paper's order: syntax and typing, the checker,
-the denotational semantics with both abstraction theorems, the ratio
-calculus, the evaluator with its erasure, unit declarations, and the worked
-examples. `THEOREMS.md` in the repository maps every identifier the paper
+import list runs roughly in dependency order: the unit algebra, syntax, and
+typing; the evaluator and its theorems; the abstraction theorems; the ratio
+calculus; unit declarations; and the worked examples. `THEOREMS.md` in the repository maps every identifier the paper
 cites to its module.
 
 ## Vocabulary
@@ -64,28 +67,26 @@ Four terms recur throughout, two of them specific to this development.
   a program whose conversions cancel has the trivial drift `1`. The analysis
   is conservative and may decline to assign a ratio (`LambdaS.Twist`).
 * Lean tooling: `sorry` is Lean's placeholder for an unproved obligation, and
-  none appears here; `#guard` is an assertion the compiler executes at build
-  time, so a false one breaks the build.
+  none appears here; `#guard` is an assertion Lean's interpreter evaluates at
+  build time, so a false one breaks the build.
 
 ## Mechanization notes
 
 The measured size of the Lean 4 [de Moura and Ullrich 2021] development is
-recorded in the README by `scripts/count_lines.py`. It builds with no `sorry` (Lean's placeholder for an unproved
-obligation) and no axioms beyond the three of Lean's
-standard library (propositional extensionality, choice, and quotient
-soundness; the check by Lean's kernel is
-part of the build, and no result adds an
-axiom). The compiled evaluator calls BLAS where the platform supplies it,
-falling back to portable C loops elsewhere. The
-examples from `Declare.lean` through `Map.lean` run as
-build-time assertions; the two numerical demonstrations whose
-arithmetic reaches the foreign-function interface are checked by the
-compiled binary when it runs. In this section we report what made the
-mechanization small, one thing it caught, and what a reader must trust
-beyond the kernel.
+recorded in the README by `scripts/count_lines.py`. It builds with no `sorry`
+and no axioms beyond the three of Lean's standard library (propositional
+extensionality, choice, and quotient soundness; the check by Lean's kernel is
+part of the build, and no result adds an axiom). The compiled evaluator calls
+BLAS (Accelerate's `cblas`) on Apple platforms and portable C loops elsewhere.
+Most worked examples run as build-time `#guard` assertions; the numerical
+checks whose arithmetic reaches the foreign-function interface (the two-state
+system in `LambdaS.QM`, and the Jacobi and inverse checks in
+`LambdaS.JacobiChecks`) run in the compiled binary. These notes report what
+made the mechanization small, one thing it caught, and what a reader must
+trust beyond the kernel.
 
 **Exponent vectors make the metatheory linear algebra.**
-The representation decision made in `Typing.lean` propagates through every file.
+The representation decision made in `Syntax.lean`, a unit expression as an exponent vector (`UExp`), propagates through every file.
 Substitution of units is a linear map; simultaneous substitution, weakening,
 and their composition laws are equalities of finite sums, proved by
 reordering summation rather than by structural induction. The one genuinely
@@ -101,23 +102,23 @@ because their host type system cannot reduce
 L·T⁻¹·T,
 our equality is *definitional*: no datatype of unit expressions exists
 anywhere in the mechanization, so a unit
-expression is its own normal form (`Typing.lean`).
+expression is its own normal form (`Syntax.lean`).
 
 **Why the checker returns a derivation.**
 Making the typing judgment Type-valued and the checker
-derivation-returning (“Statics” (`Typing.lean`)) follows the
+derivation-returning (`Typing.lean`) follows the
 intrinsically-typed tradition [Altenkirch and Reus 1999; Poulsen et al. 2018]; the technique is
 standard, and what we report is what it bought in this development. It
 deleted an entire class of theorems: checker soundness, elaboration
 soundness (`elabConvert`, which elaborates the
-e in v form, returns the core term *with* its
+`e in v` form, returns the core term *with* its
 derivation), and every “reconstruct the derivation”
 lemma. Derivation uniqueness came free from
 the completeness theorem (`check_eq`), and with it the right to define semantics
 by recursion on derivations while stating side conditions on terms.
 
 **An environment-passing normalizer avoids Kripke structure.**
-The ratio normalizer of “Accumulated Ratios, and a Decidable Diagnostic” (`Twist.lean`) must interpret a binder
+The ratio normalizer of the paper's Section 6 (`Tw.nf`, in `Ratio.lean`) must interpret a binder
 whose body lives at a larger unit scope. The standard treatment indexes the
 model by scopes and quantifies over extensions, a Kripke structure with
 unit scopes as the worlds; instead the normalizer holds
@@ -138,7 +139,7 @@ quantifier, substituted for the *bound* variable instead of the outer
 one: de Bruijn's classic capture error, in the one function the scope
 indexing could not protect, because both variables inhabit the same scope.
 Every test passed; weakening had the matching defect, and the two canceled
-in the round-trip lemma we had proved! The failure of the composition law
+in the round-trip lemma we had proved. The failure of the composition law
 pointed at the exact clause. We record this as evidence for a practice:
 prove the full set of algebraic laws of a binding structure, because a
 subset can hold by cancellation of matching defects, as our round-trip
@@ -149,21 +150,21 @@ preserved in the artifact as a regression test.
 **Numbers, twice.**
 The semantic carrier is a type class with two instances. At ℝ it
 is noncomputable, and it is the object of the theorems. At `Float`
-it is compiled, calling BLAS through Lean's FFI where the platform supplies
-it, on unboxed arrays; “Dimensioned Linear Algebra” (`Map.lean`)'s rank-one structure is why
-the arrays can be unboxed. The class carries almost no laws, deliberately:
+it is compiled, calling C through Lean's FFI (BLAS on Apple platforms) on
+unboxed arrays; the rank-one structure of the paper's Section 9 (`Map.lean`)
+is why the arrays can be unboxed. The class carries almost no laws, deliberately:
 `Float`
 satisfies neither associativity nor the field axioms, so any law strong
 enough to be useful would exclude the instance that runs. The
-carrier-generic theorems (type soundness, strong normalization, erasure)
+carrier-generic theorems (type soundness, termination, erasure)
 therefore hold of the compiled evaluator and constrain its units, array extents,
 and control flow; the theorems that pin down *which number* comes out
 (adequacy, declared factors reaching the real-valued evaluator (`one_yard_in_meters`), drift independence)
 are stated at the ℝ instance. The binary's printed numbers are
 checked by assertion instead. The yard report's 300 and 91.44 are
-checked at build
-time, in exact arithmetic where the declarations live and in `Float`
-where the binary computes; the FFI-reaching reports are checked by the
+checked at build time in `Float`, as the binary computes them, and the
+one-yard factors behind them are theorems at ℝ (`one_yard_is_three_feet`,
+`one_yard_in_meters`); the FFI-reaching reports are checked by the
 binary itself when it runs.
 
 **The carrier boundary.**
@@ -171,11 +172,11 @@ The abstraction and adequacy theorems use real arithmetic, not a proof
 that floating-point evaluation equals it. Rounding affects defined operations.
 For negative bases and non-integer exponents, `Float.pow` returns NaN,
 whereas `Real.rpow` uses the real part of the principal complex power,
-|x|^qcos(qπ). The carriers also choose different totalizations for division
+`|x|^q · cos(qπ)`. The carriers also choose different totalizations for division
 by zero and logarithms. The covariance identity in `Fundamental.lean`
 concerns the real operation; it is not a theorem about the compiled number.
 The binary checks selected boundary cases, including these differing
-power conventions, at startup.
+power conventions, when it runs.
 We claim no IEEE
 conformance, and a claim would say little: the
 standard [IEEE 2019] requires correct rounding of the field
@@ -185,13 +186,15 @@ operations at issue.
 
 **The trusted base, enumerated.**
 A reader who believes a theorem of the paper trusts the Lean kernel and
-the three standard axioms. A reader who believes the number the compiled
+the three standard axioms. A reader who believes a `#guard` outcome trusts,
+in addition, Lean's compiler and interpreter, which execute it. A reader who
+believes the number the compiled
 binary prints trusts, in addition: Lean's code generator and runtime;
 `Float` arithmetic, whose operations are opaque primitives with no
 formal semantics; and three C stubs behind the FFI (a dot product, a
 matrix-vector product, and a probe that reports which backend is linked).
-The stubs are proved about their Lean fallback bodies and
-assumed to agree with the C; floating-point reordering makes that
+The theorems see only the stubs' Lean fallback bodies, and the C is
+assumed to agree with them; floating-point reordering makes that
 assumption approximate rather than exact. Everything upstream of the final
 number (the checker, the consistency criterion, the semantics, both
 abstraction theorems, the drift analysis) is kernel-checked and involves

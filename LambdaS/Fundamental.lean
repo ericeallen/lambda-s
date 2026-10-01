@@ -22,14 +22,14 @@ There are two fundamental theorems here, and the difference between them is the
 whole story about conversion.
 
 * `fundamental_free`: a parametric **convert-free** term is related to itself,
-  by `Rel`, under *every* scaling. This is Kennedy's theorem, and it is what
-  the Pi theorem consumes.
+  by `Rel`, under *every* scaling. This is Kennedy's theorem, and the unit-level
+  Pi theorem (`den_mulScaleLaw`) consumes it.
 * `fundamental`: a parametric term, conversions included, is related to itself
   by `RelCo` under every scaling that **factors through** a dimension scaling,
-  which is coherence.
+  which is coherence. The paper's Pi theorem (`den_pi_coherent_dichotomy`) consumes it.
 
-Conversion is the only operation in Λs that can observe a unit, so it is the
-only operation that can pay. And `cvt_rel_iff_coherent` shows the price is
+Among parametric terms, conversion is the only operation that can observe a
+unit, so it is the only one that can pay. And `cvt_rel_iff_coherent` shows the price is
 exactly right rather than merely sufficient: for a single conversion applied to
 a nonzero argument, the relation holds **if and only if** the scaling identifies
 the two units. Coherence is not a convenient hypothesis that makes the proof go
@@ -68,10 +68,10 @@ equality. Unit constants do not consult the valuation.
 This is also why the fundamental theorem relates `den V` to `den (V.comp ψ)`
 rather than `den` to itself. Rescaling is a change of the declared unit system,
 so it acts on the valuation as well as on the environment. For convert-free
-terms the distinction is invisible, which is precisely `den_indep`, with
-`den_eq_of_convertFree` its closed-scalar corollary, closed because an open term
-may have a free variable of quantified type whose family the environment
-chooses non-constantly.
+terms the distinction is invisible: that is `den_indep`. Its closed-scalar
+corollary `den_eq_of_convertFree` needs closedness because an open term may have
+a free variable of quantified type whose family the environment chooses
+non-constantly.
 
 ## No unit constants, and that is not an oversight
 
@@ -92,7 +92,7 @@ through the environment (as free variables), never by naming a unit.
 ## Scope
 
 Every form of Λs except `ucon`: variables, abstraction, application, literals,
-the arithmetic, rational powers, spaces and linear maps, the vector and matrix
+the arithmetic, comparison, rational powers, spaces and linear maps, the vector and matrix
 introduction forms, conversion, and unit and dimension abstraction and
 application. The one exclusion is `Tm.Parametric`'s, argued in the previous
 section; a vector or matrix literal is parametric exactly when its component
@@ -123,24 +123,24 @@ invariant, conversions included, under the *coherent* rescalings, those
 that respect dimension (the theorem “Abstraction, coherent” (`fundamental`)). The gap between the
 two is the price of conversion, and for the canonical one-conversion
 program it closes to an equivalence. Conversion is the only construct that
-reads the declared magnitude of a unit, so it is the only construct that
+reads the declared magnitude of a unit, so it is the only parametric construct that
 loses invariance, and the theorem “Single-conversion invariance” (`cvt_rel_iff_coherent`) identifies exactly the
 rescalings under which it keeps it. Note that multiplication cannot
 substitute, although conversion's semantics is multiplication by the
 magnitude ratio V(u)/V(v): a literal denotes the number the programmer
 wrote and 1_u denotes the number 1, so every product
-multiplies by a valuation-independent number, and no convert-free term
-denotes the factor (`convert_not_definable`). The artifact runs
+multiplies by a valuation-independent number, and no parametric convert-free
+term converts between distinct base units (`convert_not_definable`). The artifact runs
 the sharpest instance: 1_yd/1_ft
-evaluates to the magnitude 1, at unit yd/ft, under
-every declaration table; ask for it in one and the
-declared 3 appears, by the one construct allowed to fetch it
-(`ydPerFt`, `ydPerFtIn1`) (see note 1). The engine of all three results is
+evaluates to the magnitude 1, at unit yd/ft, at the declared table (`ydPerFt`),
+and by `den_indep` its denotation is the same under every table; ask for it `in one` and the
+declared 3 appears, by the only construct allowed to fetch it
+(`ydPerFtIn1`) (see note 1). The engine of all three results is
 the family semantics of “Denotation over Derivations” below: unit abstraction
 denotes a family indexed by magnitude, and conversion is what makes the
 family vary.
 
-> **Note 1.** one is
+> **Note 1.** `one` is
 > the SI's name: quantities of dimension one carry “the unit one, symbol
 > 1,” which the brochure calls the neutral element of any system of
 > units [BIPM 2019]; here it is the empty exponent vector. The
@@ -151,8 +151,8 @@ family vary.
 Units are erased from the semantic universe: a quantity denotes a real
 number, a vector a function from indices to reals, and a unit abstraction
 Λu:d. e denotes a *family* ℝ → ⟦τ⟧, indexed by the log-magnitude the bound unit is declared to
-have (here τ ranges over the types of Figure 1 of the paper (the `UExp`, `DExp`, `Ty`, and `Tm` inductives of `Syntax.lean`), and
-⟦τ⟧ is its set of denotations). The family is the case that did
+have. Here τ ranges over the types of Figure 1 of the paper (`Ty`, over the exponent vectors `UExp` and `DExp` of `Syntax.lean`), and
+⟦τ⟧ is its set of denotations. The family is the case that did
 not exist in prior mechanizations. It must exist:
 Λu:Length. convert x u meter
 means something different depending on how big u is, and in a
@@ -205,9 +205,9 @@ family at a with the other at a + logψ(u). We say a
 term is *parametric* when it contains no unit constant
 1_u.
 
-**Theorem (Abstraction, convert-free; `fundamental_free`).** Every parametric, convert-free term is ℛ-related to itself under every
-rescaling ψ: rescaling the inputs by their units' factors rescales the
-output by its unit's factor.
+**Theorem (Abstraction, convert-free; `fundamental_free`).** Every parametric, convert-free term preserves ℛ_ψ-related environments under every
+rescaling ψ: its denotations at V and `V.comp ψ` are ℛ_ψ-related at its result type. Rescaling
+the inputs by their units' factors rescales the output by its unit's factor.
 
 This is Kennedy's theorem [1997], here at a calculus with
 vectors, linear maps, and both quantifiers. We call the theorem's equation,
@@ -267,21 +267,21 @@ through dimension; the artifact carries the factoring as data: a
 coherent rescaling of units *is* a rescaling Φ of dimensions, read
 back through dim. The two readings agree: a rescaling that cannot
 separate interchangeable units factors through some Φ, and conversely
-(`coherent_iff_factors`). The relation for coherent rescalings, ℛᶜᵒ_Φ,
-is ℛ with one change, at the quantifier: the factor the bound unit
-receives is not quantified over but *determined*, namely Φ(d)
-under Λu:d. Coherence is not an assumption imposed at
-the binder: the binder's dimension annotation determines the factor. The
-two relations agree at quantifier-free types.
+(`coherent_iff_factors`). The relation for coherent rescalings, ℛᶜᵒ_Φ
+(`RelCo`), differs from ℛ only at the quantifiers: under Λu:d the factor the
+bound unit receives is not quantified over but *determined*, namely Φ(d),
+and under Λδ every factor for the new dimension is quantified, extending Φ.
+Coherence is not an assumption imposed at the binder: the binder's dimension
+annotation determines the factor. The two relations agree at quantifier-free types.
 
-**Theorem (Abstraction, coherent; `fundamental`).** Every parametric term, conversions included, is ℛᶜᵒ_Φ-related to
-itself for every dimension rescaling Φ.
+**Theorem (Abstraction, coherent; `fundamental`).** Every parametric term, conversions included, preserves ℛᶜᵒ_Φ-related
+environments whenever ψ factors through Φ: its denotations at V and `V.comp ψ` are ℛᶜᵒ_Φ-related at its result type.
 
 The artifact exercises the theorem at a rescaling that doubles every
 length, applied to a meters-to-feet conversion, the case in which
 coherence has content (`fundamental_at_moving_rescale`).
 
-The theorems “Abstraction, convert-free” (`fundamental_free`) and the theorem “Abstraction, coherent” (`fundamental`) bound the cost of
+The theorems “Abstraction, convert-free” (`fundamental_free`) and “Abstraction, coherent” (`fundamental`) bound the cost of
 conversion from above. A converse is needed to show the bound is tight, and
 the converse holds per term and per rescaling rather than in aggregate. It
 is stated over ℛ, since the program's type is quantifier-free, where
@@ -420,9 +420,10 @@ conversion is admitted: `Λu:Length. convert x u meter` is related to itself onl
 when the bound unit is rescaled the way `meter` is.
 
 `RelCo` is that relation. It is indexed by a scaling of **dimensions**, which is
-what a coherent rescaling really is, and then the `∀` case needs no side
+what a coherent rescaling really is, and then the `∀u` case needs no side
 condition at all: the factor the bound unit receives is `Φ δ`, determined rather
-than quantified. The two relations agree at quantifier-free types. -/
+than quantified. At `∀δ` it quantifies over the new dimension's factor, extending
+`Φ`. The two relations agree at quantifier-free types. -/
 
 /-- **The logical relation for coherent rescalings.** -/
 def RelCo : {j k : ℕ} → DCtx D j k → Scaling D j → (τ : Ty B D j k) → Scaling B k →
@@ -967,7 +968,7 @@ under every rescaling that factors through dimension.
 
 `convert` is the only operation that pays, and this is where it pays: the case
 is `conv_invariant_of_coherent` together with coherence at the converted pair.
-Every other case is the convert-free proof unchanged, read at `RelCo`.
+Every case but the binders is the convert-free proof unchanged, read at `RelCo`.
 
 Note what the `Λu` case does *not* need: no side condition, no quantification
 over admissible extensions. The factor the bound unit receives is `Φ δ`,
@@ -1112,9 +1113,9 @@ omit [Fintype D] in
 /-- **The fundamental theorem, unconditionally, for convert-free terms.**
 
 Every parametric, convert-free term is related to itself at its type, under
-*every* scaling. This is Kennedy's theorem, and it is the version the Pi theorem
-consumes, now at the whole calculus rather than a first-order fragment, so the
-quantifier cases are present and carry their weight.
+*every* scaling. This is Kennedy's theorem, the version the unit-level Pi theorem
+(`den_mulScaleLaw`) consumes, now at the whole calculus rather than a first-order
+fragment, so the quantifier cases are present and carry their weight.
 
 Rescaling acts on the declared valuation as well as on the environment, which is
 why `V` appears on one side and `V.comp ψ` on the other.
@@ -1278,7 +1279,7 @@ omit [Fintype D] in
 
 Left to right is the converse of `fundamental`, restricted to this term: if the
 relation holds for a nonzero input then the scaling must identify `u` and `v`.
-Right to left is `fundamental` itself.
+Right to left is a direct computation; for coherent `ψ` it is also an instance of `fundamental`.
 
 The hypothesis `x ≠ 0` is necessary and not a technicality: the zero function is
 invariant under everything, which is the same degeneracy that makes
@@ -1308,7 +1309,7 @@ theorem cvt_rel_iff_coherent {j k : ℕ} {Δ : DCtx D j k} {u v : UExp B k}
     field_simp
 
 omit [Fintype D] in
-/-- **Scaling invariance for closed terms.** A closed convert-free term of scalar
+/-- **Scaling invariance for closed terms.** A closed, parametric, convert-free term of scalar
 type denotes a number invariant under *every* rescaling of the units, which
 forces it to be zero unless its unit is trivial.
 
@@ -1361,10 +1362,10 @@ Rescaling every argument by the scale factor of its unit rescales the result by
 the scale factor of *its* unit. This is the hypothesis the Pi theorem consumes,
 supplied by an actual well-typed term rather than assumed.
 
-Stated for **convert-free** terms, and that restriction is what makes the Pi
-theorem's unrestricted quantification over scalings legitimate: a term that
-converts obeys the law only for coherent `ψ`, which is not enough freedom for
-the argument the Pi theorem runs. -/
+Stated for parametric, **convert-free** terms, which obey it for *every* `ψ`.
+A converting term does too when its conversions cancel (`scaleLaw_of_driftFree`);
+in general, in closed unit scope, it obeys the law for coherent `ψ`
+(`scaleLaw_coherent`), which suffices for `den_pi_coherent_dichotomy`. -/
 theorem scaleLaw {j k : ℕ} {Δ : DCtx D j k} {e : Tm B D j k} {us : List (UExp B k)}
     {u₀ : UExp B k} (d : HasTy Δ (scalarCtx us) e (.Q u₀)) (hp : e.Parametric)
     (hf : e.ConvertFree) (V ψ : Scaling B k)
@@ -1406,7 +1407,7 @@ theorem velocity_scales {j k : ℕ} {Δ : DCtx D j k} (u v : UExp B k)
 
 /-! ## A square root inside the fragment
 
-Witness of the strengthened `relQ_rpow`: a term that takes a square root is
+Witness of `relQ_rpow`: a term that takes a square root is
 parametric, and the fundamental theorem applies to it with no positivity side
 condition. -/
 
@@ -1432,12 +1433,10 @@ theorem sqrtTm_convertFree {j k : ℕ} (u : UExp B k) :
     (sqrtTm u : Tm B D j k).ConvertFree := trivial
 
 omit [Fintype D] in
-/-- **The fundamental theorem covers rational powers.** The square root term,
-now `pow (1/2)`, is related to itself under every scaling: inputs related at
+/-- **The fundamental theorem covers rational powers.** The square-root term
+`pow (1/2)` is related to itself under every scaling: inputs related at
 `u·u` give outputs related at `(u·u)^(1/2)`, whose scale factor is
-`ψ(u·u)^(1/2)`. Before `relQ_rpow` lost its sign hypothesis this instance was
-out of reach of `fundamental_free`, because `Tm.Parametric`
-rejected the term. -/
+`ψ(u·u)^(1/2)`. No sign hypothesis is needed, because `relQ_rpow` has none. -/
 theorem sqrt_scales {j k : ℕ} {Δ : DCtx D j k} (u : UExp B k) (V ψ : Scaling B k) :
     Rel (.arrow (.Q (Term.mul u u))
                 (.Q (Term.rpow (Term.mul u u) (1/2)))) ψ
@@ -1464,9 +1463,10 @@ with a reason rather than a convention. A program mentioning meters is a program
 with a free variable standing for *one meter*, and it is scale-invariant
 relative to environments that scale that variable along with everything else.
 
-Nothing new is needed: `ucon u` compiles to a variable in a context prefixed by
-the unit constants, and the fundamental theorem applies unchanged. `velocityTm`
-and `velocity_scales` above are the whole construction. -/
+Nothing new is needed: replacing each `ucon u` by a variable in a context
+prefixed by the unit constants gives a parametric term, and the fundamental
+theorem applies unchanged. `velocityTm` and `velocity_scales` above carry this
+out for one program; the general translation is not mechanized. -/
 
 
 

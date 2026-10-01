@@ -19,7 +19,7 @@ jobs:
         with:
           use-mathlib-cache: true
 
-      - name: No sorry in the sources
+      - name: No sorry or admit in the sources
         run: |
           # Word matches anywhere on a line, outside backticks (documentation
           # names the placeholder); the axiom audit below is the semantic check.
@@ -36,8 +36,8 @@ jobs:
 
       - name: Audit the trust base
         run: |
-          # `shell: bash` above sets pipefail, so a failing `lean` fails the step
-          # instead of leaving an empty axioms.txt that the greps would pass.
+          # `shell: bash` above runs with pipefail, so a failing `lean` fails
+          # this step directly rather than through a truncated axioms.txt.
           lake env lean scripts/Audit.lean | tee axioms.txt
           python3 scripts/check_axioms.py axioms.txt
 

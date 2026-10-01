@@ -211,6 +211,10 @@ induction is needed only where evaluation leaves the term (entering a closure
 body), and the term induction handles everything else, exactly as in the System F
 development. -/
 
+/-- **Preservation.** If `e` has type `τ`, the value environment is well-typed at
+the grounded context (`EnvTy`), and the unit environment respects `Δ`
+(`EnvOkD`), then any value `eval` returns has type `Ty.ground η δ τ`. It says
+nothing when evaluation returns `none`. -/
 theorem eval_sound (cf : UExp B 0 → UExp B 0 → R) :
     ∀ (n : ℕ) {j k : ℕ} (e : Tm B D j k) (η : UEnv B k) (δ : DEnv D j)
       (ρ : List (Val R B D)) (Δ : DCtx D j k) (Γ : Ctx B D j k) (τ : Ty B D j k)

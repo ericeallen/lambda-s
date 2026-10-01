@@ -36,21 +36,22 @@ only the construction can skip to it.
 
 ## An aside on the half-density case
 
-The design's `L²` space, the space of square-integrable functions, was derived
-purely from the normalization condition `∫|ψ|² dx = 1`, and it turns out to be
-the same half-density bundle that geometric quantization, a construction in
-mathematical physics with entirely different motives, arrives at.
+The normalization condition `∫|ψ|² dx = 1` gives a wavefunction the unit of a
+half-density, whose square is a weight-1 density (`modulus_sq_of_half`).
+Geometric quantization, a construction in mathematical physics with different
+motives, arrives at the same half-densities.
 
 ## What this buys in statistics
 
-Because `log` requires a dimensionless argument, `log p` for a probability
-density `p` **fails to typecheck**. That is the *base-measure problem*: a
+Because `log` requires an argument at unit `1`, `log p` for a probability
+density `p` over a measure whose unit is not `1` **fails to typecheck**
+(`density_ne_triv`). That is the *base-measure problem*: a
 density only means something relative to the measure it was taken against, and
 representing a distribution by its density silently discards that measure.
 Radul and Alexeev (arXiv:2010.09647) identify exactly this failure in
 probabilistic programming systems, and solve it by library convention:
 standardizing on Hausdorff measure and tracking corrections in a `Bijector`
-architecture. Here it is a *type error* instead, and the tracking is inferred.
+architecture. Here it is a *type error* instead, and the checker does the tracking.
 
 The classical consequence falls straight out. Differential entropy,
 `-∫ p log p`, the continuous analogue of Shannon entropy, is ill-typed. The
@@ -64,13 +65,12 @@ remember.
 ## What this buys in general relativity
 
 A metric is a map `V ⊸ dual V ⊗ d`, so its entries carry `d/(δᵢδⱼ)` and lowering
-an index shifts a unit by `d`. The invariant volume element then works out to
+an index lands in the dual space scaled by `d`. The invariant volume element then works out to
 `d^(n/2)`, independent of the coordinate units, as it must be.
 
 Note the exponent. Rational weights are not a convenience here: `w = 1/2` for
-wavefunctions and `n/2` for volume elements in odd dimension both require them.
-That is the *third* independent forcing of ℚ over ℤ, after volatility at
-`Time^(-1/2)` and normalized wavefunctions at `m^(-3/2)`.
+wavefunctions and `n/2` for volume elements in odd dimension both require them,
+as volatility at `Time^(-1/2)` does (`LambdaS.Uom`).
 -/
 
 namespace LambdaS
@@ -105,7 +105,7 @@ theorem modulus_sq_of_half (μ : Uom B) (i : I) :
 
 /-- **A weight-1 density multiplied by its measure has unit `1`.**
 This identity supports the interpretation as integration; the artifact defines
-no integration operator here and proves no iff about its typing. -/
+no integration operator. -/
 theorem integrate_weight_one (μ : Uom B) (i : I) :
     Density μ 1 I i * μ = 1 := by
   simp only [density_apply]
@@ -146,15 +146,14 @@ theorem metric_entry (V : Space B I) (d : Uom B) (j i : I) :
     entry V (V.dual ⊗ d) j i = d / (V j * V i) := by
   ext b; simp; ring
 
-/-- **Lowering an index shifts the unit by `d`.** In coordinates, `xⁱ` and `xᵢ`
-are dimensionally different objects, and this is by how much. -/
+/-- **Lowering an index lands in the dual scaled by `d`.** In coordinates, `xⁱ`
+carries `δᵢ` and `xᵢ` carries `d / δᵢ`. -/
 theorem lower_index (V : Space B I) (d : Uom B) (i : I) :
     (V.dual ⊗ d) i = d / V i := by
   ext b; simp; ring
 
-/-- **The interval is invariant.** Contracting a vector twice against the metric
-lands at `d`, whatever units the coordinates carry, which is the statement that
-the metric determines a coordinate-independent scale. -/
+/-- **The interval carries unit `d`.** Each term `xʲ gⱼᵢ xⁱ` of the double
+contraction lands at `d`, whatever units the coordinates carry. -/
 theorem interval_unit (V : Space B I) (d : Uom B) (j i : I) :
     V j * entry V (V.dual ⊗ d) j i * V i = d := by
   ext b; simp; ring

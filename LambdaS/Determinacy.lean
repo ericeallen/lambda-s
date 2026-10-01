@@ -10,9 +10,27 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct
 /-!
 # Which conversion factors declarations determine
 
-A consistent declaration family fixes precisely the rational span of its
-ratios. Outside that span a rational separating functional perturbs a
-satisfying valuation without changing any declared factor.
+Consistency (`LambdaS.Declare`) asks whether some valuation satisfies the
+declarations. Execution needs to know which conversion factors are the same in
+*every* satisfying valuation; such a ratio is `Determined`.
+
+The answer is linear algebra over ℚ. `ratioSpan ds` is the ℚ-span of the
+declared ratios' exponent vectors. A ratio in the span is determined, because
+log-magnitude is linear in the exponent vector and every satisfying valuation
+agrees on the declared ratios (`determined_of_mem_ratioSpan`). For a consistent
+set the converse holds too: outside the span, a rational linear functional that
+vanishes on the span but not on the ratio can be added to a satisfying valuation,
+changing the ratio's factor while keeping every declaration satisfied
+(`determined_iff_mem_span`). `determined_iff_coefficients` restates span
+membership as a finite rational linear system; Section 3 of our paper cites it,
+and `DeclSolver.factorCoefficients` solves it.
+
+The `Completeness` section proves the linear algebra behind the global check in
+`LambdaS.DeclarationComplete`. When the declared vectors are annihilated by the
+dimension rows, they span the rows' common kernel exactly when they and the rows
+together span the whole unit space (`span_sup_rows_eq_top_iff`,
+`combined_span_eq_top_iff`). Spanning the whole space is decided one standard
+basis vector at a time (`span_eq_top_iff_basis_coefficients`).
 -/
 
 namespace LambdaS.Decl
@@ -26,7 +44,9 @@ def Determined (ds : Fin n → Decl B) (r : UExp B 0) : Prop :=
   ∀ V V' : Scaling B 0, (∀ i, Satisfies V (ds i)) →
     (∀ i, Satisfies V' (ds i)) → V.scale r = V'.scale r
 
-/-- The rational vector space constrained by the declarations. -/
+/-- The ℚ-span of the declared ratios' exponent vectors, a subspace of `B → ℚ`.
+For a consistent set, its members are exactly the ratios whose factors the
+declarations determine (`determined_iff_mem_span`). -/
 def ratioSpan (ds : Fin n → Decl B) : Submodule ℚ (B → ℚ) :=
   Submodule.span ℚ (Set.range fun i => (ds i).ratio.base)
 
@@ -52,6 +72,10 @@ theorem mem_ratioSpan_iff_coefficients (ds : Fin n → Decl B) (r : UExp B 0) :
   · rintro ⟨c, hc⟩
     exact ⟨c, funext fun b => by simpa [Finset.sum_apply, smul_eq_mul] using hc b⟩
 
+/-- **Span membership suffices.** If a ratio's exponent vector lies in
+`ratioSpan ds`, every satisfying valuation gives it the same factor:
+log-magnitude is linear in the exponent vector, and satisfying valuations agree
+on each declared ratio. No consistency hypothesis is needed. -/
 theorem determined_of_mem_ratioSpan {ds : Fin n → Decl B} {r : UExp B 0}
     (hr : r.base ∈ ratioSpan ds) : Determined ds r := by
   intro V V' hV hV'
@@ -82,8 +106,13 @@ private theorem separatingScaling_log (f : Module.Dual ℚ (B → ℚ)) (r : UEx
     Finset.sum_empty, add_zero]
   exact_mod_cast hrep.symm
 
-/-- Necessity requires consistency: without a satisfying valuation every ratio
-would satisfy the universal definition vacuously. -/
+/-- **Determinacy is span membership.** For a consistent declaration set, a
+ratio is `Determined` exactly when its exponent vector lies in `ratioSpan ds`.
+Outside the span, a rational linear functional that vanishes on the span but
+not on the ratio is added to a satisfying valuation; every declaration stays
+satisfied and the ratio's factor changes. The consistency hypothesis is needed
+for this direction: with no satisfying valuation, every ratio is `Determined`
+vacuously. -/
 theorem determined_iff_mem_span {ds : Fin n → Decl B}
     (hconsistent : ∃ V : Scaling B 0, ∀ i, Satisfies V (ds i)) (r : UExp B 0) :
     Determined ds r ↔ r.base ∈ ratioSpan ds := by
@@ -110,7 +139,11 @@ theorem determined_iff_mem_span {ds : Fin n → Decl B}
     exact hfr (by exact_mod_cast hz)
   · exact determined_of_mem_ratioSpan
 
-/-- Executable solvers may decide determinacy by solving this rational system. -/
+/-- **Determinacy as a rational linear system.** For a consistent declaration
+set, a ratio is `Determined` exactly when rational coefficients `c` express its
+exponent vector as a combination of the declared ratios. This is the system
+`DeclSolver.factorCoefficients` solves; Section 3 of our paper cites this
+theorem. -/
 theorem determined_iff_coefficients {ds : Fin n → Decl B}
     (hconsistent : ∃ V : Scaling B 0, ∀ i, Satisfies V (ds i)) (r : UExp B 0) :
     Determined ds r ↔
@@ -136,9 +169,9 @@ private theorem dual_apply_eq_dot (f : Module.Dual ℚ (B → ℚ)) (x : B → �
   simpa only [hs, smul_eq_mul] using h
 
 omit [Fintype D] in
-/-- A kernel-basis-free completeness test. If declaration vectors `S` are
-annihilated by all dimension rows, they span that kernel exactly when those
-vectors together with the dimension rows span the whole unit space. -/
+/-- A kernel-basis-free completeness test. If every vector of the subspace `S`
+is annihilated by all dimension rows, then `S` is the whole common kernel of
+those rows exactly when `S` together with the rows spans the whole unit space. -/
 theorem span_sup_rows_eq_top_iff (S : Submodule ℚ (B → ℚ)) (rows : D → B → ℚ)
     (hsound : ∀ x ∈ S, ∀ d, ∑ b, rows d b * x b = 0) :
     S ⊔ Submodule.span ℚ (Set.range rows) = ⊤ ↔

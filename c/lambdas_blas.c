@@ -31,7 +31,7 @@ Authors: Eric Allen
 /* y = A x, with A row-major m-by-n. One call per matrix-vector product.
 
    Precondition, checked here rather than assumed: A holds at least m*n
-   doubles and x at least n. The Lean body (LambdaS.Num.dgemv) reads out of
+   doubles and x at least n. The Lean body (LambdaS.dgemv, in LambdaS/Num.lean) reads out of
    range through `get!`, which reports a panic and continues with zeros; C
    would read past the buffer, so a violation aborts instead. The checked
    evaluator never violates it for a well-typed term (rows of a matrix

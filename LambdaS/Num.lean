@@ -19,7 +19,7 @@ arithmetic laws, and numerical adequacy is stated at the real instance.
 ## What the two instances demonstrate
 
 `ℝ` and `Float` are the same definition read two ways. At `ℝ` the evaluator is
-the object the soundness and erasure theorems are about, and necessarily
+the object the adequacy theorems relate to the denotation, and necessarily
 noncomputable since `Real.exp` is. At `Float` it is compiled to C. Changing the carrier preserves the type system and the carrier-generic
 results above. A new carrier must separately supply the laws required by any
 abstraction theorem; the real adequacy theorem does not establish its numerical
@@ -37,8 +37,8 @@ This is a choice of totalization, not a claim that real odd roots do not
 exist. No theorem equates the compiled result with the real semantics.
 The invariance theory
 needs no positivity (`relQ_rpow` carries no sign hypothesis, because a
-positive scale factor distributes over `rpow` at every real base); Kennedy's
-Pi theorem still does.
+positive scale factor distributes over `rpow` at every real base); the Pi
+theorem (`den_pi_coherent_dichotomy`) still assumes positive arguments.
 -/
 
 namespace LambdaS
@@ -53,8 +53,9 @@ doubles: no tagging, no strides, no per-entry metadata.
 
 That is the substantive claim, and these two declarations test it. Both are
 `@[extern]`, so the compiled binary calls C (`c/lambdas_blas.c`); the Lean
-bodies are the fallbacks the interpreter uses and the definitions the theorems
-see. On Apple platforms the C calls Accelerate's `cblas_ddot` and
+bodies are the definitions the theorems see. Lean's interpreter, which runs
+`#guard`, cannot call them without a precompiled shared library, so checks
+that reach them run in the compiled binary. On Apple platforms the C calls Accelerate's `cblas_ddot` and
 `cblas_dgemv`; elsewhere it runs portable loops, so the build has no external
 dependency. `blasBackend` reports which was compiled in.
 
@@ -118,7 +119,7 @@ class Num (R : Type) where
   proof needs the length regardless. -/
   matVec_length : ∀ M x, (matVec M x).length = M.length := by intro M x; simp
 
-/-- The carrier the theorems are about. Noncomputable, as `Real.exp` forces. -/
+/-- The carrier of the adequacy theorems. Noncomputable, as `Real.exp` forces. -/
 noncomputable instance : Num ℝ where
   ofRat q := (q : ℝ)
   add := (· + ·)
@@ -140,9 +141,10 @@ therefore have forced either a false law or a `sorry`.
 The split is the same one the development already draws elsewhere: theorems
 over `ℝ`, binary over `Float`, with the places they part ways pinned rather
 than papered over (`QM.boundaryChecks`). The
-abstraction theorems live in the denotational semantics over `ℝ` and never
-mention this class, so nothing here is newly unproved; `Float` has never
-satisfied an arithmetic identity and was never asked to.
+abstraction theorems live in the denotational semantics over `ℝ` and use this
+law only at the `ℝ` instance (`relQ_le_iff`), so nothing here is newly
+unproved; `Float` has never satisfied an arithmetic identity and was never
+asked to.
 
 What differs is the *consequence* of rounding. In `add` and `mul` it perturbs a
 number. In `le` it changes which branch runs, so a unit change can alter

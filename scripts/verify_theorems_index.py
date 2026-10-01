@@ -10,6 +10,9 @@ It also checks that every declaration the index names is audited: that
 `scripts/Audit.lean` prints its axioms. The README promises that audit for
 every identifier the paper cites, and a promise the script does not check is
 one that drifts.
+
+Usage: verify_theorems_index.py [--fix]. Exits 1 on stale rows (unless --fix),
+and on unresolved, malformed, or unaudited rows.
 """
 from __future__ import annotations
 

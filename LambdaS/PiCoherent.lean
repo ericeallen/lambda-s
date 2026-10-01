@@ -9,8 +9,9 @@ import LambdaS.Adequacy
 /-!
 # Dimension-level Buckingham factorization for converting programs
 
-`PiTheorem.den_mulScaleLaw` uses independent rescaling of every unit symbol,
-which requires conversion freedom or a drift-free diagnosis. Physics instead
+`LambdaS.Pi.den_mulScaleLaw` uses independent rescaling of every unit symbol,
+which requires a convert-free program (or, for `den_mulScaleLaw_driftFree`, a
+drift-free one). Physics instead
 rescales dimensions. The coherent abstraction theorem supplies this weaker
 law even for converting programs, but compares denotations at `V` and
 `V.comp ψ`; a fixed-valuation scaling law needs one further argument.
@@ -22,10 +23,12 @@ Normalization and adequacy carry that equality to a scalar denotation with
 scalar inputs. Coherent rescaling preserves precisely those oracle entries.
 
 The resulting `den_pi_coherent` factors arbitrary signed outputs on positive
-inputs through a rational basis of the dimension matrix's kernel. Its external
-unit and dimension scope is closed (`j = k = 0`); the program may use all term
-constructors, including unit and dimension binders internally. Extending this
-bridge to ungrounded external unit/dimension variables is not claimed here.
+inputs through a rational basis of the dimension matrix's kernel, and
+`den_pi_coherent_dichotomy` (the paper's Theorem 8.1) adds the unsolvable case,
+in which the program denotes zero. The external unit and dimension scope is
+closed (`j = k = 0`); the program must be parametric (no `ucon`) but may
+convert and bind units and dimensions internally. Extending this bridge to
+ungrounded external unit/dimension variables is not claimed here.
 -/
 
 namespace LambdaS
@@ -87,8 +90,8 @@ theorem den_eq_of_sameDim_conv {e : Tm B D 0 0} {us : List (UExp B 0)} {u : UExp
   simp only [Adeq, Scaling.pull_nil, substU_nil] at h₁ h₂
   simpa using h₁.symm.trans h₂
 
-/-- Coherent rescaling leaves the valuation dependence of any first-order
-scalar program unchanged, even when the program contains conversion. -/
+/-- Composing the valuation with a coherent rescaling leaves the denotation of
+a first-order scalar program unchanged, even when the program converts. -/
 theorem den_eq_of_coherent {e : Tm B D 0 0} {us : List (UExp B 0)} {u : UExp B 0}
     (d : HasTy (DCtx.nil D) (scalarCtx us) e (.Q u)) (V ψ : Scaling B 0)
     (hψ : ψ.Coherent (DCtx.nil D)) (ρ : Env (scalarCtx us)) :
@@ -102,8 +105,8 @@ private theorem relEnvCo_scaleEnv (ψ : Scaling B 0) (Φ : Scaling D 0) :
   | [], _ => trivial
   | _ :: us, ρ => ⟨rfl, relEnvCo_scaleEnv ψ Φ us ρ.2⟩
 
-/-- The fixed-valuation coherent scaling law, for first-order programs that may
-convert and may contain internal unit/dimension polymorphism. -/
+/-- The fixed-valuation coherent scaling law, for parametric first-order programs
+that may convert and may contain internal unit/dimension polymorphism. -/
 theorem scaleLaw_coherent {e : Tm B D 0 0} {us : List (UExp B 0)} {u : UExp B 0}
     (d : HasTy (DCtx.nil D) (scalarCtx us) e (.Q u)) (hp : e.Parametric)
     (V ψ : Scaling B 0) (Φ : Scaling D 0) (hψ : ψ.Factors (DCtx.nil D) Φ)
@@ -154,8 +157,9 @@ theorem den_mulScaleLaw_coherent {m : ℕ} {e : Tm B D 0 0}
   simpa only [hs, dimensionMatrix, Matrix.of_apply] using h
 
 /-- **Buckingham's reduced-arity factorization for converting programs.**
-The matrix is over dimensions; positive arguments and arbitrary signed output
-are exactly the domain of `mulScaleLaw_factorization_reduced`. -/
+Given a solution `X` of the dimension-level system, the program factors as in
+`mulScaleLaw_factorization_reduced`: over the dimension matrix, on positive
+arguments, with output of either sign. -/
 theorem den_pi_coherent {m : ℕ} {e : Tm B D 0 0}
     {us : List (UExp B 0)} {u : UExp B 0}
     (d : HasTy (DCtx.nil D) (scalarCtx us) e (.Q u)) (hp : e.Parametric)

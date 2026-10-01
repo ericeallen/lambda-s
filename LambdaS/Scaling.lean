@@ -9,10 +9,10 @@ import LambdaS.Syntax
 # Scalings: the semantic foundation
 
 Unit correctness is **not** type safety. Kennedy makes the point sharply
-(WMM 2008): *"What 'goes wrong' if a program contains a unit error? Nothing!"* A
-unit error does not get a program stuck; it gets you a wrong number. So progress
-and preservation are vacuous here, and the semantic content of unit correctness
-has to be something else: **invariance of program behavior under scaling**.
+(WMM 2008): *"What 'goes wrong' if a program contains a unit error? Nothing!"*
+Under an erased semantics a unit error yields a wrong number, not a stuck program,
+so progress and preservation there say nothing about units; the semantic content
+of unit correctness is **invariance of program behavior under scaling**.
 
 This file builds the object that invariance is stated against.
 
@@ -255,10 +255,10 @@ and pulling back is the same as pulling back and then extending. -/
 
 /-! ## The trivial scaling
 
-Scaling everything by `1`: the identity, and the reference point the Pi theorem
-collapses a polymorphic type down to. -/
+Scaling everything by `1`: the identity, and the scaling at which
+`free_theorem_sqr` reads a closed polymorphic type. -/
 
-/-- The scaling that changes nothing. -/
+/-- The scaling that changes nothing: `Scaling.zero` with `B` and `k` explicit. -/
 def id (B : Type) (k : ℕ) : Scaling B k := ⟨fun _ => 0, fun _ => 0⟩
 
 @[simp] theorem logScale_id (t : UExp B k) : (Scaling.id B k).logScale t = 0 := by

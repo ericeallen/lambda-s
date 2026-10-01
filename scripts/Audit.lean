@@ -9,14 +9,15 @@ import LambdaS
 # Trust base audit
 
 Prints the axiom dependencies of every declaration `THEOREMS.md` indexes
-(every artifact identifier the paper cites, and the supporting results behind
-them), grouped by module. The intended output mentions only `propext`,
+(every declaration the paper cites, and the supporting results behind them),
+plus a few further supporting results, grouped by topic. The intended output mentions only `propext`,
 `Classical.choice`, and `Quot.sound`; any occurrence of `sorryAx` is a
 failure, and CI validates each complete report. `scripts/verify_theorems_index.py` fails when an
 indexed declaration is missing from this file, so the list cannot drift from
 the index.
 
-Run with `lake env lean scripts/Audit.lean`.
+Run with `lake env lean scripts/Audit.lean > axioms.txt`, then check the
+reports with `python3 scripts/check_axioms.py axioms.txt`.
 -/
 
 -- Typing
@@ -210,7 +211,6 @@ Run with `lake env lean scripts/Audit.lean`.
 #print axioms LambdaS.Pi.den_pi_coherent_dichotomy
 
 -- Predicted Pi boundary cases, checked by the kernel
-#print axioms LambdaS.Examples.addMixed_coherent
 #print axioms LambdaS.Examples.instantiatedCasterDeriv
 #print axioms LambdaS.Examples.instantiatedCaster_coherent
 #print axioms LambdaS.Pi.fullRank_descends

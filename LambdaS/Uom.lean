@@ -63,7 +63,7 @@ theorem ext_iff' {u v : Uom B} : u = v ↔ ∀ b, exp u b = exp v b :=
   ⟨fun h _ => by rw [h], ext⟩
 
 /-- Raising a unit to a rational power. This is the operation integer-exponent
-systems cannot provide, and it is *total*: every unit has an `n`-th root. -/
+systems cannot provide, and it is *total*: every unit has an `n`-th root for `n ≠ 0`. -/
 def rpow (u : Uom B) (q : ℚ) : Uom B := ofExp fun b => q * exp u b
 
 /-- Rational powers are written `u ^ q`, exactly as on paper. -/
@@ -83,7 +83,7 @@ theorem rpow_mul (u : Uom B) (p q : ℚ) : u ^ (p * q) = (u ^ q) ^ p := by
   ext b; simp; ring
 
 /-- Every unit has an `n`-th root for `n ≠ 0`. Over `ℤ` this fails, which is
-precisely why the square root of a dimensioned quantity is inexpressible there. -/
+why `√(m³)` has no unit there. -/
 theorem rpow_nth_root (u : Uom B) {n : ℚ} (hn : n ≠ 0) : (u ^ (1 / n)) ^ n = u := by
   ext b; simp; field_simp
 

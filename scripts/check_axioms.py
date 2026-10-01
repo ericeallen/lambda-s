@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Validate complete Lean axiom reports, including wrapped dependency lists."""
+"""Check the output of `lake env lean scripts/Audit.lean` against the audit list.
+
+Usage: check_axioms.py AXIOM_OUTPUT
+
+Every `#print axioms` line in scripts/Audit.lean must yield exactly one report
+in AXIOM_OUTPUT, and a report may name only `propext`, `Classical.choice`, and
+`Quot.sound`; dependency lists that Lean wraps across lines are parsed whole.
+A further axiom (including `sorryAx`), a missing or extra report, or any
+unrecognized output exits 1; a usage error exits 2.
+"""
 from collections import Counter
 from pathlib import Path
 import re

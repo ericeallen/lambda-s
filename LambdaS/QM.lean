@@ -10,15 +10,15 @@ import LambdaS.Notation
 /-!
 # A real computation: quantum mechanics, end to end
 
-This module runs quantum mechanics through the calculus (the paper cites
-its `twoStateChecks` as the fuel example and leaves the rest here): the
-particle in a box exercises the scalar fragment and forces the rational
-exponents, the two-state system exercises spaces, linear maps, and the
-compiled path down to BLAS, and one example thus crosses four layers of the
-development: rational exponents in the statics, fuel in the dynamics,
-parametricity at the interface, and erasure on the path to the machine.
+This module runs quantum mechanics through the calculus. The particle in a
+box exercises the scalar fragment and forces rational exponents; the
+two-state system exercises spaces, linear maps, and the compiled path down to
+BLAS. Together they cross four layers of the development: rational exponents
+in the statics, fuel in the dynamics, parametricity at the interface, and
+erasure on the path to the machine. The paper cites `twoStateChecks` as its
+fuel example.
 
-## The particle in a box
+## The evaluator at `Float`
 
 The evaluator from `LambdaS.Dynamics` is
 generic in its numeric carrier, so the *same* definition that
@@ -39,8 +39,8 @@ meaningless number.
 **A wavefunction carries a half-power of length.** In one dimension `ψ` has unit
 `m^(-1/2)`, so that `|ψ|²` is a probability *density* at `m⁻¹` and `|ψ|²dx` is
 dimensionless. This is the example that forces ℚ exponents: `m^(-1/2)` is not
-expressible in F#, in `Data.Dimensional`, or in the Isabelle ISQ development,
-all of which fix exponents to ℤ. `pow` is primitive here for the reason
+expressible in Kennedy's Λu, in `Data.Dimensional`, or in the Isabelle ISQ
+development, all of which fix exponents to ℤ. `pow` is primitive here for the reason
 `LambdaS.NonDef.sqrt_not_definable` gives, and over ℚ it is total.
 
 ## Numbers
@@ -251,7 +251,7 @@ abbrev qmCtx : Ctx Base Dim 0 0 := [.lin St En, .vec St]
 abbrev ket (i : ℕ) : Term₀ := .idx (.mapp (.var 0) (.var 1)) i
 
 /-- `⟨ψ|H|ψ⟩`, summed over the two basis states. Real amplitudes, so no
-conjugation is needed; see the note on carriers in `LambdaS.Num`. -/
+conjugation is needed: both carriers in `LambdaS.Num`, `ℝ` and `Float`, are real. -/
 def expectH : Term₀ :=
   ⟪ %1 ! 0 * (%0 ⊙ %1) ! 0 + %1 ! 1 * (%0 ⊙ %1) ! 1 ⟫
 
@@ -268,7 +268,7 @@ the argument live in the map's domain, and `[J, J] ≠ [1, 1]`. -/
 
 /-! ### The data -/
 
-/-- The inversion splitting, `10⁻⁴ eV` in joules. -/
+/-- The coupling `A = 10⁻⁴ eV`, in joules; the levels `±A` are split by `2A`. -/
 def splitJ : Float := 1.602176634e-23
 
 /-- `H = [[0, −A], [−A, 0]]`, a linear map `St ⊸ En`. -/
@@ -361,8 +361,9 @@ a units bug in a Hamiltonian is a type error, not a wrong number. -/
 
 `expectH` is written against two specific free variables. Abstracting it is where
 `eval` needs closures, and closure bodies are not subterms of the applications
-that invoke them, so evaluation carries a fuel bound. Fuel is consumed only at
-`app`, so first-order arithmetic evaluates at every bound including zero. -/
+that invoke them, so evaluation carries a fuel bound. Fuel is consumed only where
+a closure body is entered (`app`, `uapp`, `dapp`), so first-order arithmetic
+evaluates at every bound including zero. -/
 
 /-- `λ(H : St ⊸ En). λ(ψ : vec St). ⟨ψ|H|ψ⟩` -/
 def expectation : Term₀ :=
@@ -389,8 +390,8 @@ def twoStateChecks : Bool :=
     && (runIn [hamiltonian, stateMinus] expectH).any (fun x => near x splitJ)
     && (runIn [hamiltonian, statePlus] applied).any (fun x => near x (-splitJ))
     && (runIn [hamiltonian, stateMinus] applied).any (fun x => near x splitJ)
-    -- fuel is spent only on *nested* application: a `lam` under an `app` is free,
-    -- so two applications need one unit, zero gets stuck, first-order needs none
+    -- fuel bounds nesting depth, not the count of applications: both curried
+    -- applications enter their bodies from fuel 1, zero fails, first-order needs none
     && (runFuel 1 [hamiltonian, statePlus] applied).isSome
     && (runFuel 0 [hamiltonian, statePlus] applied).isNone
     && (runFuel 0 [hamiltonian, statePlus] expectH).isSome
@@ -398,8 +399,8 @@ def twoStateChecks : Bool :=
 /-! ### Validation in the compiled binary
 
 The box results are `#guard`ed at build time in Lean's interpreter; the
-binary re-runs them on the compiled evaluator, so the C code path is
-validated against the same numbers. The literal check is new coverage: the
+binary re-runs them, plus a density check, on the compiled evaluator, so the
+C code path is validated against the same numbers. The literal check runs the
 expectation applied to the Hamiltonian and state *written as terms*, so the
 evaluator's `vcons`/`mcons` cases and the extern `dgemv` are all on the
 path of one closed program. -/
@@ -426,7 +427,7 @@ def literalChecks : Bool :=
 
 /-- The carrier-boundary conventions, asserted through the `Num` instance the
 evaluator actually uses, so a platform or libm change cannot shift them
-silently. Every undefined point of the classical operations behaves as IEEE:
+silently. At each undefined point checked, the carrier behaves as IEEE 754 specifies:
 division by zero and `log 0` give infinities, `0^q` at negative `q` gives an
 infinity, and a non-integer power of a negative base gives `NaN` (the same
 point, checked through the evaluator, is `negBase` in `boxChecks`). -/

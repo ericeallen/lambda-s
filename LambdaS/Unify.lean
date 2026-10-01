@@ -41,7 +41,8 @@ the measure specified by `termination_by`.
 
 ## Status
 
-Proved here:
+Section 2 of our paper cites this module; its main theorem is
+`System.solves_triangulate_iff`. Proved here:
 
 * the per-base decomposition (`Term.solves_iff`);
 * single-equation elimination, sound (`Term.solves_elim`), with every ground
@@ -80,7 +81,11 @@ namespace LambdaS
 
 Note the asymmetry that does all the work: `vars` is `V → ℚ`, not `V → B → ℚ`.
 A variable stands for a whole unit, so it enters every base unit's equation with
-the *same* scalar coefficient. -/
+the *same* scalar coefficient.
+
+The same structure at `V = Fin k` is the calculus's unit expression type
+`UExp B k` (in `LambdaS.Syntax`), where `vars` holds the exponents of the `k`
+unit variables in scope. -/
 structure Term (B V : Type*) where
   base : B → ℚ
   vars : V → ℚ
@@ -92,7 +97,7 @@ variable {B V : Type*}
 /-- An assignment sends each unification variable to a ground unit.
 
 Reducible, so `Function.update` and the rest of the `Pi` API apply to it
-directly: the same structurality choice made for `Space`. -/
+directly, the same choice `Space` makes. -/
 abbrev Assign (B V : Type*) := V → Uom B
 
 /-- Applying an assignment: exponents combine linearly. -/
@@ -296,9 +301,10 @@ elimination of rows. This proves the length decrease required by `triangulate`. 
 @[simp] theorem length_reduceAll (sys : System B V) (t : Term B V) (v₀ : V) :
     (reduceAll sys t v₀).length = sys.length := List.length_map ..
 
-/-- Choose a pivot variable for an equation: any variable occurring with nonzero
-coefficient. Left abstract, since the choice affects only numerical conditioning,
-never the solution set. -/
+/-- A pivot rule: picks a variable of an equation to eliminate, or `none`.
+`Faithful` states the intended contract (a variable with nonzero coefficient,
+whenever one occurs). The rule is left abstract because, by
+`solves_triangulate_iff`, no choice changes the solution set. -/
 def Pivot (B V : Type*) := Term B V → Option V
 
 /-- A pivot function is *faithful* when it finds a variable exactly when one
@@ -323,10 +329,13 @@ def triangulate (p : Pivot B V) : System B V → System B V
   termination_by sys => sys.length
   decreasing_by all_goals simp [reduceAll]
 
-/-- **Correctness of triangularization.** It preserves the solution set exactly.
+/-- **Correctness of triangularization.** It preserves the solution set exactly,
+whatever the pivot rule.
 
-Together with `reduceAll_pivot_zero` this is Gaussian elimination: each pivot
-variable is isolated in a single equation, and the solution set is untouched. -/
+Together with `reduceAll_pivot_zero`, which shows that a step with a nonzero
+pivot coefficient removes the pivot variable from every later equation, this is
+the forward phase of Gaussian elimination. No theorem here states that the whole
+output is triangular, and back-substitution is not composed with it. -/
 theorem solves_triangulate_iff (p : Pivot B V) {σ : Term.Assign B V} :
     ∀ sys : System B V, Solves σ (triangulate p sys) ↔ Solves σ sys
   | [] => by simp [triangulate]
@@ -358,9 +367,11 @@ theorem solves_triangulate_iff (p : Pivot B V) {σ : Term.Assign B V} :
 /-- A system in which no variable occurs is solvable exactly when every base
 exponent already vanishes.
 
-This is the rigid-mismatch check, and it is the terminal case of elimination:
-once triangularization has isolated every pivot variable, what remains are the
-variable-free equations, and *those* decide solvability. -/
+This is the rigid-mismatch check, the terminal case of elimination: after
+triangularization with a faithful pivot rule, each equation either has a pivot
+or is variable-free, and this theorem decides the variable-free ones. That the
+pivot equations can then always be satisfied by back-substitution is standard
+but not proved in this file. -/
 theorem solves_of_no_vars {sys : System B V} (hv : ∀ t ∈ sys, t.vars = fun _ => 0)
     (σ : Term.Assign B V) :
     Solves σ sys ↔ ∀ t ∈ sys, t.base = fun _ => 0 := by
@@ -380,9 +391,10 @@ theorem no_vars_solves_iff_forall {sys : System B V}
 /-- With a faithful pivot, an equation the pivot declines is genuinely rigid, and
 its solvability is settled by inspecting its base exponents alone.
 
-This is what closes the loop: elimination drives every equation either to a
-pivot (which determines a variable, by `Term.elim_eq_of_solves`) or to a rigid
-residual (which is decided here, with no search and no assignment). -/
+Elimination drives every equation either to a pivot (which determines that
+variable from the others, by `Term.elim_eq_of_solves`) or to a rigid residual,
+decided here with no search and no assignment. Assembling these two cases into
+a solver is not done in this file. -/
 theorem solves_of_pivot_none {p : Pivot B V} (hp : Faithful p)
     {t : Term B V} (h : p t = none) (σ : Term.Assign B V) :
     Term.Solves σ t ↔ t.base = fun _ => 0 :=

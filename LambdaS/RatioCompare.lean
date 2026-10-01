@@ -14,7 +14,9 @@ variable. `Tw.nf` evaluates in that symbolic environment by structural recursion
 internal functions, higher-order applications, and unit binders impose no fuel
 bound. Unknown function and unit-family inputs are outside this interface.
 The correctness and exactness statements quantify over arbitrary positive input
-drifts, not an all-ones environment.
+drifts, not an all-ones environment. The normal form is `Tw.openNF`;
+`Tw.openNF_eq_iff` is the exactness theorem, and `Tw.normEq` (in
+`LambdaS.Twist`) uses it at first-order contexts.
 -/
 
 namespace LambdaS
@@ -82,7 +84,7 @@ theorem Shape.reflect_correct {B : Type} [Fintype B] {k : Nat}
   | [] => 0
   | s :: Θ => s.cells + ratioCells Θ
 
-/-- A first-order context may contain vectors and matrices, but no unknown functions. -/
+/-- A first-order context may contain scalars, vectors and matrices, but no functions or unit families. -/
 def ratioFirstOrder (Θ : List Shape) : Bool := Θ.all Shape.firstOrder
 
 /-- Reconstruct an environment from independent scalar components. -/

@@ -8,8 +8,8 @@ import LambdaS.Typing
 /-!
 # Surface syntax
 
-Programs have so far been written as abstract syntax: `.div (.mul (.mul pi pi)
-(.mul hbar hbar)) (.mul (.mul (lit 2) mass) (.mul width width))`. That is a
+Programs have so far been written as abstract syntax: `.div (.mul (.mul (.mul
+pi pi) hbar) hbar) (.mul (.mul (.mul (lit 2) mass) width) width)`. That is a
 faithful way to describe a calculus and a terrible way to write physics.
 
 This file adds a bracket `⟪ … ⟫` with the usual arithmetic notation inside, so
@@ -25,8 +25,10 @@ AST, and every guard elsewhere still checks the same core terms.
 ## Elaboration, and where `convert` gets its annotation
 
 `Tm.convert` carries the unit it converts **from**, because the evaluator must
-recover the factor from the term and the unit environment alone. Making the user write it would be both tedious
-and unsafe. `elabConvert` supplies it by running the *verified* checker: it
+recover the factor from the term and the unit environment alone. Writing it by
+hand would be tedious, though a wrong one is rejected: `HasTy.convert` demands
+the subject at exactly `Q u`. `elabConvert` supplies it by running the
+*verified* checker: it
 checks the subject, reads the unit off the type it derived, and builds the
 annotated term.
 

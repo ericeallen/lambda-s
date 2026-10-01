@@ -8,7 +8,10 @@ open Lake DSL
 
 package lambdas where
   -- Accelerate supplies cblas on Apple platforms; elsewhere the C shim falls
-  -- back to portable loops and no framework is needed.
+  -- back to portable loops and no framework is needed. Lean's bundled linker
+  -- has no framework search path, so the link uses the Command Line Tools
+  -- SDK's `libblas`, a stub for Accelerate's BLAS. With only Xcode installed,
+  -- use the `usr/lib` directory of the SDK that `xcrun --show-sdk-path` prints.
   moreLinkArgs := if System.Platform.isOSX then
     #["-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib", "-lblas"] else #[]
   leanOptions := #[

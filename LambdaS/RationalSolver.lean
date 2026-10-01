@@ -9,9 +9,26 @@ import Mathlib.Tactic
 /-!
 # Executable rational linear solving with module-valued right-hand sides
 
-One rational coefficient matrix can be eliminated against any decidable
-ℚ-module. Pivot selection is finite search; back-substitution constructs a
-solution. No basis choice, real equality test, or noncomputable data occurs.
+Gaussian elimination and back-substitution for `A x = b`, where `A` has rational
+entries and `b` and `x` take values in any ℚ-module `M` with decidable equality.
+Declaration checking needs this generality: the coefficients (exponents of base
+units) are rational, but the right-hand sides are logarithms of declared
+factors. `DeclSolver.solve` takes `M` to be `LogFactor`, whose equality is
+decided in exact rational arithmetic; `DeclSolver.factorCoefficients` and
+`DeclarationComplete.checkSpan` take `M = ℚ`.
+
+Pivot selection is a finite search for a nonzero rational coefficient. A row
+whose coefficients are all zero after reduction is a *rigid residual*: the
+system has no solution if its right-hand side is nonzero, and that is the only
+equality test performed in `M`. Variables never chosen as pivots are set to
+`0`. No basis choice, real equality test, or noncomputable data occurs.
+
+The entry point is `solve`. `solve_sound` shows that every returned assignment
+satisfies the system, and `solve_isSome_iff` that `solve` succeeds exactly
+when a solution exists in `M`. `solve_map` and `solvable_map_iff` transfer
+solvability along an injective ℚ-linear map; `DeclSolver.solve_isSome_iff`
+uses them with `LogFactor.interpret` to pass from exact logarithms to real
+valuations.
 -/
 
 namespace LambdaS.RationalSolver
@@ -127,7 +144,11 @@ theorem backsub_solves (rows : List (Row n M)) (p : Row n M) (j : Fin n)
 variable [DecidableEq M]
 
 /-- Gaussian elimination with executable pivot search and back-substitution.
-Recursion removes one row, including when no variables remain. -/
+Each call consumes the head row. A row with a pivot eliminates that variable
+from the remaining rows, and back-substitution solves for it after the
+recursive call. A row with no pivot is dropped when its right-hand side is `0`
+and makes the result `none` otherwise. Variables never chosen as pivots are
+set to `0`. -/
 def solveRows : List (Row n M) → Option (Fin n → M)
   | [] => some (fun _ => 0)
   | p :: rows =>

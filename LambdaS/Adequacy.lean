@@ -26,12 +26,13 @@ an **abstract oracle** `cf`, constrained by nothing at all.
 
 So the declarations determine a number, and the evaluator multiplies by a
 number, and nothing but `eval_adeq` says they are the same number.
-`Algorithms.cfDecl` is a worked oracle of exactly this kind, built from
+`Algorithms.cfDecl` is the `Float` counterpart of such an oracle, built from
 declared magnitudes rather than from the constant `1`.
 
 `eval_adeq` is the join. Take the oracle to be `conv V` (the conversion the
 valuation determines, hence the one the declarations determine), and evaluation
-of a well-typed term agrees with its denotation, unit and magnitude both. The
+of a well-typed term, whenever it returns a value, agrees with its denotation,
+unit and magnitude both. The
 `convert` case is where the content is: the evaluator's factor is
 `conv V (substU η u) (substU η v)` and the denotation's is
 `conv (V.pull η) u v`, and `Scaling.scale_pull` says those are equal.
@@ -331,8 +332,8 @@ theorem adeq_lookup (V : Scaling B 0) : ∀ {j k : ℕ} {η : UEnv B k} {δ : DE
       exact ⟨w', by simpa using hw', ha⟩
 
 /-- **Adequacy.** With the conversion oracle taken to be the one the valuation
-determines, evaluation of a well-typed term agrees with its denotation: the
-unit it carries and the magnitude it holds.
+determines, evaluation of a well-typed term, whenever it returns a value, agrees
+with its denotation: the unit it carries and the magnitude it holds.
 
 This is the theorem that joins the declaration story to the evaluator. The
 `convert` case is its content: the evaluator multiplies by

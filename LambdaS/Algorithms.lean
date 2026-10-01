@@ -20,7 +20,7 @@ The answer is that **straight-line numerical methods transcribe directly**, and
 their types are their specifications. A central difference has type
 `(Q v → Q u) → Q v → Q v → Q (u/v)`: differentiate a position with respect to a
 time and you get a velocity, by derivation rather than by comment. What is
-missing is iteration: one Runge–Kutta step is expressible, a solver loop is not.
+missing is iteration: one Runge–Kutta step is expressible, a solver loop is not. The file ends by running declared conversions (yards, feet, meters) at `Float`.
 
 ## Checking unit equality with exponent vectors
 
@@ -42,20 +42,20 @@ Two nested dimension binders and two nested unit binders. Inside the body the
 innermost unit variable is de Bruijn `0` and the outer one is `1`; likewise for
 dimensions. -/
 
-/- The value's unit, `u`. -/
+/-- The value's unit, `u`. -/
 abbrev uU : UExp Base 2 := Term.ofVar 1
-/- The argument's unit, `v`. -/
+/-- The argument's unit, `v`. -/
 abbrev vU : UExp Base 2 := Term.ofVar 0
-/- The bound on `u`, at the scope where its binder sits. -/
+/-- The bound on `u`, at the scope where its binder sits. -/
 abbrev dU : DExp Dim 1 := Term.ofVar 0
-/- The bound on `v`. -/
+/-- The bound on `v`. -/
 abbrev dV : DExp Dim 2 := Term.ofVar 0
 
-/- Wrap a body in `Λδu. Λu:δu. Λδv. Λv:δv.` -/
+/-- Wrap a body in `Λδu. Λu:δu. Λδv. Λv:δv.` -/
 abbrev poly (body : Tm Base Dim 2 2) : Term₀ :=
   .dlam (.ulam dU (.dlam (.ulam dV body)))
 
-/- Instantiate both quantifiers. -/
+/-- Instantiate both quantifiers. -/
 abbrev at₂ (du : DExp Dim 0) (u : UExp Base 0) (dv : DExp Dim 0) (v : UExp Base 0)
     (e : Term₀) : Term₀ := .uapp (.dapp (.uapp (.dapp e du) u) dv) v
 
@@ -102,7 +102,7 @@ This is where unit equality does real work. `k₁ : Q (y/t)`, so `(h/2)·k₁` h
 unit `t·(y/t)`, and adding it to `y` requires the checker to see those as the
 same exponent vector. -/
 
-/- `Λδy. Λy:δy. Λδt. Λt:δt.`: note the value unit is bound first here, so
+/-- `Λδy. Λy:δy. Λδt. Λt:δt.`: note the value unit is bound first here, so
 inside the body `uU` is the *state* unit and `vU` the *time* unit. -/
 def rk4 : Term₀ :=
   poly ⟪ fn[.arrow (.Q vU) (.arrow (.Q uU) (.Q (Term.div uU vU)))]
@@ -145,10 +145,10 @@ the guards can be tight. -/
 
 abbrev accel : UExp Base 0 := Term.div m (Term.mul sec sec)
 
-/- `g = 9.81 m/s²`. -/
+/-- `g = 9.81 m/s²`. -/
 def gravity : Term₀ := .mul (.lit (981 / 100)) (.ucon accel)
 
-/- `λ(t : Q s). ½·g·t²` -/
+/-- `λ(t : Q s). ½·g·t²` -/
 def freeFall : Term₀ := ⟪ fn[.Q sec] (1 / 2) * (gravity * %0 * %0) ⟫
 
 #guard typeOf freeFall == some (.arrow (.Q sec) (.Q m))
@@ -160,12 +160,12 @@ def twoSec : Term₀ := .mul (.lit 2) (.ucon sec)
 def zeroSec : Term₀ := .mul (.lit 0) (.ucon sec)
 def milliSec : Term₀ := .mul (.lit (1 / 1000)) (.ucon sec)
 
-/- `deriv[m][s] freeFall 2s 0.001s`: the speed after two seconds. -/
+/-- `deriv[m][s] freeFall 2s 0.001s`: the speed after two seconds. -/
 def speedAt2 : Term₀ := ⟪ derivMS ◃ freeFall ◃ twoSec ◃ milliSec ⟫
 
 #guard typeOf speedAt2 == some (.Q (Term.div m sec))
 
-/- `simpson[m][s] freeFall 0s 2s`: the integral of position over time. -/
+/-- `simpson[m][s] freeFall 0s 2s`: the integral of position over time. -/
 def absementTo2 : Term₀ := ⟪ simpsonMS ◃ freeFall ◃ zeroSec ◃ twoSec ⟫
 
 #guard typeOf absementTo2 == some (.Q (Term.mul m sec))
@@ -194,14 +194,15 @@ transcription by hand, at `Float`, of the valuation `ψyd` that
 from `ψyd`, and the agreement between the two is checked by the numbers
 below rather than by a theorem. `evalC_convert_declared` is the theorem that
 the instrumented evaluator at carrier `ℝ` multiplies by exactly the declared
-factor. The compiled binary executes a separate Float example; these checks
-do not prove a real-to-Float correspondence.
+factor. The `Float` runs below are executed checks of a separate example,
+not a real-to-`Float` correspondence theorem.
 
 Two routes from yards to meters (direct, and through feet) print the same
 number, which is `convChain_eq` and `yard_forced` made observable: the factors
 are forced by the declarations, so there is no route to get wrong. -/
 
-/-- The declared magnitude of each base unit, in meters (and SI mates):
+/-- The declared magnitude of each base unit (lengths in meters; kilogram and
+second at `1`):
 `ψyd` of `LambdaS.Examples`, transcribed at `Float`. -/
 def magB : Base → Float
   | .meter => 1
@@ -260,9 +261,9 @@ def ydPerFtIn1 : Term₀ :=
 
 #guard runDecl ydPerFt == some 1.0
 #guard (runDecl ydPerFtIn1).any (fun x => Float.abs (x - 3.0) < 1e-12)
--- Exactly 3 at the real carrier, by `evalC_convert_declared`; the Float
--- oracle divides 0.9144 by 0.3048 in binary and lands within one unit in the
--- last place, the spacing between adjacent representable floats there.
+-- Exactly 3 at the real carrier (adequacy, `evalC_eq_den`, with `ψyd_yardFoot`).
+-- The Float oracle computes `0.3048⁻¹ · 0.9144` and lands within one unit in
+-- the last place, the spacing between adjacent representable floats there.
 
 /-- The other route to the same number: convert one operand before dividing,
 `(1_yd in ft) / 1_ft`. The quotient is at unit `ft/ft = 1` with no conversion

@@ -12,28 +12,40 @@ import LambdaS.DeclarationComplete
 /-!
 # Executable declaration solving
 
+This module is the declaration checker of Section 3 of our paper. It decides,
+in exact rational arithmetic, the conditions that `LambdaS.Declare`
+(consistency), `LambdaS.Determinacy` (which factors are fixed), and
+`LambdaS.DeclarationComplete` (whether every legal conversion is fixed) state
+semantically, and proves each decision sound and complete.
+
 Three entry points, in the order a caller wants them.
 
 * `check` accepts a complete certified system: the declarations are
   dimensionally sound, some valuation satisfies them all, and every
   same-dimension conversion has the same factor in every satisfying
-  valuation. Acceptance returns the proofs.
+  valuation. Acceptance returns the proofs as a `Checked` certificate, and
+  `check_isSome_iff` (Theorem 3.2) proves acceptance equivalent to these
+  three conditions.
 * `solve` answers the weaker question of consistency alone, whether any
-  valuation satisfies the declarations.
-* `conversionExact` returns a determined factor, as a positive rational
+  valuation satisfies the declarations (`solve_isSome_iff`).
+* `conversionExact` returns a factor as an `ExactFactor`, a positive rational
   radicand and a positive integer root degree, proved equal to `V u / V v`
-  under every satisfying valuation.
+  under every satisfying valuation (`conversionExact_correct`). For a
+  consistent set it succeeds exactly when that factor is determined
+  (`factorCoefficients_iff_determined`), and in a checked system it succeeds
+  for every same-dimension pair (`Checked.conversionExact_isSome`).
 
 `DeclarationSolverExamples` runs all three: disconnected feet and meters are
 rejected, adding `foot = 0.3048 meter` makes the system pass, and the
 dimensionless self-equation `u = 2/u` forces the magnitude `√2`, returned as
 radicand `2` and degree `2`.
 
-The mechanics: the solver works over an explicit enumeration of the finite
-base-unit universe, supplied as input data rather than as a noncomputable
-choice of order, and reduces each declaration to one linear equation in the
-logarithms of the magnitudes (`satisfies_valuation_iff`). `LogFactor` carries
-the exact arithmetic that keeps this decidable.
+The mechanics: the solver works over explicit enumerations of the finite
+base-unit and base-dimension universes (`enum`, `dims`), supplied as input data
+rather than as a noncomputable choice of order, and reduces each declaration
+to one linear equation in the logarithms of the magnitudes
+(`satisfies_valuation_iff`). `RationalSolver` performs the elimination, and
+`LogFactor` carries the exact arithmetic that keeps it decidable.
 -/
 
 namespace LambdaS.DeclSolver
@@ -46,7 +58,8 @@ variable {B : Type} [Fintype B] [DecidableEq B] {m n : ℕ}
 def matrix (enum : Fin m ≃ B) (ds : Fin n → Decl B) : Matrix (Fin n) (Fin m) ℚ :=
   Matrix.of fun i j => (ds i).ratio.base (enum j)
 
-/-- Real log-magnitudes in the supplied base-unit order. -/
+/-- The valuation whose log-magnitudes are `x`, indexed in the base-unit order
+`enum` supplies. -/
 def valuation (enum : Fin m ≃ B) (x : Fin m → ℝ) : Scaling B 0 :=
   ⟨fun b => x (enum.symm b), Fin.elim0⟩
 
@@ -181,22 +194,28 @@ theorem factorCoefficients_iff_determined (enum : Fin m ≃ B) (ds : Fin n → D
     (factorCoefficients enum ds r).isSome ↔ Decl.Determined ds r := by
   rw [factorCoefficients_isSome_iff, Decl.determined_iff_coefficients hc r]
 
-/-- Success of conversion lookup decides determinacy, rather than merely producing a guess. -/
+/-- For a consistent declaration set, conversion lookup succeeds exactly when the
+factor of `u / v` is determined, so success decides determinacy rather than
+producing a guess. -/
 theorem conversion_isSome_iff (enum : Fin m ≃ B) (ds : Fin n → Decl B)
     (hc : ∃ V : Scaling B 0, ∀ i, Decl.Satisfies V (ds i)) (u v : UExp B 0) :
     (conversion enum ds u v).isSome ↔ Decl.Determined ds (Term.div u v) := by
   simp only [conversion, Option.isSome_map]
   exact factorCoefficients_iff_determined enum ds hc _
 
-/-- An inspectable exact positive factor: the positive degree-th root of radicand. -/
+/-- An inspectable exact positive factor: the positive `degree`-th root of `radicand`. -/
 structure ExactFactor where
+  /-- The positive rational under the root. -/
   radicand : ℚ
+  /-- The root degree, a positive natural number. -/
   degree : ℕ
   radicand_pos : 0 < radicand
   degree_pos : 0 < degree
   deriving Repr
 
-/-- Real interpretation only; constructing and comparing the output data is executable. -/
+/-- The real number the factor denotes, `radicand ^ (1 / degree)`, written as
+`exp (log radicand / degree)`. Noncomputable; constructing and comparing
+`ExactFactor` values is executable. -/
 noncomputable def ExactFactor.value (q : ExactFactor) : ℝ :=
   Real.exp (Real.log (q.radicand : ℝ) / q.degree)
 
@@ -246,12 +265,22 @@ variable {D : Type} [Fintype D] [DecidableEq D] [UnitSys B D] {d : ℕ}
 /-- A checked unit system carries its computed solution and evidence that
 its declarations are sound, consistent, and determine every legal conversion. -/
 structure Checked (enum : Fin m ≃ B) (dims : Fin d ≃ D) (ds : Fin n → Decl B) where
+  /-- Exact log-magnitudes, in `enum` order, of one satisfying valuation. Free
+  coordinates are `0`; they never supply a factor. -/
   magnitudes : Fin m → LogFactor
+  /-- Every declaration relates units of one dimension. -/
   sound : ∀ i, Decl.Sound (D := D) (ds i)
+  /-- `magnitudes` is what `solve` returned, so it satisfies every declaration
+  (`solve_sound`). -/
   solution : solve enum ds = some magnitudes
+  /-- The declared ratios and dimension rows span the unit space. -/
   complete : DeclarationComplete.check enum dims ds = true
 
-/-- The complete executable declaration checker. -/
+/-- **The declaration checker.** Accepts, returning a `Checked` certificate, when
+every declaration is `Decl.Sound`, `solve` finds a solution, and
+`DeclarationComplete.check` confirms that the declared ratios and dimension rows
+span the unit space; returns `none` otherwise. `check_isSome_iff` characterizes
+acceptance. -/
 def check (enum : Fin m ≃ B) (dims : Fin d ≃ D) (ds : Fin n → Decl B) :
     Option (Checked enum dims ds) :=
   if hs : ∀ i, Decl.Sound (D := D) (ds i) then
@@ -278,8 +307,11 @@ theorem Checked.determined {enum : Fin m ≃ B} {dims : Fin d ≃ D} {ds : Fin n
   (DeclarationComplete.check_iff_all_conversions_determined enum dims ds
     cert.sound cert.consistent).mp cert.complete u v h
 
-/-- Acceptance is equivalent to dimensional soundness, consistency, and
-factor determinacy for every same-dimension pair. Rejection is complete. -/
+/-- **Executable declaration checking (Theorem 3.2 of our paper).** `check`
+accepts exactly when every declaration is dimensionally sound, some valuation
+satisfies them all, and every same-dimension pair has the same factor in every
+satisfying valuation. So an accepted system has these properties, and a system
+that has them is never rejected. -/
 theorem check_isSome_iff (enum : Fin m ≃ B) (dims : Fin d ≃ D) (ds : Fin n → Decl B) :
     (check enum dims ds).isSome ↔
       (∀ i, Decl.Sound (D := D) (ds i)) ∧

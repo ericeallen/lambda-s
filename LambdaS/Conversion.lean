@@ -12,11 +12,10 @@ import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 /-!
 # Conversion, and why paths cannot disagree
 
-Λs has a conversion operator (`convert`, a core term constructor), and
-conversion is the place to be careful: with units nameable and definable in terms of combinations of other
-units, a system that defines conversion by *walking a declared structure* can
-offer more than one route between two units, with no guarantee the routes
-agree.
+Λs has a conversion operator (`convert`, a core term constructor), and conversion
+is the place to be careful. When units can be named and defined from other
+units, a system that converts by *walking a declared structure* can offer more
+than one route between two units, with no guarantee that the routes agree.
 
 This file answers that. Conversion is not a path at all; it is a **ratio of
 valuations**, and the object that supplies the valuations already exists:
@@ -110,8 +109,7 @@ theorem convChain_eq (ψ : Scaling B k) :
 unit `v` denotes the same physical quantity: its interpretation under the
 valuation is unchanged.
 
-This is the correctness statement for an `in` operator, and it is what the
-Comp 311 assignment needs of its `def in(v: PhysicalUnit)` and never states. -/
+This is the correctness statement an `in` operator needs. -/
 theorem conv_preserves (ψ : Scaling B k) (u v : UExp B k) (m : ℝ) :
     ψ.scale v * (m * conv ψ u v) = ψ.scale u * m := by
   have hv := ne_of_gt (ψ.scale_pos v)
@@ -265,17 +263,17 @@ bridge between the two roles a `Scaling` plays: fixed declared data on the one
 hand, quantified-over transformation on the other.
 
 It is also the exact price of `convert`. A parametric term without `convert` is
-scale-invariant for *every* scaling: that is `fundamental_free`, and it is what
-the Pi theorem consumes. A term *with* `convert` is scale-invariant for the
-coherent ones, and `conv_invariant_of_coherent` is the lemma that discharges its
-case. Nothing else in Λs can observe a unit, so nothing else pays. -/
+scale-invariant for *every* scaling (`fundamental_free`, which the unit-level Pi
+theorem consumes). A parametric term *with* `convert` is scale-invariant for the
+coherent ones; `conv_invariant_of_coherent` discharges its case. No other
+parametric construct observes a unit, so nothing else pays. -/
 
 section Coherence
 
 variable [UnitSys B D] {j : ℕ}
 
 /-- A scaling is **coherent** for `Δ` when interchangeable units scale alike;
-that is, when it factors through `dim`. -/
+equivalently (`Scaling.coherent_iff_factors`), when it factors through `dim`. -/
 def Scaling.Coherent (Δ : DCtx D j k) (ψ : Scaling B k) : Prop :=
   ∀ u v : UExp B k, SameDim Δ u v → ψ.scale u = ψ.scale v
 

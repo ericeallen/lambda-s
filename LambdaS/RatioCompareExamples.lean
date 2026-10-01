@@ -6,14 +6,14 @@ Authors: Eric Allen
 import LambdaS.Twist
 
 /-!
-# Regression predictions and checks for fuel-free ratio comparison
+# Regression checks for fuel-free ratio comparison
 
-Predictions recorded before execution: internal higher-order composition computes
-its expected unit; independent scalar inputs remain distinct; beta-equivalent
-open terms agree; unit binders and vector/matrix projections preserve results.
-Unknown function/family contexts are tested separately against the legacy
-comparison. They retain the legacy bounded comparison, including acceptance when
-substitution creates another redex; no new completeness claim is made there.
+Internal higher-order composition computes its expected unit; independent
+scalar inputs remain distinct; β-equivalent open terms agree; unit binders and
+vector and matrix projections preserve results. At contexts containing an
+unknown function or unit family, the checks compare `Tw.normEq` with the bounded
+comparison `Tw.scalarEq` on `Tw.norm` forms, including a case where
+substitution creates another redex; no completeness claim is made there.
 -/
 
 namespace LambdaS.RatioCompareExamples
@@ -62,8 +62,8 @@ private def M : Tw B 0 [.vec 2, .mat 2 2] (.mat 2 2) := .var 1 rfl
 #guard Tw.normEq (.proj (.veccons x (.veccons y .vecnil)) 1) y
 #guard Tw.normEq (.proj (.row (.matcons (.veccons x .vecnil) .matnil) 0) 0) x
 
-/-- A kernel-checked instance of the new exactness theorem, with unrestricted
-internal higher-order syntax and arbitrary unknown scalar inputs. -/
+/-- A kernel-checked instance of `Tw.normEq_sound` at a first-order context,
+with internal higher-order syntax and arbitrary unknown scalar inputs. -/
 theorem open_composition_correct (ψ : Scaling B 0) (ρ : TwEnv [S, S]) :
     Tw.eval ψ (.app (composed 3) x) ρ =
       Tw.eval ψ (.mul x (.unit (Term.rpow u 8))) ρ :=
@@ -81,7 +81,7 @@ private def passedFamily : Tw B 0 [S, S] (.bind S) :=
   .app (.lam (.var 0 rfl)) unitFamily
 #guard Tw.normEq (.uapp passedFamily u) (.mul x (.unit u))
 
-/-! ## Explicit higher-order boundary and prior-acceptance comparison -/
+/-! ## Higher-order contexts, against the bounded comparison -/
 
 private def unknownApplication : Tw B 0 [F, S] S := .app (.var 0 rfl) (.var 1 rfl)
 #guard Tw.normEq unknownApplication unknownApplication
@@ -94,7 +94,7 @@ The unknown function need not occur: selection is by context, not liveness. -/
 private def higherOrderBoundary : Tw B 0 [F, S] S :=
   .app (.lam (.app (.var 0 rfl) (.var 2 rfl))) (.lam (.var 0 rfl))
 private def higherOrderInput : Tw B 0 [F, S] S := .var 1 rfl
--- Both the legacy comparison and the retained higher-order fallback accept.
+-- Both the bounded comparison and `Tw.normEq`, which falls back to it here, accept.
 #guard Tw.scalarEq higherOrderBoundary.norm higherOrderInput.norm
 #guard Tw.normEq higherOrderBoundary higherOrderInput
 -- The kernel independently confirms that the compared terms are equivalent.

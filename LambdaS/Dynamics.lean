@@ -20,7 +20,7 @@ Runtime units alone *would* merely relocate the checking to the runtime. But
 paired with a theorem that **erasure preserves results**, they establish
 something the erased semantics cannot state on its own: that the instrumentation
 is *unnecessary*. That is precisely the content of "units are static", a
-property proved here for this calculus, including conversion. Kennedy also
+property `erasure_correct` proves for this calculus, including conversion. Kennedy also
 proves unit erasure for his calculus (WMM 2008).
 
 So there are three things, and they are complementary rather than competing:
@@ -28,7 +28,7 @@ So there are three things, and they are complementary rather than competing:
 | | proves |
 |---|---|
 | instrumented dynamics + `unit_soundness_total` | the dynamic unit checks **never fire** on well-typed terms |
-| `eeval_erase` (`LambdaS.Erasure`) | dropping units **does not change the numbers** |
+| `erasure_correct` (`LambdaS.Erasure`) | dropping units **does not change the numbers** |
 | scaling parametricity, i.e. invariance of results under a change of units (`LambdaS.Fundamental`) | units have **observable meaning** |
 
 Kennedy establishes scaling parametricity as well as erasure. This file defines the instrumented evaluator; its
@@ -90,10 +90,11 @@ inductive Val (R B D : Type) where
   | dclos {j k : ℕ} : Tm B D (j + 1) k → List (Val R B D) →
       UEnv B k → DEnv D j → Val R B D
 
-/-- The dot product an application of a linear map performs.
+/-- The dot product composition performs, once per entry of the composite
+(`comp`); map application (`mapp`) goes through `Num.matVec` instead.
 
 Forwards to `Num.dot`, which the `Float` carrier overrides with the native
-kernel, so this is the point where a compiled Λs program crosses into C. -/
+kernel, so this is where a compiled composition crosses into C. -/
 def dotp (a b : List R) : R := Num.dot a b
 
 /-- Column `i` of a matrix, padded with zero. -/
@@ -102,8 +103,8 @@ def colOf (N : List (List R)) (i : ℕ) : List R :=
 
 
 /-- **Instrumented evaluation.** Values carry their units, and the evaluator is
-*partial*: adding mismatched units, taking `log` of a
-dimensioned quantity, and applying a linear map to a vector of the wrong space
+*partial*: adding mismatched units, taking `log` or `exp` of a
+quantity whose unit is not `1`, and applying a linear map to a vector of the wrong space
 all get stuck.
 
 Those stuck states are the whole point. `unit_soundness_total` says they are
@@ -288,7 +289,7 @@ theorem asUnit_eq_none {Δ : DCtx D 0 0} {ψ : Scaling B 0} {x : Meas ℝ B} {μ
     (h : ¬ SameDim Δ x.unit μ) : asUnit Δ ψ x μ = none := by
   simp [asUnit, h]
 
-/-- The cast agrees with the calculus: casting to `μ` is what `convert` computes,
+/-- The cast agrees with the calculus: casting to `v` is what `convert` computes,
 so the boundary operation is not a second, unverified conversion path. -/
 theorem asUnit_eq_eval_convert {Δ : DCtx D 0 0} {ψ : Scaling B 0} {a : Tm B D 0 0}
     {x : Meas ℝ B} {v : UExp B 0} {fuel : ℕ} (ha : evalC (conv ψ) fuel [] a = some (.scalar x)) (hΔ : Δ = DCtx.nil D) :

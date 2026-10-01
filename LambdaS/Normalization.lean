@@ -16,9 +16,9 @@ not a subterm. Fuel buys past that, and the price is that `none` conflates
 "ill-typed" with "ran out".
 
 Λs is normalizing, so a large enough bound always exists. This file proves that a
-well-typed term evaluates for *some* fuel, which together with `eval_sound`
-gives the statement one actually wants: every well-typed term evaluates to a
-value of the predicted type.
+well-typed closed term evaluates for *some* fuel, which together with `eval_sound`
+gives the statement one actually wants: every well-typed closed term evaluates to
+a value of the predicted type (`eval_total`).
 
 ## Why this is Tait and not Girard
 
@@ -45,9 +45,9 @@ and dimension variables to ground units and dimensions. Unit application
 extends η; no type-level substitution occurs at run time. Values are
 measurements ⟨ m, u⟩ (a magnitude with its unit), vectors and
 matrices tagged with their spaces, and three forms of closure. The evaluator
-is partial in two ways. It is *checked*: addition of mismatched
+is partial in two ways. It is *checked*: addition or comparison of mismatched
 units, indexing outside a space, applying a map to a vector of the wrong
-space, log of a dimensioned value, and conversion whose source annotation
+space, log or exp of a dimensioned value, and conversion whose source annotation
 disagrees with the run-time unit all get stuck, and these stuck states are
 what the progress half of type soundness rules out. And it is
 *fuel-bounded*: closure bodies are not subterms of the applications that
@@ -67,7 +67,7 @@ kg m²/s², as
 with H and ψ supplied through the environment. Written first-order
 this way, the expectation evaluates at every bound, zero included;
 abstracted as λ H. λ ψ. … and applied back to the
-same two arguments, it evaluates at fuel one and is stuck at fuel zero.
+same two arguments, it evaluates at fuel one and fails at fuel zero.
 The artifact records this as `twoStateChecks` and its
 documentation develops the example in full (`LambdaS.QM`);
 “Mechanization notes” (`LambdaS.lean`) explains where such checks run.
@@ -123,6 +123,8 @@ variable [UnitSys B D] [Num R]
 More fuel never turns a success into a failure. Needed because the fundamental
 lemma combines sub-evaluations that each came with their own bound. -/
 
+/-- **Fuel monotonicity.** A value returned at fuel `n` is returned at every fuel
+`m ≥ n`. -/
 theorem eval_mono (cf : UExp B 0 → UExp B 0 → R) :
     ∀ (n : ℕ) {j k : ℕ} (e : Tm B D j k) (m : ℕ) (η : UEnv B k) (δ : DEnv D j)
       (ρ : List (Val R B D)) (v : Val R B D),
@@ -269,11 +271,13 @@ termination_by n j k e m η δ ρ v _hnm _h => (n, sizeOf e)
 
 /-! ## Reducibility
 
-Tait's predicate. At scalar, vector and linear-map types it is just "has the
-right shape"; at the three binding types it is the interesting clause: a
-closure is reducible when applying it to anything reducible *terminates* at a
-reducible value. -/
+Tait's predicate. At scalar, vector and linear-map types it says the value has
+the predicted unit or spaces and the right lengths; at the three binding types
+it is the interesting clause: a closure is reducible when applying it to
+anything reducible *terminates* at a reducible value. -/
 
+/-- **Tait's reducibility predicate** on closed values, by recursion on the
+type's skeleton (`Ty.skel`), which instantiation preserves. -/
 def Red (cf : UExp B 0 → UExp B 0 → R) : Ty B D 0 0 → Val R B D → Prop
   | .Q u, v => ∃ m, v = .scalar ⟨m, u⟩
   | .vec V, v => ∃ xs, v = .vector xs V ∧ xs.length = V.length
@@ -297,8 +301,8 @@ def Red (cf : UExp B 0 → UExp B 0 → R) : Ty B D 0 0 → Val R B D → Prop
 termination_by τ _ => Ty.skel τ
 decreasing_by all_goals simp only [Ty.skel, Ty.skel_subst, Ty.skel_substDim]; omega
 
-/-- Reducible values are well-shaped, which is all the evaluator's matches
-need. -/
+/-- An environment is **reducible** at a context when each value is reducible at
+the corresponding type. -/
 inductive RedEnv (cf : UExp B 0 → UExp B 0 → R) :
     List (Val R B D) → Ctx B D 0 0 → Prop where
   | nil : RedEnv cf ([] : List (Val R B D)) []
@@ -330,6 +334,9 @@ is no induction on fuel here: the reducibility predicate at arrow type already
 the term suffices. Fuel only has to be reconciled between subterms, which is what
 `eval_mono` is for. -/
 
+/-- **The fundamental lemma of reducibility.** A well-typed term, in a reducible
+environment whose unit environment respects the dimension context (`EnvOkD`),
+evaluates at some fuel to a value reducible at its grounded type. -/
 theorem red_eval (cf : UExp B 0 → UExp B 0 → R) :
     ∀ {j k : ℕ} (e : Tm B D j k) (η : UEnv B k) (δ : DEnv D j) (ρ : List (Val R B D))
       (Δ : DCtx D j k) (Γ : Ctx B D j k) (τ : Ty B D j k),
@@ -733,10 +740,10 @@ finite fuel) to a value reducible at its type.
 
 This is what the fuel costs and what it buys. `eval` is a total function only
 because it may answer `none`. Here the fuel is produced rather than assumed, so
-`none` is not a
-possible answer for a well-typed term: `eval` is partial in its definition and
-total on the language. The fuel is an artifact of Lean's termination checker,
-not of Λs. -/
+for a well-typed closed term `none` only means the fuel was too small (by
+`eval_mono`, every fuel above the produced bound returns the same value): `eval`
+is partial in its definition and total on the language. The fuel is an artifact
+of Lean's termination checker, not of Λs. -/
 theorem eval_terminates (cf : UExp B 0 → UExp B 0 → R) {e : Tm B D 0 0}
     {τ : Ty B D 0 0} (ht : HasTy (DCtx.nil D) [] e τ) :
     ∃ n v, evalC cf n [] e = some v ∧ Red cf τ v := by

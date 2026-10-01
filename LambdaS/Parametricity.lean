@@ -83,7 +83,7 @@ itself) needs a
 denotation of *terms*, hence recursion over typing **derivations**. `HasTy` is
 `Type`-valued for exactly that reason, and `LambdaS.Fundamental` does the work:
 `den` interprets derivations, and `fundamental` and `fundamental_free` are the
-theorems. The Pi theorem is assembled in `LambdaS.PiTheorem`.
+theorems. The Pi theorem is assembled in `LambdaS.PiTheorem` and, for programs that convert, `LambdaS.PiCoherent`.
 -/
 
 namespace LambdaS
@@ -98,8 +98,8 @@ A **unit** abstraction is different, and this is where `convert` shows its cost.
 `Λu:δ. e` denotes a *family* `ℝ → Ty.den τ`, indexed by the log-magnitude the
 instantiating unit is declared to have. It has to: `Λu:Length. convert x u meter`
 means something different depending on how big `u` is, and `conv` is what reads
-that. For convert-free terms the family is constant, which is Kennedy's theorem
-rather than our definition, and is the better place for it to live.
+that. For convert-free terms the family is constant in the sense of `Indep`
+(`den_indep`): a theorem here, where Kennedy's mechanized semantics defines it so.
 
 `@[reducible]` is load-bearing: instance synthesis runs at reducible
 transparency, so without it `HMul ℝ (Ty.Q u).den` fails to resolve. -/
@@ -159,9 +159,10 @@ theorem Ty.den_weakenDim {j k : ℕ} (τ : Ty B D j k) :
 
 /-- The **logical relation**: "behaves the same when units are rescaled by `ψ`".
 
-At a scalar the two readings differ by exactly the scale factor. At a function,
-related arguments must give related results. At `∀u:d. τ` the two families must agree at
-every instantiation `r` and under every scaling `s` of the bound variable, with
+At a scalar the two readings differ by exactly the scale factor; a vector scales
+componentwise, and entry `(a, i)` of a map `Lin V W` by `ψ(W a) / ψ(V i)`. At a function,
+related arguments must give related results. At `∀u:d. τ` the two families must be related at
+every index `r` and under every factor `s` for the bound variable, with
 the rescaled reading taken at `r + s` because rescaling moves the instantiating
 unit too. The dimension bound restricts which *units* may instantiate, not which
 *scalings* are considered, so the free theorems keep their full strength and the
@@ -356,7 +357,7 @@ theorem relQ_add {u : UExp B k} {ψ : Scaling B k} {x y x' y' : ℝ}
 
 /-- **Comparison survives a rescaling.** Both sides scale by the same positive
 factor, so the ordering is the same in both unit systems, and a conditional
-takes the same branch. This is where `OrderedNum.le_scale` is discharged: the
+takes the same branch. This is where `OrderedNum.le_scale` is applied: its
 factor is `Scaling.scale`, positive by construction, and the law is read at
 the `ℝ` instance, the carrier the denotation lives over. -/
 theorem relQ_le_iff {u : UExp B k} {ψ : Scaling B k} {x y x' y' : ℝ}
@@ -452,12 +453,12 @@ theorem rel_Q_eq (u : UExp B k) (ψ : Scaling B k) (x y : ℝ) :
     Rel (D := D) (j := j) (.Q u) ψ x y ↔ RelQ u ψ x y := Iff.rfl
 
 /-- **Theorems for free.** Any `f` related to itself at `∀u. Q u → Q (u·u)`
-satisfies `f (k·x) = k² · f x` for every positive `k`.
+satisfies `f (r + log k) (k·x) = k² · f r x` for every index `r` and positive `k`.
 
 `f` takes the instantiating unit's log-magnitude as its first argument, and
 rescaling by `k` moves that argument by `log k`: the unit the term was applied
-to gets rescaled along with everything else. Read at a fixed `r` this is the
-familiar statement.
+to gets rescaled along with everything else. When the family is constant, as it
+is for a convert-free term, this is the familiar `f (k·x) = k² · f x`.
 
 Note how `∀u` is written: `∀δ. ∀u:δ.`, a unit variable bounded by a *dimension*
 variable. That is unbounded quantification, and it is where the full strength of

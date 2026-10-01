@@ -8,10 +8,32 @@ import LambdaS.DeclareSolver
 /-!
 # Executable declaration checks at the semantic boundaries
 
-These examples separate consistency from global completeness and exercise
-exact irrational output. The runtime battery executes the same computations
-as the guards. The correctness theorems connect computed factors to every
-satisfying real valuation, independently of the solver's chosen free magnitudes.
+These examples run `DeclSolver.check`, `DeclSolver.solve`, and
+`DeclSolver.conversionExact` on small unit systems chosen to separate
+consistency from global completeness and to exercise exact irrational output.
+Each namespace sets up its own `UnitSys`:
+
+* `Length`: feet and meters with no declaration are consistent but rejected as
+  incomplete, and `foot = 0.3048 meter` (`link`) makes the system pass, as in
+  Section 3 of our paper; a redundant reciprocal is accepted and a conflicting
+  factor is rejected.
+* `Root`: the dimensionless equation `u = 2/u` forces the factor `√2`, returned
+  as radicand `2` and degree `2`.
+* `Unsound`: a solvable declaration that equates independent dimensions is
+  rejected.
+* `Empty` and `DependentDimensions`: an empty unit system, and dimension rows
+  that coincide.
+* `RadicalChain`: a radical factor derived through a compound right-hand side;
+  in an incomplete system, a determined factor is still extracted and an
+  undetermined one is refused.
+* `Nanometer`: the paper's wavefunction-amplitude example (`exactAmplitude`).
+
+Each check is a `#guard`, and `allChecks` and `report` run the same
+computations in the native executable, which exits nonzero on failure.
+`Length.linkedFactor_returned` and `Root.rootFactor_returned` prove what the
+solver returns; `Length.linkedFactor_correct` and `Root.rootFactor_correct`
+prove the returned factor equal to the conversion factor in every satisfying
+real valuation, independently of the solver's chosen free magnitudes.
 -/
 namespace LambdaS.DeclarationSolverExamples
 
@@ -23,8 +45,11 @@ local instance : UnitSys (Fin 2) (Fin 1) where
 
 def foot : UExp (Fin 2) 0 := Term.ofBase 0
 def meter : UExp (Fin 2) 0 := Term.ofBase 1
+/-- `unit foot = 0.3048 meter`. -/
 def link : Decl (Fin 2) := ⟨0, 381 / 1250, by norm_num, meter⟩
+/-- `unit meter = (1250/381) foot`: redundant with `link`, and consistent. -/
 def reciprocal : Decl (Fin 2) := ⟨1, 1250 / 381, by norm_num, foot⟩
+/-- `unit foot = (1/3) meter`: conflicts with `link`. -/
 def conflict : Decl (Fin 2) := ⟨0, 1 / 3, by norm_num, meter⟩
 def noDeclarations : Fin 0 → Decl (Fin 2) := Fin.elim0
 
@@ -51,6 +76,8 @@ def exactLink : Bool :=
 
 def linkedFactor : ExactFactor := exactFactor ![link] ![1]
 
+/-- `conversionExact` from foot to meter returns `linkedFactor`, the exact factor
+built from the coefficient witness `![1]`. -/
 theorem linkedFactor_returned :
     conversionExact (Equiv.refl _) ![link] foot meter = some linkedFactor := by
   have h : factorCoefficients (Equiv.refl (Fin 2)) ![link]
@@ -65,6 +92,8 @@ theorem linkedFactor_returned :
     norm_num [Function.update]
   simp only [conversionExact, h, Option.map_some, linkedFactor]
 
+/-- The returned factor equals the foot-to-meter conversion factor in every
+valuation satisfying `link`. -/
 theorem linkedFactor_correct (V : Scaling (Fin 2) 0) (hV : Decl.Satisfies V link) :
     linkedFactor.value = conv V foot meter := by
   apply conversionExact_correct (Equiv.refl _) ![link] foot meter linkedFactor_returned V
@@ -89,6 +118,8 @@ def exactRoot : Bool :=
 
 def rootFactor : ExactFactor := exactFactor ![selfDecl] ![1 / 2]
 
+/-- `conversionExact` from `unit` to the dimensionless unit returns `rootFactor`,
+the exact factor built from the coefficient witness `![1/2]`. -/
 theorem rootFactor_returned :
     conversionExact (Equiv.refl _) ![selfDecl] unit Term.one = some rootFactor := by
   have h : factorCoefficients (Equiv.refl (Fin 1)) ![selfDecl]
@@ -103,6 +134,8 @@ theorem rootFactor_returned :
     norm_num [Function.update]
   simp only [conversionExact, h, Option.map_some, rootFactor]
 
+/-- The returned factor equals the conversion factor from `unit` to `1` in every
+valuation satisfying `selfDecl`. -/
 theorem rootFactor_correct (V : Scaling (Fin 1) 0) (hV : Decl.Satisfies V selfDecl) :
     rootFactor.value = conv V unit Term.one := by
   apply conversionExact_correct (Equiv.refl _) ![selfDecl] unit Term.one rootFactor_returned V
@@ -138,7 +171,7 @@ def accepted : Bool :=
 end DependentDimensions
 
 namespace RadicalChain
-/-- Three length units linked through a compound rational-power right-hand side,
+/-! Three length units linked through a compound rational-power right-hand side,
 so that the radical a conversion needs is derived rather than declared. -/
 local instance : UnitSys (Fin 3) (Fin 1) where
   dim _ := Term.ofBase 0
@@ -173,16 +206,18 @@ def exactAB : Bool :=
 def conflictRejected : Bool :=
   (solve (Equiv.refl _) ![viaMean, bToC, conflict]).isNone
 
-/-- With the first declaration alone, b/c is undetermined, so the global check fails ... -/
+/-- With `viaMean` alone, `b/c` is undetermined, so the global check rejects the system. -/
 def incompleteRejected : Bool :=
   (check (Equiv.refl _) (Equiv.refl (Fin 1)) ![viaMean]).isNone
 
-/-- ... yet the pair the declaration does determine is still extracted exactly ... -/
+/-- With `viaMean` alone, the factor from `a` to `meanBC`, which that declaration
+fixes, is still extracted exactly: radicand `2`, degree `1`. -/
 def determinedInIncomplete : Bool :=
   (conversionExact (Equiv.refl _) ![viaMean] a meanBC).map
     (fun q => (q.radicand, q.degree)) == some (2, 1)
 
-/-- ... and the undetermined pair is refused rather than assigned the solver's free choice. -/
+/-- With `viaMean` alone, the undetermined factor from `a` to `c` is refused rather
+than assigned the solver's free choice. -/
 def undeterminedInIncomplete : Bool :=
   (conversionExact (Equiv.refl _) ![viaMean] a c).isNone
 
@@ -192,9 +227,10 @@ def allChecks : Bool :=
 end RadicalChain
 
 namespace Nanometer
-/- A one-dimensional wavefunction amplitude carries a half-power of inverse
+/-! A one-dimensional wavefunction amplitude carries a half-power of inverse
 length. A rational declared factor between nanometer and meter then yields a
-radical factor between the amplitude units. -/
+radical factor between the amplitude units. Section 3 of our paper cites
+`exactAmplitude`. -/
 local instance : UnitSys (Fin 2) (Fin 1) where
   dim _ := Term.ofBase 0
 

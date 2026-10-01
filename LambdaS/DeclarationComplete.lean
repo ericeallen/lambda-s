@@ -9,10 +9,33 @@ import LambdaS.RationalSolver
 /-!
 # Executable completeness of unit declarations
 
-Combine the declared ratio vectors with the dimension rows. Rational solving
-against each standard basis vector decides whether these columns span the
-unit space. For sound declarations this is exactly the condition that every
-dimensionless ratio is constrained. Consistency is checked separately.
+Consistency (`LambdaS.Declare`) says some valuation satisfies the declarations.
+Running a program needs more: every conversion between two units of the same
+dimension must have a factor the declarations fix. By
+`Decl.determined_iff_mem_span` (`LambdaS.Determinacy`), a consistent set fixes a
+factor exactly when its ratio lies in the ℚ-span of the declared ratios. The
+ratios of same-dimension pairs are exactly the dimensionless unit vectors, the
+kernel of the dimension map, so completeness is the condition that the declared
+ratios span that kernel.
+
+`check` decides this without computing a kernel basis. It appends one row per
+base dimension (`dimensionRows`) to the declared ratio vectors (`combined`) and
+asks whether the result spans all of `B → ℚ`; `checkSpan` answers by solving one
+rational system per standard basis vector with `RationalSolver.solve`. For
+sound declarations the two spanning conditions agree
+(`Decl.combined_span_eq_top_iff`).
+
+The theorems, from the linear-algebra form to the one the checker uses:
+
+* `check_iff_span_dimensionless`: for sound declarations, `check` holds exactly
+  when every dimensionless ratio lies in `Decl.ratioSpan`.
+* `check_iff_determined`: if the set is also consistent, exactly when every
+  dimensionless ratio is `Decl.Determined`.
+* `check_iff_all_conversions_determined`: the same, stated for every
+  same-dimension pair; Section 3 of our paper cites it, and
+  `DeclSolver.check` relies on it.
+
+Consistency itself is checked separately, by `DeclSolver.solve`.
 -/
 
 namespace LambdaS.DeclarationComplete
@@ -124,8 +147,10 @@ theorem check_iff_determined (enum : Fin m ≃ B) (dims : Fin d ≃ D)
   simp_rw [Decl.determined_iff_mem_span hconsistent]
 
 omit [Fintype D] [DecidableEq D] in
-/-- The user-facing completeness statement: every legal conversion has a factor
-fixed by the declarations, provided the declaration set is consistent. -/
+/-- **Global completeness, decided.** For sound and consistent declarations,
+`check` returns `true` exactly when every legal conversion (every pair `u`, `v`
+of the same dimension) has a factor fixed by the declarations. Section 3 of our
+paper cites this form; `DeclSolver.check` relies on it. -/
 theorem check_iff_all_conversions_determined (enum : Fin m ≃ B) (dims : Fin d ≃ D)
     (ds : Fin n → Decl B) (hsound : ∀ i, Decl.Sound (D := D) (ds i))
     (hconsistent : ∃ V : Scaling B 0, ∀ i, Decl.Satisfies V (ds i)) :

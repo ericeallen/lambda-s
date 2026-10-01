@@ -11,17 +11,19 @@ import LambdaS.Fundamental
 `fundamental` says a parametric term is scale-invariant for coherent scalings,
 and `fundamental_free` says a parametric convert-free term is invariant for
 *all* of them (parametric meaning no `ucon`).
-This file proves the converse: invariance under all scalings detects **exactly**
-the conversions that do something.
+This file proves the converse for the canonical one-conversion program
+(`cvt_invariant_iff_eq`): invariance under all scalings detects **exactly** the
+conversions that do something. `Twist.invariant_iff` (the paper's Theorem 6.1)
+extends it to first-order scalar programs of nonzero denotation.
 
 ## The theorem that is not available
 
 The tempting statement ("invariant under all scalings implies definable") is
-false, and not for any interesting reason. Take `f x = π · x` at type
+false, and not for any interesting reason. Take `f x = c · x` at type
 `Q u → Q u`. It satisfies the scaling law for every `ψ`, since `f (k·x) = k·f x`.
-No parametric, convert-free term denotes it: literals are rational, and the
-arithmetic of Λs over rationals and the input cannot produce `π`. Definability results of that shape fail in System F
-too, and units have nothing to do with it.
+Terms are countable and reals are not, so for all but countably many `c` no
+term denotes `f`. Definability results of that shape fail in System F too, and
+units have nothing to do with it.
 
 So the right target is not definability in general but a completeness result for
 `convert` in particular. That is what is proved here.
@@ -53,10 +55,11 @@ conversion costs.
 ## And the first-order dichotomy
 
 `scaleLaw_forces_zero` is the general form of `NonDef.convert_not_definable`: if
-a first-order term's result unit mentions a base unit that none of its arguments
-mention, then all-scalings invariance forces the term to denote zero. This is
-`Pi.eq_zero_of_appears_once` (the pendulum argument) reappearing as a
-statement about terms rather than about exponent matrices.
+the result unit of a first-order scaling law mentions a base unit that no
+argument unit mentions, then every function obeying the law under all scalings
+is zero (`forced_zero` states this for terms). It is the single-base-unit case
+of `Pi.mulScaleLaw_eq_zero_of_unsolvable`, stated over environments rather than
+exponent matrices.
 -/
 
 namespace LambdaS
@@ -179,7 +182,8 @@ denotes exactly what some convert-free term denotes: at the same type, in every
 environment, under every valuation.
 
 Stated over derivations this says what it should: there is another **term**,
-convert-free, with a derivation at the same type and the same denotation. Over
+convert-free and parametric whenever the original is, with a derivation at the
+same type and the same denotation. Over
 an intrinsically typed syntax the term and its derivation are one object, so the
 statement could not distinguish them.
 
@@ -328,8 +332,8 @@ theorem exists_convertFree_of_inert : ∀ {j k : ℕ} {Δ : DCtx D j k} {Γ : Ct
 
 omit [DecidableEq B] in
 omit [DecidableEq B] [Fintype D] in
-/-- **Inert terms are invariant under every scaling**, not merely the coherent
-ones, because they are convert-free in all but name. -/
+/-- **Parametric inert terms are invariant under every scaling**, not merely the
+coherent ones, because they are convert-free in all but name. -/
 theorem fundamental_of_inert {j k : ℕ} {Δ : DCtx D j k} {Γ : Ctx B D j k}
     {e : Tm B D j k} {τ : Ty B D j k} (d : HasTy Δ Γ e τ) (hp : e.Parametric)
     (hi : e.Inert) (V ψ : Scaling B k) {ρ ρ' : Env Γ} (hr : RelEnv Γ ψ ρ ρ') :
@@ -385,9 +389,8 @@ theorem cvt_detectable {u v : UExp B k} (h : SameDim Δ u v) (V : Scaling B k)
 /-! ## The first-order dichotomy
 
 `NonDef.convert_not_definable` collapsed a function between two distinct base
-units to zero. The same argument works for any first-order signature, and the
-hypothesis is the pendulum condition: a base unit the result mentions and no
-argument does. -/
+units to zero. The same argument works for any first-order signature in which
+some base unit occurs in the result and in no argument. -/
 
 omit [DecidableEq B] [UnitSys B D] in
 omit [Fintype D] in
@@ -417,12 +420,12 @@ omit [Fintype D] in
 If some base unit occurs in the result unit but in no argument unit, then a
 first-order function invariant under every scaling is the zero function.
 
-This is the semantic form of the pendulum argument: the scaling that moves only
-that base unit fixes every input and moves the output, so the output has nowhere
-to go but zero. Compare `Pi.eq_zero_of_appears_once`, which says the same thing
-about exponent matrices.
+The proof uses the pendulum argument's device, a scaling that moves only one
+base unit: here it fixes every input and moves the output, so the output must
+be zero. `Pi.eq_zero_of_appears_once` applies the same device to exponent
+matrices.
 
-It is also the one-variable special case of the solvability dichotomy
+It is also the single-base-unit special case of the solvability dichotomy
 (`Pi.mulScaleLaw_eq_zero_of_unsolvable`, in `LambdaS.PiTheorem`): a base unit missing from every
 argument but present in the result makes `A X = b` unsolvable with the
 annihilator being that base unit's coordinate direction, and the general

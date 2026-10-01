@@ -9,13 +9,14 @@ import Mathlib.LinearAlgebra.Matrix.Rank
 /-!
 # The Pi theorem: linear-algebra core
 
-Kennedy's Pi Theorem for programming (POPL 1997; restated in the 2009 lecture
-notes as Theorem 4) says that a first-order unit-polymorphic type
+Kennedy's Pi theorem for programs (POPL 1997, Theorem 3; Theorem 4 of his 2009
+lecture notes) says that a first-order unit-polymorphic type
 
   `∀α₁…αₘ. float<u₁> → ⋯ → float<uₙ> → float<u₀>`
 
-is *isomorphic* to one with `n − r` dimensionless arguments, where `r` is the
-rank of the matrix of unit-variable exponents.
+is *isomorphic*, for positive values, to one with `n − r` dimensionless
+arguments, where `r` is the rank of the matrix `A` of unit-variable exponents,
+provided `A X = B` is solvable over ℤ for the result's exponent vector `B`.
 
 He mechanized the extensional semantics in Coq (WMM 2008) but listed the Pi
 theorem's proof as **work in progress**, along with the non-definability results
@@ -28,10 +29,10 @@ The **linear-algebra core**: the dimensionless power-products of the arguments
 form the kernel of the exponent matrix, its dimension is `n − r` by
 rank-nullity, and (the pedagogically important part) a unit variable occurring
 in exactly one argument forces that argument out of every dimensionless group
-*and* out of the answer.
+*and*, when the result does not mention it, out of the answer.
 
-That last theorem is the pendulum, mechanized. Mass appears only in the mass, so
-it has nothing to cancel against.
+Those last two theorems are the pendulum, mechanized: the mass dimension
+appears only in the mass argument, so it has nothing to cancel against.
 
 ## What is not proved here
 
@@ -62,9 +63,10 @@ variable {m n : ℕ}
 /-- The **exponent matrix** of a first-order signature: `A v i` is the
 exponent, in the unit of argument `i`, of the `v`-th rescalable unit symbol.
 In Kennedy's statement the rows are the quantified unit variables; the bridge
-in `LambdaS.PiTheorem` (`den_mulScaleLaw`) instantiates the row index with
-`B ⊕ Fin k`, one row per base unit *and* per unit variable in scope, so the
-matrix sees every rescaling the fundamental theorem provides. -/
+in `LambdaS.PiTheorem` (`den_mulScaleLaw`) enumerates the rows by
+`Fin m ≃ B ⊕ Fin k`, one row per base unit *and* per unit variable in scope, so
+the matrix sees every rescaling the fundamental theorem provides.
+`dimensionMatrix` in `LambdaS.PiCoherent` has one row per dimension instead. -/
 abbrev ExpMatrix (m n : ℕ) := Matrix (Fin m) (Fin n) ℚ
 
 /-- A **dimensionless power-product** of the arguments: exponents `x` such that
@@ -80,8 +82,8 @@ def Dimensionless (A : ExpMatrix m n) : Submodule ℚ (Fin n → ℚ) :=
 /-- **The Pi count.** The dimensionless groups form a space of dimension
 `n − r`, where `r` is the rank of the exponent matrix.
 
-Stated as an addition to avoid truncated subtraction. This is Buckingham's
-theorem's arithmetic, and it is exactly what a `:pi` command would report. -/
+Stated as an addition to avoid truncated subtraction. This is the arithmetic
+of Buckingham's theorem. -/
 theorem finrank_dimensionless_add_rank (A : ExpMatrix m n) :
     Module.finrank ℚ (Dimensionless A) + Matrix.rank A = n := by
   have h := LinearMap.finrank_range_add_finrank_ker (Matrix.mulVecLin A)

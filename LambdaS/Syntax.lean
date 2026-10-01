@@ -9,13 +9,12 @@ import LambdaS.Unify
 /-!
 # Syntax of Λs
 
-Kennedy's Λu attaches units to scalars. Λs distributes them over an index type,
-so the primitive is a **space** and scalars are the one-point case.
+Kennedy's Λu attaches units to scalars. Λs also distributes them over an index
+type: vectors and linear maps carry a **space** of units.
 
 ## Representation choices
 
-Three, all forced by wanting a *decidable* checker rather than chosen for
-elegance.
+Three choices shape the representation.
 
 **Unit expressions are exponent vectors, not trees.** A unit expression with `k`
 unit variables in scope is a `Term B (Fin k)`: the very structure
@@ -43,7 +42,8 @@ identifying them would let a matrix's columns permute silently.
 the checker needs substitution and decidable equality but never unification,
 types stay unique, and `infer` is provably complete as well as sound. The
 unification development in `LambdaS.Unify` is for a future *inference* engine,
-where let-generalization forces it; nothing here depends on it.
+where let-generalization forces it; this module uses only its `Term`
+representation, and nothing here rests on its elimination lemmas.
 -/
 
 namespace LambdaS
@@ -83,7 +83,7 @@ def inv (t : Term B V) : Term B V := ⟨fun b => -t.base b, fun v => -t.vars v�
 def div (s t : Term B V) : Term B V :=
   ⟨fun b => s.base b - t.base b, fun v => s.vars v - t.vars v⟩
 
-/-- Rational powers. Total: every unit expression has an `n`-th root. -/
+/-- Rational powers. Total: every unit expression has an `n`-th root for `n ≠ 0`. -/
 def rpow (t : Term B V) (q : ℚ) : Term B V :=
   ⟨fun b => q * t.base b, fun v => q * t.vars v⟩
 
@@ -120,8 +120,8 @@ variable {k : ℕ}
 
 /-- Substitute `σ` for de Bruijn unit variable `0`, discharging one binder.
 
-Linear in the exponents, because substitution into an element of a free abelian
-group *is* a linear map. -/
+Linear in the exponents, because substitution into an element of a free
+ℚ-vector space *is* a linear map. -/
 def subst (t : UExp B (k + 1)) (σ : UExp B k) : UExp B k :=
   ⟨fun b => t.base b + t.vars 0 * σ.base b,
    fun i => t.vars i.succ + t.vars 0 * σ.vars i⟩
@@ -348,7 +348,7 @@ spaces: `W_j / V_i`. -/
 def linEntry {k} (V W : Sp B k) (j : Fin W.length) (i : Fin V.length) : UExp B k :=
   Term.div (W.get j) (V.get i)
 
-/-- **The calculus's entry units are the model's.** The unit `Lin V W`
+/-- **The calculus's entry units are the model's.** For closed spaces, the unit `Lin V W`
 assigns entry `(j, i)` is `entry` of `LambdaS.Map` at the two spaces, so
 Hart's classification, developed in the model, is about the matrices the
 calculus types. -/
@@ -393,7 +393,7 @@ typechecks (`Examples.caster`).
 -/
 
 /-- A dimension expression with `j` dimension variables in scope. Literally a
-unit expression over base dimensions: the two are the same free abelian group
+unit expression over base dimensions: the two are the same free ℚ-vector space
 construction, so `UExp`'s whole API applies. -/
 abbrev DExp (D : Type) (j : ℕ) := UExp D j
 
@@ -483,12 +483,10 @@ def dimOf [Fintype B] [UnitSys B D] {j k} (Δ : DCtx D j k) (u : UExp B k) : DEx
       exact Finset.sum_eq_zero fun i _ => by simp [(Fin.succ_ne_zero i).symm]
     · simp [substU, UExp.weaken, Term.ofVar]
 
-/-- Two units are **interchangeable** when they have the same dimension.
-
-Note what is *not* here. Before dimension contexts this also demanded
-`u.vars = v.vars`, a conservative stand-in for not knowing a unit variable's
-dimension. With `Δ` supplying it the clause is gone, and `convert` works under a
-bounded quantifier, which is what makes a dimension-typed quantity usable. -/
+/-- Two units are **interchangeable** when they have the same dimension under
+`Δ`. Nothing further is required of their unit variables: `Δ` supplies each
+variable's dimension, so `convert` works under a bounded quantifier, which is
+what makes a dimension-typed quantity usable. -/
 def SameDim [Fintype B] [UnitSys B D] {j k} (Δ : DCtx D j k) (u v : UExp B k) : Prop :=
   dimOf (D := D) Δ u = dimOf (D := D) Δ v
 
@@ -505,7 +503,7 @@ Six formers, one unit quantifier. `∀u. τ` is not primitive: it is
 `∀δ. ∀u:δ. τ`, and the free theorems that need a genuinely unconstrained unit
 get one by abstracting its dimension. -/
 inductive Ty (B D : Type) : ℕ → ℕ → Type where
-  /-- A scalar quantity carrying a unit. The one-point space. -/
+  /-- A scalar quantity carrying a unit. -/
   | Q {j k} : UExp B k → Ty B D j k
   | arrow {j k} : Ty B D j k → Ty B D j k → Ty B D j k
   /-- A vector over a space. -/
@@ -526,8 +524,7 @@ variable {D : Type}
 /-- Push a unit substitution and a dimension substitution through a type.
 
 Every other substitution on types is an instance of this one. The quantifier
-cases are the only interesting clauses, and they are where the earlier
-definitions were wrong: going under `∀u:d` must map the *bound* variable to
+cases are the only interesting clauses: going under `∀u:d` must map the *bound* variable to
 itself and shift everything else past it, which is exactly `liftU`. -/
 def ground : {j k j₀ k₀ : ℕ} → (Fin k → UExp B k₀) → (Fin j → DExp D j₀) →
     Ty B D j k → Ty B D j₀ k₀
@@ -640,8 +637,7 @@ theorem ground_weaken {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
 /-- **The quantifier case.** Grounding under a binder and then substituting the
 instantiating unit is the same as grounding with the environment extended by it.
 
-This is the lemma the `uapp` case of soundness turns on, and it is where the
-corrected `liftU` earns its place. -/
+This is the lemma the `uapp` case of soundness turns on. -/
 theorem ground_liftU_subst {j k j₀ k₀ : ℕ} (η : Fin k → UExp B k₀)
     (δ : Fin j → DExp D j₀) (w : UExp B k₀) (τ : Ty B D j (k + 1)) :
     subst (ground (liftU η) δ τ) w = ground (Fin.cons w η) δ τ := by
@@ -778,14 +774,14 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   | add {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   /-- A constant rational power, `e^q`. Primitive, because it is not definable
   from the field operations; total, with `pow 0 e : Q 1` denoting `x^0 = 1`.
-  The unit grammar has had `u^q` all along, and this constructor makes the term
-  grammar symmetric with it: `pow (1/n)` is the `n`-th root. -/
+  It mirrors the unit grammar's `u^q`: `pow (1/n)` is the `n`-th root. -/
   | pow {j k} : ℚ → Tm B D j k → Tm B D j k
+  /-- Component extraction, `e.i`: the elimination form for `Vec`. -/
   | idx {j k} : Tm B D j k → ℕ → Tm B D j k
-  /-- Row extraction: the elimination form for `Lin`, dual to `mcons` as
+  /-- Row extraction: an elimination form for `Lin`, dual to `mcons` as
   `idx` is to `vcons`. Row `i` of a map at `Lin V W` is a vector over the
   row space `w / δ_V(·)` for `w = δ_W(i)`, which is exactly the vector
-  `mcons` consumes, so extraction and introduction agree exactly. -/
+  `mcons` consumes, so extraction and introduction agree. -/
   | mrow {j k} : Tm B D j k → ℕ → Tm B D j k
   /-- **Compare and branch**, fused so that no `Bool` type is needed. The
   scrutinees are compared at a common unit, which is what keeps the form
@@ -794,7 +790,9 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   not typecheck, so the observation that could detect a rescaling is
   unreachable by construction. -/
   | ifle {j k} : Tm B D j k → Tm B D j k → Tm B D j k → Tm B D j k → Tm B D j k
+  /-- Linear-map application, `e ⊙ e`, distinct from function application `app`. -/
   | mapp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
+  /-- Composition of linear maps, `e ∘ e`. -/
   | comp {j k} : Tm B D j k → Tm B D j k → Tm B D j k
   /-- The empty vector, at the empty space. -/
   | vnil {j k} : Tm B D j k
@@ -836,9 +834,10 @@ inductive Tm (B D : Type) : ℕ → ℕ → Type where
   alternative a wrong factor would still typecheck, putting the Mars Climate
   Orbiter failure outside the trusted boundary.
 
-  This is the only form that can observe a unit, and so the only form that
-  costs parametricity: a term containing it is scale-invariant for **coherent**
-  scalings rather than for all of them. See `LambdaS.Conversion`. -/
+  This is the only form that reads a conversion factor, and its cost is
+  coherence: a parametric term containing it is invariant under **coherent**
+  rescalings (`fundamental`) rather than under all of them (`fundamental_free`).
+  The unit constant `ucon` is excluded from both theorems. -/
   | convert {j k} : Tm B D j k → UExp B k → UExp B k → Tm B D j k
 
 /-- A typing context. -/

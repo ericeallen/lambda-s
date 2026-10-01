@@ -14,8 +14,8 @@ an array of dimensioned entries is only well-behaved when the array of **entry
 units** is multiplicatively separable: entry `(j,i)` must carry `aⱼ · bᵢ`, so
 that two vectors of units determine every entry. Hart calls this rank one, and
 so do we; it is a statement about the entry units and says nothing about the
-numerical rank of the matrix. From there Hart derives a taxonomy of five
-classes, each licensing a different set of operations:
+numerical rank of the matrix. From there Hart derives a taxonomy of dimensioned
+matrices; five of its classes license different sets of operations:
 
 | Hart's class        | operations licensed                    |
 |---------------------|----------------------------------------|
@@ -56,10 +56,11 @@ defined to be w_j/u_i (`entry`). At the terms, the introduction
 rule T-MCons of Figure 2 of the paper (the constructors of `HasTy`) accepts a row only at the
 space w/u⃗, so no term constructs a matrix outside Hart's form;
 the artifact checks one-row maps (`toTime` accepted, the same
-map with a mistyped row rejected at build time). The operations the taxonomy governs
-(trace, determinant, factorization) belong to a numerical library above
-the calculus; what the calculus contributes is that every matrix reaching
-them, written as a literal or received as an argument, is in Hart's form.
+map with a mistyped row rejected at build time). Trace, determinant, and the
+2×2 cofactor inverse are written as terms (`traceTm`, `detTm`, `invTm`);
+factorizations belong to a numerical library above the calculus. What the
+calculus contributes is that every matrix reaching them, written as a literal
+or received as an argument, is in Hart's form.
 
 **Theorem (Rank-one units; `entry_rank_one`).** The unit of entry (j,i) of a map of type Lin u⃗ w⃗
 factors as w_j · u_i⁻¹. There is no hypothesis: every well-typed
@@ -145,8 +146,8 @@ observation: the two spaces determine every entry unit, so a run-time array
 of bare magnitudes loses nothing, and the compiled evaluator hands vectors
 and matrices to BLAS as unboxed arrays. The formal license for the flat
 representation is the erasure theorem of “Adequacy and Erasure” (`Erasure.lean`), whose
-run-time matrix values carry magnitudes and a space tag only; the rank-one
-structure is why the tag suffices. Type soundness covers the literals:
+run-time matrix values carry magnitudes and a column count only; the rank-one
+structure is why the types can supply every entry unit. Type soundness covers the literals:
 evaluating a well-typed matrix literal yields a matrix value at the
 declared spaces (`lin_soundness_total`).
 -/
@@ -203,12 +204,9 @@ theorem entry_perm_prod [Fintype I] (V : Space B I) (σ : Equiv.Perm I) :
   rw [Equiv.prod_comp σ V]
   simp
 
-/-- The identity map is dimensionless on the diagonal, and its off-diagonal
-entries are `0`, which inhabits *every* unit.
-
-That zero is unit-polymorphic is not a convenience here but a structural
-requirement: without it neither the identity matrix nor the `n = 0` term of
-`exp` would be well-typed. It is the parametricity fact doing load-bearing work. -/
+/-- The identity map's diagonal entries are dimensionless: `entry_diag` under
+the name the paper cites. Its off-diagonal entries are `0`, a value at every
+unit; this theorem states only the diagonal. -/
 theorem entry_id_diag (V : Space B I) (i : I) : entry V V i i = 1 := entry_diag V i
 
 /-! ## 3. Squarable: `V ⊸ V ⊗ d` -/
@@ -227,8 +225,7 @@ theorem entry_square (V : Space B I) (d : Uom B) (k j i : I) :
 /-- **Functoriality of `⊗`.** Scaling domain and codomain by the same unit
 leaves every entry unchanged, so `(V ⊗ d) ⊸ (W ⊗ d) ≅ V ⊸ W`.
 
-Squarability depends on this, and it was not stated anywhere in the design until
-the paper test surfaced it. -/
+Squarability depends on this. -/
 @[simp] theorem entry_scale_scale (V : Space B I) (W : Space B J) (d : Uom B) (j : J) (i : I) :
     entry (V ⊗ d) (W ⊗ d) j i = entry V W j i := by
   ext b; simp
@@ -256,10 +253,10 @@ theorem weighted_norm_dimensionless (V : Space B I) (j i : I) :
 
 /-- **Cholesky.** If `M : V ⊸ dual V` factors as `Rᵀ ∘ R` with `R : V ⊸ Y`, then
 composability forces `Y = dual Y`, and torsion-freeness of the unit group forces
-`Y` to be the *dimensionless* space.
+`Y` to be the *dimensionless* space. The theorem proves the second step.
 
-So the Cholesky factor lands in `triv`: it is the whitening transform, and the
-type derives that rather than the programmer asserting it. -/
+So a Cholesky factor maps into `triv`, the unit shape of a whitening transform;
+the type derives that rather than the programmer asserting it. -/
 theorem cholesky_factor_dimensionless {Y : Space B I} (h : Y = Y.dual) :
     Y = Space.triv B I := by
   funext i

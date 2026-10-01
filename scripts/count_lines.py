@@ -17,9 +17,11 @@ a block comment is text, not a comment marker; both are handled. The script
 also counts `theorem` and `lemma` declarations, on code lines only, so a
 declaration quoted in documentation is not counted.
 
-`--check` compares the README's status table against the counts (line
-figures rounded to the nearest hundred, the theorem count exact) and exits 1
-on drift; `--fix` rewrites the table in place. CI runs the check, so the
+`--check` compares the README's opening size sentence and status table
+against the counts (line figures rounded to the nearest hundred, the theorem
+count exact) and exits 1 on drift; `--fix` rewrites both in place. With no
+flag the script only prints the counts. The paper's statement of these
+figures is not checked here. CI runs the check, so the
 stated size cannot silently stop being the measured one.
 """
 from __future__ import annotations
